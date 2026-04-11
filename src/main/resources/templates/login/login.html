@@ -21,11 +21,11 @@
         <p class="form-message success" th:if="${signupSuccessMessage}" th:text="${signupSuccessMessage}"></p>
 
         <div class="social-login" aria-label="소셜 로그인">
-            <a class="social-button facebook" href="#">
+            <a class="social-button facebook" th:href="@{/oauth2/authorization/facebook}">
                 <span class="provider-mark">f</span>
                 <span>Facebook으로 계속하기</span>
             </a>
-            <a class="social-button google" href="#">
+            <a class="social-button google" th:href="@{/oauth2/authorization/google}">
                 <span class="provider-mark google-mark">G</span>
                 <span>Google으로 계속하기</span>
             </a>

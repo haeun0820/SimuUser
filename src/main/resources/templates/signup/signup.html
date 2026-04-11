@@ -11,6 +11,7 @@
     <a class="home-link" th:href="@{/}">SimuUser</a>
 
     <form class="signup-form" th:action="@{/signup}" method="post">
+        <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
         <h1>회원가입</h1>
 
         <p class="form-message error" th:if="${errorMessage}" th:text="${errorMessage}"></p>

@@ -42,6 +42,12 @@ public class AppUser {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(length = 30)
+    private String provider;
+
+    @Column(length = 100)
+    private String providerId;
+
     protected AppUser() {
     }
 
@@ -53,6 +59,21 @@ public class AppUser {
         this.phone = phone;
         this.birthDate = birthDate;
         this.gender = gender;
+        this.provider = "LOCAL";
+        this.providerId = null;
+        this.createdAt = LocalDateTime.now();
+    }
+
+    public AppUser(String name, String userId, String password, String email, String phone, LocalDate birthDate, String gender, String provider, String providerId) {
+        this.name = name;
+        this.userId = userId;
+        this.password = password;
+        this.email = email;
+        this.phone = phone;
+        this.birthDate = birthDate;
+        this.gender = gender;
+        this.provider = provider;
+        this.providerId = providerId;
         this.createdAt = LocalDateTime.now();
     }
 
@@ -90,5 +111,13 @@ public class AppUser {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public String getProvider() {
+        return provider;
+    }
+
+    public String getProviderId() {
+        return providerId;
     }
 }
