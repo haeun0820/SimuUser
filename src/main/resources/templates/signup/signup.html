@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimuUser 회원가입</title>
+    <link rel="stylesheet" th:href="@{/css/signup/signup.css}">
+</head>
+<body>
+<main class="signup-page">
+    <a class="home-link" th:href="@{/}">SimuUser</a>
+
+    <form class="signup-form" th:action="@{/signup}" method="post">
+        <h1>회원가입</h1>
+
+        <p class="form-message error" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+
+        <section class="form-section">
+            <label for="name">이름 <span>*</span></label>
+            <input id="name" name="name" type="text" th:value="${signupRequest?.name}">
+
+            <label for="userId">아이디 <span>*</span></label>
+            <div class="inline-field">
+                <input id="userId" name="userId" type="text" th:value="${signupRequest?.userId}">
+                <button id="checkUserIdButton" type="button">중복 확인</button>
+            </div>
+            <p id="userIdCheckMessage" class="field-message"></p>
+
+            <label for="password">비밀번호 <span>*</span></label>
+            <input id="password" name="password" type="password">
+
+            <label for="passwordConfirm">비밀번호 확인 <span>*</span></label>
+            <input id="passwordConfirm" name="passwordConfirm" type="password">
+
+            <label for="email">이메일</label>
+            <input id="email" name="email" type="email" th:value="${signupRequest?.email}">
+
+            <label for="phone">전화번호 <span>*</span></label>
+            <input id="phone" name="phone" type="tel" placeholder="010-0000-0000" th:value="${signupRequest?.phone}">
+
+            <label for="birthDate">생년월일 <span>*</span></label>
+            <input id="birthDate" name="birthDate" type="date" th:value="${signupRequest?.birthDate}">
+
+            <fieldset>
+                <legend>성별 <span>*</span></legend>
+                <label class="radio-label">
+                    <input type="radio" name="gender" value="male" th:checked="${signupRequest?.gender == 'male'}"> 남성
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="gender" value="female" th:checked="${signupRequest?.gender == 'female'}"> 여성
+                </label>
+            </fieldset>
+        </section>
+
+        <section class="terms-section">
+            <h2>개인정보처리방침 동의 <span>*</span></h2>
+            <div class="terms-box">
+                개인정보 수집 및 이용 목적, 보관 기간, 파기 절차에 대한 약관 영역
+            </div>
+            <label class="check-label">
+                <input type="checkbox" name="privacyAgree" th:checked="${signupRequest?.privacyAgree}">
+                개인정보처리방침에 동의합니다.
+            </label>
+        </section>
+
+        <section class="terms-section">
+            <h2>회원 약관 동의 <span>*</span></h2>
+            <div class="terms-box">
+                회원 서비스 이용 조건, 계정 관리, 금지 행위에 대한 약관 영역
+            </div>
+            <label class="check-label">
+                <input type="checkbox" name="termsAgree" th:checked="${signupRequest?.termsAgree}">
+                회원 약관에 동의합니다.
+            </label>
+        </section>
+
+        <label class="check-label all-check">
+            <input type="checkbox" name="allAgree" th:checked="${signupRequest?.allAgree}">
+            모두 동의합니다.
+        </label>
+
+        <button class="submit-button" type="submit">회원가입</button>
+    </form>
+</main>
+<script>
+    const userIdInput = document.getElementById("userId");
+    const checkUserIdButton = document.getElementById("checkUserIdButton");
+    const userIdCheckMessage = document.getElementById("userIdCheckMessage");
+
+    checkUserIdButton.addEventListener("click", async () => {
+        const userId = userIdInput.value.trim();
+
+        if (!userId) {
+            userIdCheckMessage.textContent = "아이디를 입력하세요.";
+            userIdCheckMessage.className = "field-message error";
+            return;
+        }
+
+        const response = await fetch(`/signup/check-user-id?userId=${encodeURIComponent(userId)}`);
+        const result = await response.json();
+
+        userIdCheckMessage.textContent = result.message;
+        userIdCheckMessage.className = result.available ? "field-message success" : "field-message error";
+    });
+</script>
+</body>
+</html>

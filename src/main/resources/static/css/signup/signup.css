@@ -1,0 +1,201 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, "Noto Sans KR", "Malgun Gothic", sans-serif;
+    color: #222222;
+    background: #ffffff;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+.signup-page {
+    width: 100%;
+    min-height: 100vh;
+    padding: 40px 16px;
+}
+
+.home-link {
+    display: inline-block;
+    margin-bottom: 28px;
+    color: #005bc8;
+    font-size: 18px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.signup-form {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+.signup-form h1 {
+    margin: 0 0 24px;
+    font-size: 24px;
+    text-align: center;
+}
+
+.form-message {
+    margin: 0 0 16px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.form-message.error {
+    color: #b42318;
+    background: #fff0ee;
+    border: 1px solid #f3b3ad;
+}
+
+.form-section,
+.terms-section {
+    margin-bottom: 24px;
+    padding: 20px;
+    border: 1px solid #dddddd;
+    border-radius: 8px;
+}
+
+.form-section {
+    display: grid;
+    gap: 10px;
+}
+
+.form-section label,
+.terms-section h2,
+fieldset legend {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.form-section span,
+.terms-section span,
+fieldset legend span {
+    color: #e03131;
+}
+
+.form-section input[type="text"],
+.form-section input[type="password"],
+.form-section input[type="email"],
+.form-section input[type="tel"],
+.form-section input[type="date"] {
+    width: 100%;
+    height: 38px;
+    padding: 0 10px;
+    border: 1px solid #bdbdbd;
+    border-radius: 6px;
+}
+
+.inline-field {
+    display: flex;
+    gap: 8px;
+}
+
+.inline-field input {
+    flex: 1;
+}
+
+.inline-field button {
+    width: 86px;
+    border: 0;
+    border-radius: 6px;
+    color: #ffffff;
+    background: #005bc8;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.field-message {
+    min-height: 18px;
+    margin: -4px 0 4px;
+    font-size: 12px;
+}
+
+.field-message.success {
+    color: #0b6b36;
+}
+
+.field-message.error {
+    color: #b42318;
+}
+
+fieldset {
+    display: flex;
+    gap: 18px;
+    margin: 6px 0 0;
+    padding: 0;
+    border: 0;
+}
+
+.radio-label,
+.check-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 400;
+}
+
+.terms-section h2 {
+    margin: 0 0 12px;
+}
+
+.terms-box {
+    min-height: 96px;
+    padding: 12px;
+    border: 1px solid #bdbdbd;
+    border-radius: 6px;
+    color: #444444;
+    font-size: 13px;
+    line-height: 1.5;
+    background: #fafafa;
+}
+
+.check-label {
+    margin-top: 10px;
+    font-size: 13px;
+}
+
+.all-check {
+    justify-content: flex-end;
+    margin-bottom: 24px;
+}
+
+.submit-button {
+    display: block;
+    width: 160px;
+    height: 42px;
+    margin: 0 auto;
+    border: 0;
+    border-radius: 6px;
+    color: #ffffff;
+    background: #005bc8;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+@media (max-width: 480px) {
+    .signup-page {
+        padding: 24px 12px;
+    }
+
+    .form-section,
+    .terms-section {
+        padding: 16px;
+    }
+
+    .inline-field {
+        flex-direction: column;
+    }
+
+    .inline-field button {
+        width: 100%;
+        height: 36px;
+    }
+
+}

@@ -10,4 +10,14 @@ public class MainController {
     public String home() {
         return "main/main";
     }
+
+    @GetMapping("/login")
+    public String login() {
+        return "login/login";
+    }
+
+    @GetMapping("/signup")
+    public String signup() {
+        return "signup/signup";
+    }
 }

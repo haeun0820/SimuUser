@@ -29,6 +29,7 @@ nav a {
     color: white;
     padding: 8px 16px;
     border-radius: 6px;
+    text-decoration: none;
 }
 
 /* Hero */
