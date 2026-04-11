@@ -2,77 +2,79 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SimuUser</title>
-
-    <!-- CSS 연결 -->
     <link rel="stylesheet" th:href="@{/css/main/main.css}">
 </head>
 <body>
 
-<header>
+<header class="site-header" th:unless="${isLoggedIn}">
     <div class="logo">SimuUser</div>
 
     <nav>
-        <a href="#">기능</a>
-        <a href="#">사용 흐름</a>
+        <a href="#">&#44592;&#45733;</a>
+        <a href="#">&#49324;&#50857; &#55120;&#47492;</a>
     </nav>
 
-    <a class="login-btn" th:href="@{/login}">로그인</a>
+    <a class="login-btn" th:href="@{/login}">&#47196;&#44536;&#51064;</a>
+</header>
+
+<header class="site-header auth-header" th:if="${isLoggedIn}">
+    <a class="brand-link" th:href="@{/}">
+        <span class="brand-mark" aria-hidden="true">S</span>
+        <span class="logo">SimuUser</span>
+    </a>
+
+    <nav class="auth-nav">
+        <a href="#">&#45824;&#49884;&#48372;&#46300;</a>
+        <a href="#">&#54532;&#47196;&#51229;&#53944;</a>
+        <a href="#">&#48516;&#49437;&#46020;&#44396;</a>
+    </nav>
+
+    <div class="auth-actions">
+        <form class="logout-form" th:action="@{/logout}" method="post">
+            <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <button class="logout-button" type="submit">&#47196;&#44536;&#50500;&#50883;</button>
+        </form>
+        <button class="icon-button" type="button" aria-label="notification">&#50508;&#47548;</button>
+        <button class="profile-button" type="button" th:title="${displayName}" aria-label="profile"></button>
+    </div>
 </header>
 
 <section class="hero">
     <h1>
-        아이디어를 검증하고<br>
-        사업성을 판단하세요
+        &#50500;&#51060;&#46356;&#50612;&#47484; &#44160;&#51613;&#54616;&#44256;<br>
+        &#49324;&#50629;&#49457;&#51012; &#54032;&#45800;&#54616;&#49464;&#50836;
     </h1>
 
     <p>
-        AI 유저 시뮬레이션, 시장 분석, 수익성 분석까지 자동화
+        AI &#50976;&#51200; &#49884;&#48044;&#47112;&#51060;&#49496;, &#49884;&#51109; &#48516;&#49437;, &#49688;&#51061;&#49457; &#48516;&#49437;&#44620;&#51648; &#51088;&#46041;&#54868;&#54633;&#45768;&#45796;.
     </p>
 
     <div class="summary">
-        <div class="summary-box">6가지<br>AI 분석</div>
-        <div class="summary-box">100%<br>자동화</div>
-        <div class="summary-box">수분<br>소요</div>
-        <div class="summary-box">무료<br>시작</div>
+        <div class="summary-box">6&#44032;&#51648;<br>AI &#48516;&#49437;</div>
+        <div class="summary-box">100%<br>&#51088;&#46041;&#54868;</div>
+        <div class="summary-box">&#49688;&#48516;<br>&#49548;&#50836;</div>
+        <div class="summary-box">&#47924;&#47308;<br>&#49884;&#51089;</div>
     </div>
 
     <div class="center-btn">
-        <div class="btn">핵심 기능</div>
+        <div class="btn">&#54645;&#49900; &#44592;&#45733;</div>
     </div>
 </section>
 
 <section class="section">
     <div class="section-title">
-        <h2>핵심 기능</h2>
+        <h2>&#54645;&#49900; &#44592;&#45733;</h2>
     </div>
 
     <div class="card-grid">
-        <div class="card">AI 가상 유저 시뮬레이션</div>
-        <div class="card">시장 & 경쟁 분석</div>
-        <div class="card">비용 & 수익성 분석</div>
-        <div class="card">기획 피드백 AI</div>
-        <div class="card">자동 문서화</div>
-        <div class="card">시나리오 비교</div>
-    </div>
-
-    <div class="center-btn">
-        <div class="btn">사용 흐름</div>
-    </div>
-</section>
-
-<section class="section">
-    <div class="section-title">
-        <h2>사용 흐름</h2>
-    </div>
-
-    <div class="flow">
-        <div class="flow-card"><span class="step">01</span> 아이디어 입력</div>
-        <div class="flow-card"><span class="step">02</span> AI 시뮬레이션</div>
-        <div class="flow-card"><span class="step">03</span> 시장 분석</div>
-        <div class="flow-card"><span class="step">04</span> 수익성 분석</div>
-        <div class="flow-card"><span class="step">05</span> 기획 피드백</div>
-        <div class="flow-card"><span class="step">06</span> 문서화</div>
+        <div class="card">AI &#44032;&#49345; &#50976;&#51200; &#49884;&#48044;&#47112;&#51060;&#49496;</div>
+        <div class="card">&#49884;&#51109; &amp; &#44221;&#51137; &#48516;&#49437;</div>
+        <div class="card">&#48708;&#50857; &amp; &#49688;&#51061;&#49457; &#48516;&#49437;</div>
+        <div class="card">&#44592;&#54925; &#54588;&#46300;&#48177; AI</div>
+        <div class="card">&#51088;&#46041; &#47928;&#49436;&#54868;</div>
+        <div class="card">&#49884;&#45208;&#47532;&#50724; &#48708;&#44368;</div>
     </div>
 </section>
 

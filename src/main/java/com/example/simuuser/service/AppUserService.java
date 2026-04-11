@@ -3,7 +3,7 @@ package com.example.simuuser.service;
 import com.example.simuuser.dto.SignupRequest;
 import com.example.simuuser.entity.AppUser;
 import com.example.simuuser.repository.AppUserRepository;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,10 +11,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class AppUserService {
 
     private final AppUserRepository appUserRepository;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final PasswordEncoder passwordEncoder;
 
-    public AppUserService(AppUserRepository appUserRepository) {
+    public AppUserService(AppUserRepository appUserRepository, PasswordEncoder passwordEncoder) {
         this.appUserRepository = appUserRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional(readOnly = true)

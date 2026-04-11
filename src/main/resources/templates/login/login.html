@@ -19,6 +19,7 @@
         </div>
 
         <p class="form-message success" th:if="${signupSuccessMessage}" th:text="${signupSuccessMessage}"></p>
+        <p class="form-message error" th:if="${param.error}">아이디 또는 비밀번호를 확인하세요.</p>
 
         <div class="social-login" aria-label="소셜 로그인">
             <a class="social-button facebook" th:href="@{/oauth2/authorization/facebook}">
@@ -45,7 +46,8 @@
             <span>또는</span>
         </div>
 
-        <form class="email-login" action="#" method="post">
+        <form class="email-login" th:action="@{/login}" method="post">
+            <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
             <label class="visually-hidden" for="userId">아이디</label>
             <input id="userId" name="userId" type="text" autocomplete="username" placeholder="아이디를 입력하세요.">
 

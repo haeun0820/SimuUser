@@ -154,6 +154,12 @@ a {
     border: 1px solid #b7ebc9;
 }
 
+.form-message.error {
+    color: #b42318;
+    background: #fff0ee;
+    border: 1px solid #f3b3ad;
+}
+
 .social-button {
     min-height: 48px;
     display: grid;

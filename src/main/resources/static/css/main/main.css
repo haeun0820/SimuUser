@@ -5,7 +5,7 @@ body {
 }
 
 /* Header */
-header {
+.site-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -18,7 +18,7 @@ header {
     color: #2b6df6;
 }
 
-nav a {
+.site-header nav a {
     margin: 0 15px;
     text-decoration: none;
     color: #555;
@@ -30,6 +30,103 @@ nav a {
     padding: 8px 16px;
     border-radius: 6px;
     text-decoration: none;
+}
+
+.auth-header {
+    padding: 24px 80px;
+}
+
+.brand-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+}
+
+.brand-mark {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: white;
+    background: #005bc8;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.auth-nav {
+    display: flex;
+    gap: 60px;
+}
+
+.auth-nav a {
+    font-weight: 700;
+}
+
+.auth-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.icon-button,
+.profile-button,
+.logout-button {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.icon-button {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.profile-button {
+    width: 34px;
+    height: 34px;
+    border: 3px solid #222222;
+    border-radius: 50%;
+    position: relative;
+}
+
+.profile-button::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #222222;
+}
+
+.profile-button::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    bottom: 4px;
+    width: 18px;
+    height: 10px;
+    border-radius: 10px 10px 0 0;
+    background: #222222;
+}
+
+.logout-form {
+    margin: 0;
+}
+
+.logout-button {
+    padding: 8px 10px;
+    border-radius: 6px;
+    color: #555555;
+    font-size: 13px;
+}
+
+.logout-button:hover {
+    background: #f0f0f0;
 }
 
 /* Hero */
