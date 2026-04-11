@@ -9,20 +9,24 @@
 <body>
 
 <header class="site-header" th:unless="${isLoggedIn}">
-    <div class="logo">SimuUser</div>
+    <div class="header-left">
+        <img class="logo-img" th:src="@{/images/logo.png}" alt="로고">
+    </div>
 
-    <nav>
-        <a href="#">&#44592;&#45733;</a>
-        <a href="#">&#49324;&#50857; &#55120;&#47492;</a>
+    <nav class="header-center">
+        <a href="#feature">기능</a>
+        <a href="#process">사용 흐름</a>
     </nav>
 
-    <a class="login-btn" th:href="@{/login}">&#47196;&#44536;&#51064;</a>
+    <div class="header-right">
+        <a class="login-btn" th:href="@{/login}">로그인</a>
+    </div>
 </header>
 
 <header class="site-header auth-header" th:if="${isLoggedIn}">
     <a class="brand-link" th:href="@{/}">
         <span class="brand-mark" aria-hidden="true">S</span>
-        <span class="logo">SimuUser</span>
+        <span class="logo"><img class="logo-img" th:src="@{/images/logo.png}" alt="로고"></span>
     </a>
 
     <nav class="auth-nav">
@@ -42,41 +46,133 @@
 </header>
 
 <section class="hero">
+    <div class="hero-badge">
+        <button class="section-btn1">AI 기반 아이디어 검증 플랫폼</button>
+    </div>
+
     <h1>
-        &#50500;&#51060;&#46356;&#50612;&#47484; &#44160;&#51613;&#54616;&#44256;<br>
-        &#49324;&#50629;&#49457;&#51012; &#54032;&#45800;&#54616;&#49464;&#50836;
+        아이디어를 <span>검증</span>하고<br>
+        <span>사업성</span>을 판단하세요
     </h1>
 
     <p>
-        AI &#50976;&#51200; &#49884;&#48044;&#47112;&#51060;&#49496;, &#49884;&#51109; &#48516;&#49437;, &#49688;&#51061;&#49457; &#48516;&#49437;&#44620;&#51648; &#51088;&#46041;&#54868;&#54633;&#45768;&#45796;.
+        아이디어 입력부터 AI 유저 시뮬레이션, 시장 분석, 수익성 판단까지<br>
+        하나의 플랫폼에서 완전히 자동화된 검증 흐름을 경험하세요.
     </p>
 
     <div class="summary">
-        <div class="summary-box">6&#44032;&#51648;<br>AI &#48516;&#49437;</div>
-        <div class="summary-box">100%<br>&#51088;&#46041;&#54868;</div>
-        <div class="summary-box">&#49688;&#48516;<br>&#49548;&#50836;</div>
-        <div class="summary-box">&#47924;&#47308;<br>&#49884;&#51089;</div>
+        <div class="summary-box"><b>6가지</b><br>AI 분석도구</div>
+        <div class="summary-box"><b>100%</b><br>AI 자동화</div>
+        <div class="summary-box"><b>수분</b><br>분석 소요 시간</div>
+        <div class="summary-box"><b>무료</b><br>시작 비용</div>
     </div>
 
-    <div class="center-btn">
-        <div class="btn">&#54645;&#49900; &#44592;&#45733;</div>
-    </div>
+    <div class="scroll-text">↓ 스크롤하여 기능 더 살펴보기</div>
 </section>
 
-<section class="section">
+<section id="feature" class="section">
     <div class="section-title">
-        <h2>&#54645;&#49900; &#44592;&#45733;</h2>
+        <button class="section-btn">핵심 기능</button>
     </div>
+
+    <h1>
+        아이디어 검증의 모든 것
+    </h1>
+
+    <p>
+        6가지 AI 분석 도구로 아이디어의 가능성을 다각도로 검증합니다
+    </p>
 
     <div class="card-grid">
-        <div class="card">AI &#44032;&#49345; &#50976;&#51200; &#49884;&#48044;&#47112;&#51060;&#49496;</div>
-        <div class="card">&#49884;&#51109; &amp; &#44221;&#51137; &#48516;&#49437;</div>
-        <div class="card">&#48708;&#50857; &amp; &#49688;&#51061;&#49457; &#48516;&#49437;</div>
-        <div class="card">&#44592;&#54925; &#54588;&#46300;&#48177; AI</div>
-        <div class="card">&#51088;&#46041; &#47928;&#49436;&#54868;</div>
-        <div class="card">&#49884;&#45208;&#47532;&#50724; &#48708;&#44368;</div>
+        <div class="card">
+            <div class="tag">Core</div>
+            <h3>AI 가상 유저 시뮬레이션</h3>
+            <p id="commend">실제 시장 조사 없이도 타겟 유저의 반응을 예측합니다.
+            <br>페르소나 자동 생성과 구매 의사 확률까지.</p>
+        </div>
+
+        <div class="card">
+            <div class="tag">Analytics</div>
+            <h3>시장 & 경쟁 분석</h3>
+            <p id="commend">TAM/SAM/SOM 분석, 경쟁 강도 평가, 차별화 포인트를 자동으로 도출합니다.</p>
+        </div>
+
+        <div class="card">
+            <div class="tag">Finance</div>
+            <h3>비용 & 수익성 분석</h3>
+            <p id="commend">개발 비용 추정부터 BEP 계산까지. 투자 적합도를 한눈에 파악하세요.</p>
+        </div>
+
+        <div class="card">
+            <div class="tag">AI</div>
+            <h3>기획 피드백 AI</h3>
+            <p id="commend">기획서의 논리 구조를 평가하고 리스크 분석, 실패 시나리오까지 생성합니다.</p>
+        </div>
+
+        <div class="card">
+            <div class="tag">Docs</div>
+            <h3>자동 문서화</h3>
+            <p id="commend">분석 결과를 전문 기획서와 보고서로 자동 변환. PDF 내 보내기 지원.</p>
+        </div>
+
+        <div class="card">
+            <div class="tag">Compare</div>
+            <h3>시나리오 비교</h3>
+            <p id="commend">A안 vs B안을 다각도로 비교 분석하여 최적의 기획 방향을 선택하세요.</p>
+        </div>
     </div>
 </section>
 
+<section id="process" class="process">
+    <div class="process-badge">
+        <button class="section-btn2">사용 흐름</button>
+    </div>
+
+    <h1>
+        6단계 검증 프로세스
+    </h1>
+
+    <p>
+        체계적인 흐름으로 아이디어를 완전히 검증합니다
+    </p>
+
+    <div class="card-grid">
+        <div class="card">
+            <div class="tag">01</div>
+            <h3>아이디어 입력</h3>
+            <p id="commend">서비스 아이디어와 타겟 유저를 입력합니다
+        </div>
+
+        <div class="card">
+            <div class="tag">02</div>
+            <h3>AI 가상 유저 시뮬레이션</h3>
+            <p id="commend">가상 유저의 반응과 구매 의사를 예측합니다</p>
+        </div>
+
+        <div class="card">
+            <div class="tag">03</div>
+            <h3>시장 & 경쟁 분석</h3>
+            <p id="commend">시장 포화도와 경쟁 강도를 분석합니다</p>
+        </div>
+
+        <div class="card">
+            <div class="tag">04</div>
+            <h3>수익성 분석</h3>
+            <p id="commend">비용과 BEP를 계산하고 투자 적합도를 평가합니다</p>
+        </div>
+
+        <div class="card">
+            <div class="tag">05</div>
+            <h3>기획 피드백</h3>
+            <p id="commend">AI가 기획서를 분석하고 개선 방향을 제시합니다</p>
+        </div>
+
+        <div class="card">
+            <div class="tag">06</div>
+            <h3>문서화 & 공유</h3>
+            <p id="commend">전문 보고서로 자동 변환하여 공유합니다</p>
+        </div>
+    </div>
+</section>
 </body>
 </html>
