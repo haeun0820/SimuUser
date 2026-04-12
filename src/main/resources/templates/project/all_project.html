@@ -22,19 +22,32 @@
         <span class="bc-sep">›</span>
         <span class="bc-current">전체 프로젝트</span>
       </nav>
-      <div class="header-icons">
-        <button class="icon-btn" aria-label="알림">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zM18 16v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" fill="#6b7280"/>
-          </svg>
-        </button>
-        <button class="icon-btn" aria-label="프로필">
+      <div class="header-icons auth-actions">
+
+      <!-- 알림 -->
+      <button class="icon-btn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zM18 16v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
+            fill="#6b7280"/>
+        </svg>
+      </button>
+
+      <!-- 프로필 메뉴 -->
+      <div class="profile-menu">
+        <button class="icon-btn">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="8" r="4" stroke="#6b7280" stroke-width="1.8"/>
             <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="#6b7280" stroke-width="1.8"/>
           </svg>
         </button>
+
+        <div class="dropdown">
+          <button>마이페이지</button>
+          <button>로그아웃</button>
+        </div>
       </div>
+
+    </div>
     </header>
 
     <!-- 페이지 콘텐츠 -->
@@ -66,7 +79,7 @@
 
         <div class="filter-tabs">
           <button class="filter-tab active" data-filter="all">
-            <span class="filter-dot" style="background:#011b53;"></span>전체
+            <span class="filter-dot" style="background:#011b53;"></span>
           </button>
           <button class="filter-tab" data-filter="collab">
             <span class="filter-dot" style="background:#f59e0b;"></span>협업
