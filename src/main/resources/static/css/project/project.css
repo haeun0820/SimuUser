@@ -1,5 +1,5 @@
 /* ============================================================
-   project.css  –  SimuUser 프로젝트 공통 스타일
+  project.css  –  SimuUser 프로젝트 공통 스타일
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap');
@@ -79,7 +79,8 @@ body {
   align-items: center;
   gap: 14px;
 }
-.icon-btn {
+/* 프로젝트 전용으로 바꿔버리기 */
+.top-header .icon-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -87,10 +88,9 @@ body {
   border-radius: 8px;
   display: flex;
   align-items: center;
-  color: var(--text-sub);
-  transition: background 0.15s;
+  justify-content: center;
 }
-.icon-btn:hover { background: var(--bg); color: var(--text); }
+.top-header .icon-btn:hover { background: var(--bg); color: var(--text); }
 
 /* ── Page Content ── */
 .page-content {
@@ -243,6 +243,11 @@ body {
   flex-shrink: 0;
 }
 .member-badge:hover { background: rgba(37,99,235,0.14); }
+
+#memberCount {
+    position: relative;
+    top: 1px;  /* 1~2px 정도로 조절 */
+}
 
 /* ── Form Actions ── */
 .form-actions {
@@ -568,7 +573,50 @@ body {
 .breadcrumb-nav a { color: var(--text-sub); text-decoration: none; }
 .breadcrumb-nav .bc-sep { color: var(--text-hint); }
 .breadcrumb-nav .bc-current { color: var(--text); font-weight: 600; }
-.header-icons { display: flex; align-items: center; gap: 8px; }
+.header-icons { display: flex; flex-direction: row; align-items: center; gap: 10px; }
+.header-icons .icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 가로 정렬 핵심 */
+.header-icons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 메인과 동일 */
+.auth-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* 프로필 메뉴 */
+.profile-menu {
+  position: relative;
+}
+
+/* 드롭다운 */
+.dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+
+  background: white;
+  border-radius: 10px;
+  padding: 10px 0;
+  width: 140px;
+
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  display: none;
+}
+
+.profile-menu:hover .dropdown {
+  display: block;
+}
 
 /* Inline validation */
 .field-error {
@@ -589,3 +637,52 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+.profile-menu:hover .dropdown {
+    display: block;
+}
+
+/* ✅ 메인과 동일하게 추가 */
+.profile-menu {
+  position: relative;
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+
+  background: white;
+  border-radius: 10px;
+  padding: 10px 0;
+  width: 140px;
+
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  display: none;
+  z-index: 999;
+}
+
+.dropdown button {
+  display: block;
+  width: 100%;
+  padding: 10px 15px;
+  text-align: left;
+  font-size: 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.dropdown button:hover {
+  background: #f5f7fb;
+}
+
+.profile-menu:hover .dropdown {
+  display: block;
+}
+
+.top-header .icon-btn:hover svg path,
+.top-header .icon-btn:hover svg circle {
+  stroke: #2b6df6;
+  fill: #2b6df6;
+}
