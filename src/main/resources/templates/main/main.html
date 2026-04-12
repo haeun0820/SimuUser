@@ -24,25 +24,55 @@
 </header>
 
 <header class="site-header auth-header" th:if="${isLoggedIn}">
-    <a class="brand-link" th:href="@{/}">
-        <span class="brand-mark" aria-hidden="true">S</span>
-        <span class="logo"><img class="logo-img" th:src="@{/images/logo.png}" alt="로고"></span>
-    </a>
 
-    <nav class="auth-nav">
-        <a href="#">&#45824;&#49884;&#48372;&#46300;</a>
-        <a href="#">&#54532;&#47196;&#51229;&#53944;</a>
-        <a href="#">&#48516;&#49437;&#46020;&#44396;</a>
+    <!-- 왼쪽 (로고) -->
+    <div class="header-left">
+        <img class="logo-img" th:src="@{/images/logo.png}" alt="로고">
+    </div>
+
+    <!-- 가운데 (메뉴) -->
+    <nav class="header-center auth-nav">
+        <a href="#">대시보드</a>
+        <a href="#">프로젝트</a>
+        <a href="#">분석도구</a>
     </nav>
 
-    <div class="auth-actions">
-        <form class="logout-form" th:action="@{/logout}" method="post">
-            <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-            <button class="logout-button" type="submit">&#47196;&#44536;&#50500;&#50883;</button>
-        </form>
-        <button class="icon-button" type="button" aria-label="notification">&#50508;&#47548;</button>
-        <button class="profile-button" type="button" th:title="${displayName}" aria-label="profile"></button>
+    <!-- 오른쪽 (아이콘) -->
+    <div class="header-right auth-actions">
+
+        <!-- 알림 (SVG) -->
+        <button class="icon-btn" aria-label="notification">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zM18 16v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
+                    fill="#333"/>
+            </svg>
+        </button>
+
+        <div class="profile-menu">
+
+            <!-- 프로필 아이콘 -->
+            <button class="icon-btn profile-trigger">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="8" r="4" stroke="#333" stroke-width="2"/>
+                    <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="#333" stroke-width="2"/>
+                </svg>
+            </button>
+
+            <!-- 드롭다운 박스 -->
+            <div class="dropdown">
+                <form class="logout-form">
+                    <button href="#" class="logout-button">마이페이지</button>
+                </form>
+                <!-- <a href="#" class="logout-button">마이페이지</a> -->
+                <form class="logout-form" th:action="@{/logout}" method="post">
+                    <button class="logout-button" type="submit">로그아웃</button>
+                </form>
+            </div>
+
+        </div>
+
     </div>
+
 </header>
 
 <section class="hero">

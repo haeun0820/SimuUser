@@ -61,6 +61,87 @@ body {
 .auth-header {
     padding: 24px 80px;
 }
+/* 로그인 후 헤더 css 수정중 */
+/* SVG 버튼 */
+.icon-btn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 로그아웃 버튼 */
+/* .logout-button {
+    background: none;
+    border: none;
+    color: #777;
+    font-size: 14px;
+    cursor: pointer;
+} */
+
+/* hover 효과 */
+.icon-btn:hover svg path,
+.icon-btn:hover svg circle {
+    stroke: #2b6df6;
+    fill: #2b6df6;
+}
+
+/* 프로필 갖다대면 뜨는 메뉴창? */
+/* 프로필 메뉴 wrapper */
+.profile-menu {
+    position: relative;
+}
+
+/* 드롭다운 박스 */
+.dropdown {
+    position: absolute;
+    top: 40px;
+    right: 0;
+
+    top: 100%;
+
+    background: white;
+    border-radius: 10px;
+    padding: 10px 0;
+    width: 140px;
+
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+
+    display: none; /* 기본 숨김 */
+}
+
+/* 메뉴 아이템 */
+.dropdown a,
+.dropdown button {
+    display: block;
+    width: 100%;
+    padding: 10px 15px;
+
+    text-align: left;
+    font-size: 14px;
+    color: #333;
+
+    background: none;
+    border: none;
+    cursor: pointer;
+
+    text-decoration: none;
+}
+
+/* hover 효과 */
+.dropdown a:hover,
+.dropdown button:hover {
+    background: #f5f7fb;
+}
+
+/* 🔥 hover 시 보이기 */
+.profile-menu:hover .dropdown {
+    display: block;
+}
+
+/* 여기까지 헤더였움 */
 
 .brand-link {
     display: flex;
@@ -83,11 +164,20 @@ body {
 }
 
 .auth-nav {
+    margin-right: 12%;
     display: flex;
     gap: 60px;
 }
 
 .auth-nav a {
+    text-decoration: none;
+    color: #555;
+    font-weight: 500;
+}
+
+.auth-nav a:hover {
+    text-decoration: none;
+    color: #391fff;
     font-weight: 700;
 }
 
