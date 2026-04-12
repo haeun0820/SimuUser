@@ -22,23 +22,21 @@
         <p class="form-message error" th:if="${param.error}">아이디 또는 비밀번호를 확인하세요.</p>
 
         <div class="social-login" aria-label="소셜 로그인">
-            <a class="social-button facebook" th:href="@{/oauth2/authorization/facebook}">
-                <span class="provider-mark">f</span>
-                <span>Facebook으로 계속하기</span>
+            <a class="social-button naver" th:href="@{/oauth2/authorization/naver}">
+                <span class="provider-mark">N</span>
+                <span>Naver로 계속하기</span>
             </a>
             <a class="social-button google" th:href="@{/oauth2/authorization/google}">
                 <span class="provider-mark google-mark">G</span>
-                <span>Google으로 계속하기</span>
+                <span>Google로 계속하기</span>
             </a>
-            <a class="social-button microsoft" href="#">
-                <span class="provider-mark microsoft-mark" aria-hidden="true">
-                    <span></span><span></span><span></span><span></span>
-                </span>
-                <span>Microsoft으로 계속하기</span>
+            <a class="social-button kakao" th:href="@{/oauth2/authorization/kakao}">
+                <span class="provider-mark kakao-mark">K</span>
+                <span>Kakao로 계속하기</span>
             </a>
             <a class="social-button apple" href="#">
                 <span class="provider-mark apple-mark">A</span>
-                <span>Apple으로 계속하기</span>
+                <span>Apple로 계속하기</span>
             </a>
         </div>
 

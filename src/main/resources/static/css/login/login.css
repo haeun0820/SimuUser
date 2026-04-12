@@ -186,8 +186,12 @@ a {
     line-height: 1;
 }
 
-.facebook .provider-mark {
-    color: #1877f2;
+.naver .provider-mark {
+    color: #03c75a;
+}
+
+.kakao-mark {
+    color: #3c1e1e;
 }
 
 .google-mark {
