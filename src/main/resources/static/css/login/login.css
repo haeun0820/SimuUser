@@ -57,9 +57,6 @@ a {
     position: relative;
     width: 60px;
     height: 60px;
-    margin-bottom: 7px;
-    background: var(--brand);
-    border-radius: 18px;
 }
 
 .brand-star {
@@ -187,15 +184,15 @@ a {
 }
 
 .naver .provider-mark {
-    color: #03c75a;
+    width: 30px;
 }
 
 .kakao-mark {
-    color: #3c1e1e;
+    width: 32px;
 }
 
 .google-mark {
-    color: #4285f4;
+    width: 35px;
 }
 
 .microsoft-mark {
@@ -224,7 +221,7 @@ a {
 }
 
 .apple-mark {
-    color: #222222;
+    width: 32px;
 }
 
 .divider {
