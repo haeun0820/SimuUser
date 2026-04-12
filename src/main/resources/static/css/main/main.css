@@ -94,7 +94,57 @@ body {
     position: relative;
 }
 
-/* 드롭다운 박스 */
+/* 흑흑흑흑 이건 메뉴창.. */
+.nav-item {
+    position: relative;
+}
+
+.nav-trigger {
+    background: none;
+    border: none;
+    font-size: 15px;
+    font-weight: 500;
+    color: #555;
+    cursor: pointer;
+}
+
+.nav-dropdown {
+    position: absolute;
+    top: 120%;
+    left: 0;
+
+    background: white;
+    border-radius: 10px;
+    padding: 10px 0;
+    min-width: 180px;
+
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+
+    transition: all 0.2s ease;
+}
+
+.nav-dropdown a {
+    display: block;
+    padding: 10px 15px;
+    font-size: 14px;
+    color: #333;
+    text-decoration: none;
+}
+
+.nav-dropdown a:hover {
+    background: #f5f7fb;
+}
+
+.nav-item:hover .nav-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
 .dropdown {
     position: absolute;
     top: 40px;
@@ -109,10 +159,9 @@ body {
 
     box-shadow: 0 6px 20px rgba(0,0,0,0.15);
 
-    display: none; /* 기본 숨김 */
+    display: none;
 }
 
-/* 메뉴 아이템 */
 .dropdown a,
 .dropdown button {
     display: block;
@@ -130,13 +179,11 @@ body {
     text-decoration: none;
 }
 
-/* hover 효과 */
 .dropdown a:hover,
 .dropdown button:hover {
     background: #f5f7fb;
 }
 
-/* 🔥 hover 시 보이기 */
 .profile-menu:hover .dropdown {
     display: block;
 }
