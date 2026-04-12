@@ -32,7 +32,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         OAuth2User oauth2User = delegate.loadUser(userRequest);
         String provider = userRequest.getClientRegistration().getRegistrationId().toUpperCase();
 
-        if ("FACEBOOK".equals(provider) || "GOOGLE".equals(provider)) {
+        if ("GOOGLE".equals(provider) || "NAVER".equals(provider) || "KAKAO".equals(provider)) {
             saveOAuth2UserIfNew(provider, oauth2User.getAttributes());
         }
 
@@ -51,7 +51,15 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     }
 
     private String extractProviderId(String provider, Map<String, Object> attributes) {
-        Object value = "GOOGLE".equals(provider) ? attributes.get("sub") : attributes.get("id");
+        Object value;
+
+        if ("NAVER".equals(provider)) {
+            value = naverResponse(attributes).get("id");
+        } else if ("KAKAO".equals(provider)) {
+            value = attributes.get("id");
+        } else {
+            value = attributes.get("sub");
+        }
 
         if (value == null || value.toString().trim().isEmpty()) {
             throw new OAuth2AuthenticationException(provider + " provider id is missing.");
@@ -61,8 +69,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     }
 
     private AppUser createOAuth2User(String provider, String providerId, Map<String, Object> attributes) {
-        String name = valueOrDefault(attributes.get("name"), provider + " User");
-        String email = valueOrNull(attributes.get("email"));
+        String name = extractName(provider, attributes);
+        String email = extractEmail(provider, attributes);
         String userId = provider.toLowerCase() + "_" + providerId;
 
         return new AppUser(
@@ -78,9 +86,65 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         );
     }
 
-    private String valueOrDefault(Object value, String defaultValue) {
-        String text = valueOrNull(value);
-        return text == null ? defaultValue : text;
+    private String extractName(String provider, Map<String, Object> attributes) {
+        if ("NAVER".equals(provider)) {
+            String name = valueOrNull(naverResponse(attributes).get("name"));
+            return name == null ? "NAVER User" : name;
+        }
+
+        if ("KAKAO".equals(provider)) {
+            String nickname = valueOrNull(kakaoProperties(attributes).get("nickname"));
+            return nickname == null ? "KAKAO User" : nickname;
+        }
+
+        String name = valueOrNull(attributes.get("name"));
+        if (name != null) {
+            return name;
+        }
+
+        return provider + " User";
+    }
+
+    private String extractEmail(String provider, Map<String, Object> attributes) {
+        if ("NAVER".equals(provider)) {
+            return valueOrNull(naverResponse(attributes).get("email"));
+        }
+
+        if ("KAKAO".equals(provider)) {
+            return valueOrNull(kakaoAccount(attributes).get("email"));
+        }
+
+        return valueOrNull(attributes.get("email"));
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> naverResponse(Map<String, Object> attributes) {
+        Object response = attributes.get("response");
+        if (response instanceof Map<?, ?>) {
+            return (Map<String, Object>) response;
+        }
+
+        throw new OAuth2AuthenticationException("NAVER response is missing.");
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> kakaoProperties(Map<String, Object> attributes) {
+        Object properties = attributes.get("properties");
+        if (properties instanceof Map<?, ?>) {
+            return (Map<String, Object>) properties;
+        }
+
+        return Map.of();
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> kakaoAccount(Map<String, Object> attributes) {
+        Object account = attributes.get("kakao_account");
+        if (account instanceof Map<?, ?>) {
+            return (Map<String, Object>) account;
+        }
+
+        return Map.of();
     }
 
     private String valueOrNull(Object value) {
