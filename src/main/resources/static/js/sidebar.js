@@ -18,7 +18,7 @@
                 <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/>
                 </svg>`,
         label: "대시보드",
-        href: "/main"
+        href: "/dashboard"
     },
     { type: "section", label: "프로젝트" },
     {
