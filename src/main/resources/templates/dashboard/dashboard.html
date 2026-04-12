@@ -1,141 +1,231 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SimuUser</title>
-    <link rel="stylesheet" th:href="@{/css/dashboard/dashboard.css}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SimuUser</title>
+  <link rel="stylesheet" th:href="@{/css/dashboard/dashboard.css}">
 </head>
 <body>
+<div class="app-layout">
 
-<div class="layout">
+  <!-- ① 사이드바 -->
+  <div id="sidebar-root" data-active="dashboard"></div>
 
-    <!-- 사이드바 -->
-    <aside class="sidebar">
-        <div class="logo"><img src="/images/onlylogo.png" alt=""> SimuUser</div>
+  <!-- ② 메인 영역 -->
+  <div class="main-area">
 
-        <nav>
-            <div class="menu active">📊 대시보드</div>
+    <!-- 상단 헤더 / 브레드크럼 -->
+    <header class="top-header">
+      <nav class="breadcrumb-nav">
+        <span class="bc-current">대시보드</span>
+      </nav>
+      <div class="header-icons auth-actions">
 
-            <div class="menu-title">프로젝트</div>
-            <div class="menu">➕ 새 프로젝트</div>
-            <div class="menu">📁 전체 프로젝트</div>
+      <!-- 알림 -->
+      <button class="icon-btn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zM18 16v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
+            fill="#6b7280"/>
+        </svg>
+      </button>
 
-            <div class="menu-title">분석 도구</div>
-            <div class="menu">🧪 AI 시뮬레이션</div>
-            <div class="menu">📈 시장 분석</div>
-            <div class="menu">💰 수익성 분석</div>
-            <div class="menu">🧠 피드백 AI</div>
-            <div class="menu">🔄 시나리오 비교</div>
-            <div class="menu">📄 문서화</div>
-        </nav>
+      <!-- 프로필 메뉴 -->
+      <div class="profile-menu">
+        <button class="icon-btn">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="8" r="4" stroke="#6b7280" stroke-width="1.8"/>
+            <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="#6b7280" stroke-width="1.8"/>
+          </svg>
+        </button>
 
-        <div class="bottom">
-            <div>문의</div>
-            <div class="profile">
-                <div class="avatar"></div>
-                <div>
-                    <div>닉네임</div>
-                    <small>email@test.com</small>
-                </div>
-            </div>
+        <div class="dropdown">
+          <button>마이페이지</button>
+          <button class="logout-button" type="submit">로그아웃</button>
         </div>
-    </aside>
+      </div>
 
-    <!-- 메인 -->
-    <main class="main">
+    </div>
+    </header>
+
+    <!-- 페이지 콘텐츠 -->
+    <main class="page-content">
+        <div class="dashboard-header">
+            <div class="dashboard-title">대시보드</div>
+            <div class="dashboard-sub">아이디어 검증 현황을 한눈에 확인하세요</div>
+        </div>
 
         <!-- 상단 -->
-        <header class="topbar">
-            <h2>대시보드</h2>
-            <div class="icons">
-                <!-- 알림 (SVG) -->
-                <button class="icon-btn" aria-label="notification">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zM18 16v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
-                            fill="#333"/>
-                    </svg>
-                </button>
+        <div class="dashboard-top">
+        <div class="dashboard-card dashboard-chart">
+            분석 도구 사용 비율
+        </div>
+        <div class="dashboard-card dashboard-chart">
+            분석 횟수
+        </div>
+        </div>
+
+        <!-- 중단 -->
+<div class="dashboard-middle">
+    <div class="activity-section">
+        <div class="section-header">
+            <h3 class="section-main-title">활동</h3>
+            <span class="section-sub-title">나의 총 활동</span>
+        </div>
         
-                <div class="profile-menu">
-
-                    <!-- 프로필 아이콘 -->
-                    <button class="icon-btn profile-trigger">
-                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="8" r="4" stroke="#333" stroke-width="2"/>
-                            <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="#333" stroke-width="2"/>
-                        </svg>
-                    </button>
-
-                    <!-- 드롭다운 박스 -->
-                    <div class="dropdown">
-                        <form class="logout-form">
-                            <button href="#" class="logout-button">마이페이지</button>
-                        </form>
-                        <!-- <a href="#" class="logout-button">마이페이지</a> -->
-                        <form class="logout-form" th:action="@{/logout}" method="post">
-                            <button class="logout-button" type="submit">로그아웃</button>
-                        </form>
-                    </div>
+        <div class="dashboard-stats">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">전체 프로젝트</span>
+                    <span class="stat-icon-bg blue"><i class="icon-folder">📁</i></span>
                 </div>
-            </div>
-        </header>
-
-        <!-- 컨텐츠 -->
-        <section class="content">
-
-            <!-- 상단 카드 -->
-            <div class="card-row">
-                <div class="card large">
-                    <h3>분석 도구 사용 비율</h3>
-                    <div class="chart-placeholder"></div>
-                </div>
-
-                <div class="card large">
-                    <h3>분석 횟수</h3>
-                    <div class="chart-placeholder"></div>
-                </div>
+                <div class="stat-value">10</div>
             </div>
 
-            <!-- 활동 + 프로젝트 -->
-            <div class="card-row">
-                <div class="card small">
-                    <h4>전체 프로젝트</h4>
-                    <div class="big-number">10</div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">총 분석 수</span>
+                    <span class="stat-icon-bg purple"><i class="icon-chart">📈</i></span>
                 </div>
-
-                <div class="card small">
-                    <h4>총 분석 수</h4>
-                    <div class="big-number">101</div>
-                </div>
-
-                <div class="card project">
-                    <h4>프로젝트 제목</h4>
-                    <p>프로젝트 설명</p>
-                </div>
-
-                <div class="card project">
-                    <h4>프로젝트 제목</h4>
-                    <p>프로젝트 설명</p>
-                </div>
+                <div class="stat-value">101</div>
             </div>
+        </div>
+    </div>
 
-            <!-- 분석 도구 -->
-            <h3 class="section-title">분석 도구</h3>
-
-            <div class="tool-grid">
-                <div class="tool">🧪 AI 시뮬레이션</div>
-                <div class="tool">📈 시장 분석</div>
-                <div class="tool">💰 수익성 분석</div>
-                <div class="tool">🧠 피드백</div>
-                <div class="tool">🔄 비교</div>
-                <div class="tool">📄 문서화</div>
+    <div class="projects-section">
+        <div class="section-header project-header">
+            <div class="title-group">
+                <h3 class="section-main-title">프로젝트</h3>
+                <span class="section-sub-title">최신 업데이트 순</span>
             </div>
+            <a href="/project/all" class="view-all">전체보기 ></a>
+        </div>
 
-        </section>
-    </main>
-
+        <div class="dashboard-projects" id="projectsGrid">
+            <!-- js -->
+        </div>
+    </div>
 </div>
+
+        <!-- 분석 도구 -->
+        <div class="dashboard-tools">
+        <h3>분석 도구</h3>
+        <div class="tool-grid">
+            <div class="tool-card">AI 시뮬레이션</div>
+            <div class="tool-card">시장 분석</div>
+            <div class="tool-card">수익성 분석</div>
+            <div class="tool-card">피드백</div>
+            <div class="tool-card">비교</div>
+            <div class="tool-card">문서화</div>
+        </div>
+        </div>
+    </main>
+  </div>
+</div>
+
+<!-- 사이드바 컴포넌트 -->
+<script th:src="@{/js/sidebar.js}"></script>
+
+<script>
+  /* ============================================================
+     all-projects.js (inline)
+     ============================================================ */
+
+  let allProjects = [];
+  let currentFilter = 'all';
+  let searchQuery = '';
+  
+  /* ── 시간 포맷 ── */
+  function timeAgo(isoStr) {
+    const diff = Date.now() - new Date(isoStr).getTime();
+    const min = Math.floor(diff / 60000);
+    if (min < 1) return '방금 전';
+    if (min < 60) return `${min}분 전`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr}시간 전`;
+    const day = Math.floor(hr / 24);
+    return `${day}일 전`;
+  }
+
+  /* ── 카드 렌더 ── */
+  /* ── 카드 렌더 (리스트 스타일로 수정) ── */
+  function renderCard(p) {
+    const isCollab = p.type === 'collab';
+    
+    // 배지 설정
+    const badge = isCollab
+      ? '<span class="badge badge-collab">협업</span>'
+      : '<span class="badge badge-personal">개인</span>';
+
+    // 팀원 정보 (With. ...)
+    const memberInfo = isCollab && p.members && p.members.length > 0
+      ? `<span class="meta-team">With. ${p.members.map(escHtml).join(', ')}</span>`
+      : '';
+
+    // 우리가 만든 project-item 구조 그대로 반환
+    return `
+      <div class="project-item" onclick="location.href='/project/detail/${p.id}'" style="cursor:pointer;">
+        <div class="project-content">
+          <div class="project-title-row">
+            <span class="project-title">${escHtml(p.title)}</span>
+            ${badge}
+          </div>
+          <div class="project-desc">${p.description ? escHtml(p.description) : '프로젝트 설명이 없습니다.'}</div>
+          <div class="project-meta">
+            <span class="meta-time">🕒 ${timeAgo(p.createdAt)}</span>
+            ${memberInfo}
+          </div>
+        </div>
+        <div class="project-arrow">→</div>
+      </div>`;
+  }
+
+  /* ── 렌더링 ── */
+  function renderProjects() {
+    const grid = document.getElementById('projectsGrid');
+
+    let filtered = allProjects.filter(p => {
+      const matchFilter =
+        currentFilter === 'all' ||
+        (currentFilter === 'collab' && p.type === 'collab') ||
+        (currentFilter === 'personal' && p.type === 'personal');
+
+      const q = searchQuery.toLowerCase();
+      const matchSearch = !q ||
+        p.title.toLowerCase().includes(q) ||
+        (p.description || '').toLowerCase().includes(q);
+
+      return matchFilter && matchSearch;
+    });
+
+    if (filtered.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <p>${searchQuery ? '검색 결과가 없습니다.' : '프로젝트가 없습니다.'}</p>
+          <span>${searchQuery ? '다른 검색어를 입력해보세요.' : '새 프로젝트를 만들어 시작해보세요!'}</span>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(renderCard).join('');
+  }
+
+  /* ── 초기 로드 ── */
+  function init() {
+    allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
+    renderProjects();
+  }
+
+  init();
+
+  /* ── 유틸 ── */
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
 
 </body>
 </html>
