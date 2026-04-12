@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>새 프로젝트 – SimuUser</title>
+  <link rel="stylesheet" th:href="@{/css/project/project.css}">
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ① 사이드바 (sidebar.js가 이 div를 교체) -->
+  <div id="sidebar-root" data-active="new-project"></div>
+
+  <!-- ② 메인 영역 -->
+  <div class="main-area">
+
+    <!-- 상단 헤더 / 브레드크럼 -->
+    <header class="top-header">
+      <nav class="breadcrumb-nav">
+        <a href="#">프로젝트</a>
+        <span class="bc-sep">›</span>
+        <span class="bc-current">새 프로젝트</span>
+      </nav>
+      <div class="header-icons">
+        <button class="icon-btn" aria-label="알림">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zM18 16v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" fill="#6b7280"/>
+          </svg>
+        </button>
+        <button class="icon-btn" aria-label="프로필">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="8" r="4" stroke="#6b7280" stroke-width="1.8"/>
+            <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="#6b7280" stroke-width="1.8"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- 페이지 콘텐츠 -->
+    <main class="page-content">
+
+      <!-- 페이지 타이틀 -->
+      <div class="page-header">
+        <div class="page-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M12 5v14M5 12h14" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="page-title">새 프로젝트</div>
+          <div class="page-subtitle">아이디어를 입력하고 AI 검증을 시작하세요</div>
+        </div>
+      </div>
+
+      <!-- 폼 카드 -->
+      <div class="card">
+        <p class="required-note"><span class="required-star">*</span> 표시는 필수 입력란입니다.</p>
+
+        <form id="projectForm" novalidate>
+
+          <!-- 서비스 아이디어 -->
+          <div class="form-section form-group">
+            <label class="form-label" for="serviceIdea">
+              서비스 아이디어 <span class="required-star">*</span>
+            </label>
+            <input
+              class="form-input"
+              id="serviceIdea"
+              type="text"
+              placeholder="예 : AI 기반 맞춤형 식단 추천 앱"
+              maxlength="200"
+            >
+            <span class="form-hint">한 문장으로 서비스를 표현해주세요</span>
+            <div class="field-error" id="err-serviceIdea">서비스 아이디어를 입력해주세요.</div>
+          </div>
+
+          <!-- 상세 설명 -->
+          <div class="form-section form-group">
+            <label class="form-label" for="description">상세 설명</label>
+            <textarea
+              class="form-textarea"
+              id="description"
+              placeholder="서비스의 핵심 기능, 해결하려는 문제, 차별점 등을 자유롭게 작성해주세요."
+              style="min-height:140px;"
+            ></textarea>
+          </div>
+
+          <!-- 타겟 유저 / 산업 분야 -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="targetUser">타겟 유저</label>
+              <input
+                class="form-input"
+                id="targetUser"
+                type="text"
+                placeholder="예 : 20~30대 직장인"
+              >
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="industry">산업 분야</label>
+              <select class="form-select" id="industry">
+                <option value="">선택해주세요</option>
+                <option value="commerce">커머스/쇼핑</option>
+                <option value="fintech">금융/핀테크</option>
+                <option value="health">의료/헬스케어</option>
+                <option value="edu">교육/에듀테크</option>
+                <option value="content">콘텐츠/엔터테인먼트</option>
+                <option value="social">소셜/커뮤니티</option>
+                <option value="mobility">모빌리티/여행</option>
+                <option value="productivity">생산성/비즈니스</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 프로젝트 종류 / 팀원 초대 -->
+          <div class="form-row" id="typeInviteRow" style="align-items:flex-start;">
+
+            <!-- 프로젝트 종류 -->
+            <div class="form-group">
+              <label class="form-label">
+                프로젝트 종류 <span class="required-star">*</span>
+              </label>
+              <div class="radio-group">
+                <label class="radio-label">
+                  <input type="radio" name="projectType" value="personal" checked>
+                  <span class="radio-circle"></span>
+                  개인
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="projectType" value="collab">
+                  <span class="radio-circle"></span>
+                  협업
+                </label>
+              </div>
+            </div>
+
+            <!-- 팀원 초대 (협업 선택 시에만 표시) -->
+            <div class="form-group" id="teamInviteSection" style="display:none;">
+              <label class="form-label">팀원 초대</label>
+              <div class="team-invite-row">
+                <input
+                  class="form-input"
+                  id="inviteEmail"
+                  type="email"
+                  placeholder="예 : qpdkfj@gmail.com"
+                >
+                <button type="button" class="btn-add" id="btnAddMember">추가</button>
+                <!-- 팀원 뱃지 (팀원이 있을 때만 표시) -->
+                <button type="button" class="member-badge" id="memberBadge" style="display:none;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2"/>
+                    <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" stroke-width="2"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                  팀원 <span id="memberCount">0</span>명
+                </button>
+              </div>
+              <div class="field-error" id="err-email">올바른 이메일을 입력해주세요.</div>
+            </div>
+
+          </div>
+
+          <!-- 액션 버튼 -->
+          <div class="form-actions">
+            <button type="button" class="btn-cancel" id="btnCancel">취소</button>
+            <button type="submit" class="btn-primary">프로젝트 생성</button>
+          </div>
+
+        </form>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- 팀원 목록 팝업 -->
+<div class="popup-overlay" id="memberPopup" style="display:none;">
+  <div class="popup">
+    <div class="popup-header">
+      <span class="popup-title">팀원 목록</span>
+      <button class="popup-close" id="btnClosePopup" aria-label="닫기">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="member-list" id="memberList">
+      <div class="empty-members">초대된 팀원이 없습니다.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 사이드바 컴포넌트 -->
+<script th:src="@{/js/sidebar.js}"></script>
+
+<script>
+  /* ============================================================
+     new-project.js (inline)
+     ============================================================ */
+
+  const members = [];
+
+  /* ── 프로젝트 종류 토글 ── */
+  document.querySelectorAll('input[name="projectType"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const isCollab = radio.value === 'collab' && radio.checked;
+      document.getElementById('teamInviteSection').style.display = isCollab ? '' : 'none';
+    });
+  });
+
+  /* ── 팀원 추가 ── */
+  document.getElementById('btnAddMember').addEventListener('click', addMember);
+  document.getElementById('inviteEmail').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); addMember(); }
+  });
+
+  function addMember() {
+    const input = document.getElementById('inviteEmail');
+    const errEl = document.getElementById('err-email');
+    const email = input.value.trim();
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!email || !emailRe.test(email)) {
+      input.classList.add('error');
+      errEl.style.display = 'block';
+      return;
+    }
+    if (members.includes(email)) {
+      input.classList.add('error');
+      errEl.textContent = '이미 추가된 이메일입니다.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    input.classList.remove('error');
+    errEl.style.display = 'none';
+    errEl.textContent = '올바른 이메일을 입력해주세요.';
+
+    members.push(email);
+    input.value = '';
+    updateMemberBadge();
+  }
+
+  function updateMemberBadge() {
+    const badge = document.getElementById('memberBadge');
+    document.getElementById('memberCount').textContent = members.length;
+    badge.style.display = members.length > 0 ? 'inline-flex' : 'none';
+  }
+
+  function renderMemberList() {
+    const list = document.getElementById('memberList');
+    if (members.length === 0) {
+      list.innerHTML = '<div class="empty-members">초대된 팀원이 없습니다.</div>';
+      return;
+    }
+    list.innerHTML = members.map((email, i) => `
+      <div class="member-item">
+        <span class="member-email">${escHtml(email)}</span>
+        <button class="btn-remove" data-index="${i}">삭제</button>
+      </div>`).join('');
+
+    list.querySelectorAll('.btn-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        members.splice(Number(btn.dataset.index), 1);
+        updateMemberBadge();
+        renderMemberList();
+      });
+    });
+  }
+
+  /* ── 팝업 열기/닫기 ── */
+  document.getElementById('memberBadge').addEventListener('click', () => {
+    renderMemberList();
+    document.getElementById('memberPopup').style.display = 'flex';
+  });
+  document.getElementById('btnClosePopup').addEventListener('click', closePopup);
+  document.getElementById('memberPopup').addEventListener('click', e => {
+    if (e.target === document.getElementById('memberPopup')) closePopup();
+  });
+  function closePopup() {
+    document.getElementById('memberPopup').style.display = 'none';
+  }
+
+  /* ── 폼 제출 ── */
+  document.getElementById('projectForm').addEventListener('submit', e => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    const projectType = document.querySelector('input[name="projectType"]:checked').value;
+
+    const project = {
+      id: Date.now(),
+      title: document.getElementById('serviceIdea').value.trim(),
+      description: document.getElementById('description').value.trim(),
+      targetUser: document.getElementById('targetUser').value.trim(),
+      industry: document.getElementById('industry').value,
+      type: projectType,
+      members: projectType === 'collab' ? [...members] : [],
+      createdAt: new Date().toISOString(),
+    };
+
+    // localStorage에 저장
+    const saved = JSON.parse(localStorage.getItem('simu_projects') || '[]');
+    saved.unshift(project);
+    localStorage.setItem('simu_projects', JSON.stringify(saved));
+
+    // 전체 프로젝트 화면으로 이동
+    window.location.href = '/project/all';
+  });
+
+  function validateForm() {
+    let valid = true;
+    const idea = document.getElementById('serviceIdea');
+    const errIdea = document.getElementById('err-serviceIdea');
+
+    if (!idea.value.trim()) {
+      idea.classList.add('error');
+      errIdea.style.display = 'block';
+      valid = false;
+    } else {
+      idea.classList.remove('error');
+      errIdea.style.display = 'none';
+    }
+    return valid;
+  }
+
+  document.getElementById('serviceIdea').addEventListener('input', function () {
+    if (this.value.trim()) {
+      this.classList.remove('error');
+      document.getElementById('err-serviceIdea').style.display = 'none';
+    }
+  });
+
+  /* ── 취소 버튼 ── */
+  document.getElementById('btnCancel').addEventListener('click', () => {
+    if (confirm('입력한 내용이 저장되지 않습니다. 취소하시겠습니까?')) {
+      window.location.href = '/project/all';
+    }
+  });
+
+  /* ── 유틸 ── */
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>

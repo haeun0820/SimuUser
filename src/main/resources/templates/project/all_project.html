@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>전체 프로젝트 – SimuUser</title>
+  <link rel="stylesheet" th:href="@{/css/project/project.css}">
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ① 사이드바 -->
+  <div id="sidebar-root" data-active="all-projects"></div>
+
+  <!-- ② 메인 영역 -->
+  <div class="main-area">
+
+    <!-- 상단 헤더 / 브레드크럼 -->
+    <header class="top-header">
+      <nav class="breadcrumb-nav">
+        <a href="#">프로젝트</a>
+        <span class="bc-sep">›</span>
+        <span class="bc-current">전체 프로젝트</span>
+      </nav>
+      <div class="header-icons">
+        <button class="icon-btn" aria-label="알림">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zM18 16v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" fill="#6b7280"/>
+          </svg>
+        </button>
+        <button class="icon-btn" aria-label="프로필">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="8" r="4" stroke="#6b7280" stroke-width="1.8"/>
+            <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="#6b7280" stroke-width="1.8"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- 페이지 콘텐츠 -->
+    <main class="page-content">
+
+      <!-- 페이지 타이틀 -->
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+        <div>
+          <h1 class="page-title">전체 프로젝트</h1>
+          <p class="page-subtitle" id="projectCountLabel" style="margin-top:4px;">총 0개의 프로젝트</p>
+        </div>
+        <a th:href="@{/project/new}" class="btn-new-project">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M12 5v14M5 12h14" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+          새 프로젝트
+        </a>
+      </div>
+
+      <!-- 툴바: 검색 + 필터 -->
+      <div class="projects-toolbar">
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="8" stroke="#9ca3af" stroke-width="1.8"/>
+            <path d="M21 21l-4.35-4.35" stroke="#9ca3af" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <input type="text" id="searchInput" placeholder="프로젝트 검색..">
+        </div>
+
+        <div class="filter-tabs">
+          <button class="filter-tab active" data-filter="all">
+            <span class="filter-dot" style="background:#011b53;"></span>전체
+          </button>
+          <button class="filter-tab" data-filter="collab">
+            <span class="filter-dot" style="background:#f59e0b;"></span>협업
+          </button>
+          <button class="filter-tab" data-filter="personal">
+            <span class="filter-dot" style="background:#22c55e;"></span>개인
+          </button>
+        </div>
+      </div>
+
+      <!-- 프로젝트 그리드 -->
+      <div class="projects-grid" id="projectsGrid">
+        <!-- JS로 렌더링 -->
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- 사이드바 컴포넌트 -->
+<script th:src="@{/js/sidebar.js}"></script>
+
+<script>
+  /* ============================================================
+     all-projects.js (inline)
+     ============================================================ */
+
+  let allProjects = [];
+  let currentFilter = 'all';
+  let searchQuery = '';
+
+  /* ── 산업 분야 라벨 맵 ── */
+  const industryMap = {
+    commerce: '커머스/쇼핑', fintech: '금융/핀테크', health: '의료/헬스케어',
+    edu: '교육/에듀테크', content: '콘텐츠/엔터테인먼트', social: '소셜/커뮤니티',
+    mobility: '모빌리티/여행', productivity: '생산성/비즈니스', '': ''
+  };
+
+  /* ── 시간 포맷 ── */
+  function timeAgo(isoStr) {
+    const diff = Date.now() - new Date(isoStr).getTime();
+    const min = Math.floor(diff / 60000);
+    if (min < 1) return '방금 전';
+    if (min < 60) return `${min}분 전`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr}시간 전`;
+    const day = Math.floor(hr / 24);
+    return `${day}일 전`;
+  }
+
+  /* ── 카드 렌더 ── */
+  function renderCard(p) {
+    const isCollab = p.type === 'collab';
+    const badge = isCollab
+      ? '<span class="project-type-badge badge-collab">협업</span>'
+      : '<span class="project-type-badge badge-personal">개인</span>';
+
+    const memberInfo = isCollab && p.members && p.members.length > 0
+      ? `<span class="project-members">With. ${p.members.map(escHtml).join(', ')}</span>`
+      : '';
+
+    const industryTag = p.industry
+      ? `<span style="font-size:11.5px;background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:20px;">${escHtml(industryMap[p.industry] || p.industry)}</span>`
+      : '';
+
+    return `
+      <div class="project-card" data-id="${p.id}">
+        <div class="project-card-head">
+          <span class="project-card-title">${escHtml(p.title)}</span>
+          ${badge}
+        </div>
+        ${p.description
+          ? `<p class="project-card-desc">${escHtml(p.description)}</p>`
+          : '<p class="project-card-desc" style="color:#d1d5db;">설명이 없습니다.</p>'}
+        <div style="margin-top:10px;">${industryTag}</div>
+        <div class="project-card-footer">
+          <span class="project-time">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            ${timeAgo(p.createdAt)}
+          </span>
+          ${memberInfo}
+        </div>
+        <div class="project-card-action">
+          <button class="btn-detail">상세 보기 →</button>
+        </div>
+      </div>`;
+  }
+
+  /* ── 렌더링 ── */
+  function renderProjects() {
+    const grid = document.getElementById('projectsGrid');
+
+    let filtered = allProjects.filter(p => {
+      const matchFilter =
+        currentFilter === 'all' ||
+        (currentFilter === 'collab' && p.type === 'collab') ||
+        (currentFilter === 'personal' && p.type === 'personal');
+
+      const q = searchQuery.toLowerCase();
+      const matchSearch = !q ||
+        p.title.toLowerCase().includes(q) ||
+        (p.description || '').toLowerCase().includes(q);
+
+      return matchFilter && matchSearch;
+    });
+
+    document.getElementById('projectCountLabel').textContent = `총 ${filtered.length}개의 프로젝트`;
+
+    if (filtered.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <p>${searchQuery ? '검색 결과가 없습니다.' : '프로젝트가 없습니다.'}</p>
+          <span>${searchQuery ? '다른 검색어를 입력해보세요.' : '새 프로젝트를 만들어 시작해보세요!'}</span>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(renderCard).join('');
+  }
+
+  /* ── 필터 탭 ── */
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentFilter = tab.dataset.filter;
+      renderProjects();
+    });
+  });
+
+  /* ── 검색 ── */
+  document.getElementById('searchInput').addEventListener('input', function () {
+    searchQuery = this.value;
+    renderProjects();
+  });
+
+  /* ── 초기 로드 ── */
+  function init() {
+    allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
+    renderProjects();
+  }
+
+  init();
+
+  /* ── 유틸 ── */
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
