@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimuUser</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard/dashboard.css}">
+</head>
+<body>
+
+<div class="layout">
+
+    <!-- 사이드바 -->
+    <aside class="sidebar">
+        <div class="logo"><img src="/images/onlylogo.png" alt=""> SimuUser</div>
+
+        <nav>
+            <div class="menu active">📊 대시보드</div>
+
+            <div class="menu-title">프로젝트</div>
+            <div class="menu">➕ 새 프로젝트</div>
+            <div class="menu">📁 전체 프로젝트</div>
+
+            <div class="menu-title">분석 도구</div>
+            <div class="menu">🧪 AI 시뮬레이션</div>
+            <div class="menu">📈 시장 분석</div>
+            <div class="menu">💰 수익성 분석</div>
+            <div class="menu">🧠 피드백 AI</div>
+            <div class="menu">🔄 시나리오 비교</div>
+            <div class="menu">📄 문서화</div>
+        </nav>
+
+        <div class="bottom">
+            <div>문의</div>
+            <div class="profile">
+                <div class="avatar"></div>
+                <div>
+                    <div>닉네임</div>
+                    <small>email@test.com</small>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 메인 -->
+    <main class="main">
+
+        <!-- 상단 -->
+        <header class="topbar">
+            <h2>대시보드</h2>
+            <div class="icons">
+                <!-- 알림 (SVG) -->
+                <button class="icon-btn" aria-label="notification">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zM18 16v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
+                            fill="#333"/>
+                    </svg>
+                </button>
+        
+                <div class="profile-menu">
+
+                    <!-- 프로필 아이콘 -->
+                    <button class="icon-btn profile-trigger">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="8" r="4" stroke="#333" stroke-width="2"/>
+                            <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="#333" stroke-width="2"/>
+                        </svg>
+                    </button>
+
+                    <!-- 드롭다운 박스 -->
+                    <div class="dropdown">
+                        <form class="logout-form">
+                            <button href="#" class="logout-button">마이페이지</button>
+                        </form>
+                        <!-- <a href="#" class="logout-button">마이페이지</a> -->
+                        <form class="logout-form" th:action="@{/logout}" method="post">
+                            <button class="logout-button" type="submit">로그아웃</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 컨텐츠 -->
+        <section class="content">
+
+            <!-- 상단 카드 -->
+            <div class="card-row">
+                <div class="card large">
+                    <h3>분석 도구 사용 비율</h3>
+                    <div class="chart-placeholder"></div>
+                </div>
+
+                <div class="card large">
+                    <h3>분석 횟수</h3>
+                    <div class="chart-placeholder"></div>
+                </div>
+            </div>
+
+            <!-- 활동 + 프로젝트 -->
+            <div class="card-row">
+                <div class="card small">
+                    <h4>전체 프로젝트</h4>
+                    <div class="big-number">10</div>
+                </div>
+
+                <div class="card small">
+                    <h4>총 분석 수</h4>
+                    <div class="big-number">101</div>
+                </div>
+
+                <div class="card project">
+                    <h4>프로젝트 제목</h4>
+                    <p>프로젝트 설명</p>
+                </div>
+
+                <div class="card project">
+                    <h4>프로젝트 제목</h4>
+                    <p>프로젝트 설명</p>
+                </div>
+            </div>
+
+            <!-- 분석 도구 -->
+            <h3 class="section-title">분석 도구</h3>
+
+            <div class="tool-grid">
+                <div class="tool">🧪 AI 시뮬레이션</div>
+                <div class="tool">📈 시장 분석</div>
+                <div class="tool">💰 수익성 분석</div>
+                <div class="tool">🧠 피드백</div>
+                <div class="tool">🔄 비교</div>
+                <div class="tool">📄 문서화</div>
+            </div>
+
+        </section>
+    </main>
+
+</div>
+
+</body>
+</html>
