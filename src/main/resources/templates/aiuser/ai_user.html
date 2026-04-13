@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 가상 유저 시뮬레이션 – SimuUser</title>
+  <link rel="stylesheet" th:href="@{/css/aiuser/ai_user.css}">
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ① 사이드바 -->
+  <div id="sidebar-root" data-active="simulation"></div>
+
+  <!-- ② 메인 영역 -->
+  <div class="main-area">
+
+    <!-- 상단 헤더 -->
+    <header class="top-header">
+      <nav class="breadcrumb-nav" id="breadcrumbNav">
+        <a href="#">분석도구</a>
+        <span class="bc-sep">›</span>
+        <span class="bc-current">AI 가상 유저 시뮬레이션</span>
+      </nav>
+      <div class="header-icons auth-actions">
+
+      <!-- 알림 -->
+      <button class="icon-btn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zM18 16v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
+            fill="#6b7280"/>
+        </svg>
+      </button>
+
+      <!-- 프로필 메뉴 -->
+      <div class="profile-menu">
+        <button class="icon-btn">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="8" r="4" stroke="#6b7280" stroke-width="1.8"/>
+            <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="#6b7280" stroke-width="1.8"/>
+          </svg>
+        </button>
+
+        <div class="dropdown">
+          <form class="logout-form" th:action="@{/mypage}" method="get">
+                    <button class="logout-button" type="submit">마이페이지</button>
+                </form>
+                <!-- <a href="#" class="logout-button">마이페이지</a> -->
+                <form class="logout-form" th:action="@{/logout}" method="post">
+                    <button class="logout-button" type="submit">로그아웃</button>
+                </form>
+        </div>
+      </div>
+
+    </div>
+    </header>
+
+    <!-- 결과 페이지 URL -->
+    <input type="hidden" id="resultPageUrl" th:value="@{/aiuser/result}">
+
+    <!-- 페이지 콘텐츠 -->
+    <main class="page-content">
+
+      <div class="page-header">
+        <div class="page-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="page-title">AI 가상 유저 시뮬레이션</div>
+          <div class="page-subtitle">타겟 유저의 반응과 구매 의사를 AI로 예측합니다</div>
+        </div>
+      </div>
+
+      <form id="simulationForm" novalidate>
+
+        <!-- ─── 프로젝트 선택 ─── -->
+        <div class="project-select-card">
+          <div class="project-select-header">
+            <span class="section-title" style="margin-bottom:0;">프로젝트 선택</span>
+            <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+              <div class="project-filter-tabs">
+                <label>
+                  <input type="radio" name="projectFilter" value="all" checked>
+                  <span class="radio-dot"></span>
+                  <span>전체</span>
+                </label>
+                <label>
+                  <input type="radio" name="projectFilter" value="collab">
+                  <span class="radio-dot"></span>
+                  <span>협업</span>
+                </label>
+                <label>
+                  <input type="radio" name="projectFilter" value="personal">
+                  <span class="radio-dot"></span>
+                  <span>개인</span>
+                </label>
+              </div>
+              <button type="button" class="btn-new-proj" id="btnNewProject"
+                      th:data-href="@{/project/new}">
+                새로 만들기 +
+              </button>
+            </div>
+          </div>
+
+          <div class="project-list-scroll" id="projectListScroll"></div>
+          <div class="field-error" id="err-project">프로젝트를 선택해주세요.</div>
+        </div>
+
+        <!-- ─── 타겟 설정 ─── -->
+        <div class="target-card">
+          <div class="section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+              <circle cx="12" cy="12" r="6" stroke="currentColor" stroke-width="2"/>
+              <circle cx="12" cy="12" r="2" fill="currentColor"/>
+            </svg>
+            타겟 설정
+          </div>
+
+          <div class="target-grid">
+            <div class="form-group">
+              <label class="form-label" for="personaCount">
+                페르소나 수 <span class="required-star">*</span>
+              </label>
+              <select class="form-select" id="personaCount">
+                <option value="">선택하세요</option>
+                <option value="2">2명</option>
+                <option value="3">3명</option>
+              </select>
+              <div class="field-error" id="err-persona">페르소나 수를 선택해주세요.</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="genderSelect">
+                성별 <span class="required-star">*</span>
+              </label>
+              <select class="form-select" id="genderSelect">
+                <option value="">선택하세요</option>
+                <option value="all">전체</option>
+                <option value="male">남자</option>
+                <option value="female">여자</option>
+              </select>
+              <div class="field-error" id="err-gender">성별을 선택해주세요.</div>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:20px;">
+            <label class="form-label">나이대 <span class="required-star">*</span></label>
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" class="age-check" id="age-all" value="all">
+                <span class="checkbox-box"></span>전체
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" class="age-check" value="teens">
+                <span class="checkbox-box"></span>10대
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" class="age-check" value="twenties">
+                <span class="checkbox-box"></span>20대
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" class="age-check" value="thirties">
+                <span class="checkbox-box"></span>30대
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" class="age-check" value="forties">
+                <span class="checkbox-box"></span>40대
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" class="age-check" value="fifties">
+                <span class="checkbox-box"></span>50대 이상
+              </label>
+            </div>
+            <div class="field-error" id="err-age">나이대를 하나 이상 선택해주세요.</div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:28px;">
+            <label class="form-label" for="jobInput">직업</label>
+            <input type="text" class="form-input" id="jobInput"
+                   placeholder="예: 직장인" style="max-width:320px;">
+          </div>
+
+          <div class="run-btn-wrap">
+            <button type="submit" class="btn-run">시뮬레이션 실행</button>
+          </div>
+        </div>
+
+      </form>
+    </main>
+  </div>
+</div>
+
+<!-- 사이드바 -->
+<script th:src="@{/js/sidebar.js}"></script>
+<!-- 페이지 스크립트 -->
+<script th:src="@{/js/aiuser/ai_user.js}"></script>
+</body>
+</html>
