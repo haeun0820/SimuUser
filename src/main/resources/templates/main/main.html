@@ -80,8 +80,8 @@
 
             <!-- 드롭다운 박스 -->
             <div class="dropdown">
-                <form class="logout-form">
-                    <button href="#" class="logout-button">마이페이지</button>
+                <form class="logout-form" th:action="@{/mypage}" method="get">
+                    <button class="logout-button" type="submit">마이페이지</button>
                 </form>
                 <!-- <a href="#" class="logout-button">마이페이지</a> -->
                 <form class="logout-form" th:action="@{/logout}" method="post">
