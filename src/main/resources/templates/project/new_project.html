@@ -1,8 +1,10 @@
     <!DOCTYPE html>
-    <html lang="ko">
+    <html lang="ko" xmlns:th="http://www.thymeleaf.org">
     <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:if="${_csrf}" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:if="${_csrf}" th:content="${_csrf.headerName}">
     <title>새 프로젝트 – SimuUser</title>
     <link rel="stylesheet" th:href="@{/css/project/project.css}">
     </head>
@@ -76,6 +78,7 @@
             <p class="required-note"><span class="required-star">*</span> 표시는 필수 입력란입니다.</p>
 
             <form id="projectForm" novalidate>
+            <input type="hidden" th:if="${_csrf}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
             <!-- 서비스 아이디어 -->
             <div class="form-section form-group">
@@ -301,27 +304,40 @@
     }
 
     /* ── 폼 제출 ── */
-    document.getElementById('projectForm').addEventListener('submit', e => {
+    document.getElementById('projectForm').addEventListener('submit', async e => {
         e.preventDefault();
         if (!validateForm()) return;
 
         const projectType = document.querySelector('input[name="projectType"]:checked').value;
 
         const project = {
-        id: Date.now(),
         title: document.getElementById('serviceIdea').value.trim(),
         description: document.getElementById('description').value.trim(),
         targetUser: document.getElementById('targetUser').value.trim(),
         industry: document.getElementById('industry').value,
         type: projectType,
-        members: projectType === 'collab' ? [...members] : [],
-        createdAt: new Date().toISOString(),
+        members: projectType === 'collab' ? [...members] : []
         };
 
-        // localStorage에 저장
-        const saved = JSON.parse(localStorage.getItem('simu_projects') || '[]');
-        saved.unshift(project);
-        localStorage.setItem('simu_projects', JSON.stringify(saved));
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        const headers = { 'Content-Type': 'application/json' };
+
+        if (csrfToken && csrfHeader) {
+        headers[csrfHeader] = csrfToken;
+        }
+
+        const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(project)
+        });
+
+        if (!response.ok) {
+        const result = await response.json().catch(() => ({ message: '프로젝트 생성에 실패했습니다.' }));
+        alert(result.message || '프로젝트 생성에 실패했습니다.');
+        return;
+        }
 
         // 전체 프로젝트 화면으로 이동
         window.location.href = '/project/all';

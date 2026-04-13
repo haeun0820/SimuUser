@@ -33,8 +33,8 @@
             <label for="passwordConfirm">비밀번호 확인 <span>*</span></label>
             <input id="passwordConfirm" name="passwordConfirm" type="password">
 
-            <label for="email">이메일</label>
-            <input id="email" name="email" type="email" th:value="${signupRequest?.email}">
+            <label for="email">이메일 <span>*</span></label>
+            <input id="email" name="email" type="email" required th:value="${signupRequest?.email}">
 
             <label for="phone">전화번호 <span>*</span></label>
             <input id="phone" name="phone" type="tel" placeholder="010-0000-0000" th:value="${signupRequest?.phone}">

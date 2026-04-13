@@ -56,6 +56,9 @@ public class AppUserService {
         if (!request.getPassword().equals(request.getPasswordConfirm())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
+        if (isBlank(request.getEmail())) {
+            throw new IllegalArgumentException("이메일을 입력하세요.");
+        }
         if (isBlank(request.getPhone())) {
             throw new IllegalArgumentException("전화번호를 입력하세요.");
         }
