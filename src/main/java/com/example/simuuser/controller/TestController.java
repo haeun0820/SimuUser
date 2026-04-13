@@ -1,7 +1,7 @@
 package com.example.simuuser.controller;
 
-import org.springframework.ui.Model;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
@@ -18,5 +18,10 @@ public class TestController {
         // 받아온 ID를 타임리프 페이지로 넘겨줍니다.
         model.addAttribute("projectId", projectId);
         return "project/exact_project"; // 실제 html 파일 경로
+    }
+
+    @GetMapping("/scenario")
+    public String scenario() {
+        return "scenario/scenario";
     }
 }
