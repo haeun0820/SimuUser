@@ -52,7 +52,7 @@ public class ProjectService {
         savedMembers.add(projectMemberRepository.save(new ProjectMember(savedProject, owner, "OWNER", "ACCEPTED")));
         savedMembers.addAll(saveMembers(savedProject, owner, request.getMembers()));
 
-        return new ProjectResponse(savedProject, savedMembers);
+        return new ProjectResponse(savedProject, savedMembers, owner.getId());
     }
 
     @Transactional(readOnly = true)
@@ -65,7 +65,7 @@ public class ProjectService {
 
         return new ArrayList<>(visibleProjects.values()).stream()
                 .sorted(Comparator.comparing(Project::getCreatedAt).reversed())
-                .map(project -> new ProjectResponse(project, projectMemberRepository.findByProjectOrderByCreatedAtAsc(project)))
+                .map(project -> new ProjectResponse(project, projectMemberRepository.findByProjectOrderByCreatedAtAsc(project), owner.getId()))
                 .toList();
     }
 

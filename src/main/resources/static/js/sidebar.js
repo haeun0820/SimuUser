@@ -52,7 +52,7 @@
                 <path d="M3 12l9 5 9-5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
                 </svg>`,
         label: "AI 가상 유저 시뮬레이션",
-        href: "#",
+        href: "/aiuser/ai_user",
     },
     {
         type: "link",

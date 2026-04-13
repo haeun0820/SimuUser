@@ -238,8 +238,17 @@
   });
 
   /* ── 초기 로드 ── */
-  function init() {
-    allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
+  async function init() {
+    try {
+      const response = await fetch('/api/projects');
+      if (!response.ok) {
+        throw new Error('프로젝트 목록을 불러오지 못했습니다.');
+      }
+      allProjects = await response.json();
+    } catch (error) {
+      allProjects = [];
+      console.error(error);
+    }
     renderProjects();
   }
 

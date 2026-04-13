@@ -17,7 +17,7 @@ public class ProjectResponse {
     private final List<String> members;
     private final LocalDateTime createdAt;
 
-    public ProjectResponse(Project project, List<ProjectMember> members) {
+    public ProjectResponse(Project project, List<ProjectMember> members, Long currentUserId) {
         this.id = project.getId();
         this.title = project.getTitle();
         this.description = project.getDescription();
@@ -25,6 +25,8 @@ public class ProjectResponse {
         this.industry = project.getIndustry();
         this.type = project.getType();
         this.members = members.stream()
+                .filter(member -> "ACCEPTED".equals(member.getStatus()))
+                .filter(member -> currentUserId == null || !member.getUser().getId().equals(currentUserId))
                 .map(member -> member.getUser().getEmail())
                 .filter(email -> email != null && !email.isBlank())
                 .toList();
