@@ -42,8 +42,13 @@
             </button>
 
             <div class="dropdown">
-            <button>마이페이지</button>
-            <button>로그아웃</button>
+            <form class="logout-form" th:action="@{/mypage}" method="get">
+                    <button class="logout-button" type="submit">마이페이지</button>
+                </form>
+                <!-- <a href="#" class="logout-button">마이페이지</a> -->
+                <form class="logout-form" th:action="@{/logout}" method="post">
+                    <button class="logout-button" type="submit">로그아웃</button>
+                </form>
             </div>
         </div>
 
