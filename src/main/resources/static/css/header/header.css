@@ -142,3 +142,23 @@
   border-radius: 50%;
   border: 2px solid white;
 }
+
+/* ai_user.css 하단에 추가 */
+.top-header {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 0 32px !important;
+    background-color: #ffffff !important;
+    border-bottom: 1px solid var(--border) !important;
+    height: 56px !important;
+    box-sizing: border-box !important;
+}
+
+/* 헤더 내부 오른쪽 아이콘 그룹 */
+.header-icons {
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important; /* 아이콘 사이 간격 확보 */
+}
