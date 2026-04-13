@@ -1,18 +1,51 @@
 document.addEventListener("DOMContentLoaded", function () {
     
-    // --- 1. 유저 정보 설정 (소셜 로그인 연동 시나리오) ---
-    // 실제 환경에서는 서버에서 넘어온 Thymeleaf 변수나 API를 통해 세팅합니다.
-    // 임시 테스트용 데이터 (구글, 네이버 등 연동 이메일 가정)
-    const currentUser = {
-        nickname: "닉네임",
-        email: "homerun@gmail.com" 
-    };
+    // --- 1. 유저 정보 설정 ---
+    let currentUser = null;
 
-    // 화면 상단 및 폼에 유저 정보 바인딩
-    document.getElementById("displayNickname").textContent = currentUser.nickname;
-    document.getElementById("displayEmail").textContent = currentUser.email;
-    document.getElementById("inputNickname").value = currentUser.nickname;
-    document.getElementById("inputEmail").value = currentUser.email;
+    function bindUser(user) {
+        currentUser = user;
+        document.getElementById("displayNickname").textContent = user.name || "닉네임";
+        document.getElementById("displayEmail").textContent = user.email || "";
+        document.getElementById("inputName").value = user.name || "";
+        document.getElementById("inputUserId").value = user.loginLabel || user.userId || "";
+        document.getElementById("inputEmail").value = user.email || "";
+        document.getElementById("inputProfileImage").value = user.profileImage || "";
+        document.getElementById("inputPhone").value = user.phone === "SOCIAL" ? "" : (user.phone || "");
+        document.getElementById("inputBirthDate").value = user.birthDate === "1900-01-01" ? "" : (user.birthDate || "");
+
+        document.querySelectorAll('input[name="inputGender"]').forEach(input => input.checked = false);
+        if (user.gender && user.gender !== "UNKNOWN") {
+            const genderInput = document.querySelector(`input[name="inputGender"][value="${user.gender}"]`);
+            if (genderInput) genderInput.checked = true;
+        }
+
+        setPasswordFieldsEnabled(user.localLogin);
+    }
+
+    function setPasswordFieldsEnabled(enabled) {
+        document.getElementById("inputCurrentPassword").disabled = !enabled;
+        document.getElementById("inputNewPassword").disabled = !enabled;
+        document.getElementById("inputNewPasswordConfirm").disabled = !enabled;
+
+        if (!enabled) {
+            document.getElementById("inputCurrentPassword").placeholder = "소셜 로그인 계정은 비밀번호를 변경할 수 없습니다.";
+            document.getElementById("inputNewPassword").placeholder = "소셜 로그인 계정";
+            document.getElementById("inputNewPasswordConfirm").placeholder = "소셜 로그인 계정";
+        }
+    }
+
+    async function loadProfile() {
+        try {
+            const response = await fetch('/api/me');
+            if (!response.ok) {
+                throw new Error('프로필을 불러오지 못했습니다.');
+            }
+            bindUser(await response.json());
+        } catch (error) {
+            console.error(error);
+        }
+    }
 
 
     // --- 2. 탭 전환 로직 ---
@@ -33,11 +66,8 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
 
-    // --- 3. 내 프로젝트 렌더링 (all-projects 코드 응용) ---
-    const allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
-    
-    // 배너 영역에 프로젝트 개수 업데이트
-    document.getElementById('projectCountLabel').textContent = `${allProjects.length}개 프로젝트`;
+    // --- 3. 내 프로젝트 렌더링 ---
+    let allProjects = [];
 
     function timeAgo(isoStr) {
         const diff = Date.now() - new Date(isoStr).getTime();
@@ -52,6 +82,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function escHtml(str) {
         return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    async function loadProjects() {
+        try {
+            const response = await fetch('/api/projects');
+            if (!response.ok) {
+                throw new Error('프로젝트 목록을 불러오지 못했습니다.');
+            }
+            allProjects = await response.json();
+        } catch (error) {
+            allProjects = [];
+            console.error(error);
+        }
+
+        document.getElementById('projectCountLabel').textContent = `${allProjects.length}개 프로젝트`;
+        renderProjectList();
     }
 
     function renderProjectList() {
@@ -101,7 +147,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }).join('');
     }
 
-    renderProjectList();
+    loadProjects();
 
 
     // --- 4. 분석 기록 렌더링 (더미 데이터 사용 - 필요시 API 연동) ---
@@ -143,15 +189,57 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // --- 5. 프로필 폼 저장 이벤트 ---
     const profileForm = document.getElementById('profileEditForm');
-    profileForm.addEventListener('submit', function(e) {
+    profileForm.addEventListener('submit', async function(e) {
         e.preventDefault();
-        const newNickname = document.getElementById('inputNickname').value;
-        
-        // 여기에 API 통신 로직 추가
-        alert(`${newNickname} 님, 프로필이 저장되었습니다.`);
-        
-        // 화면 반영
-        document.getElementById('displayNickname').textContent = newNickname;
+        const passwordMessage = document.getElementById('passwordMismatchMessage');
+        passwordMessage.style.display = 'none';
+        passwordMessage.textContent = '';
+
+        const gender = document.querySelector('input[name="inputGender"]:checked')?.value || "";
+        const payload = {
+            name: document.getElementById('inputName').value.trim(),
+            phone: document.getElementById('inputPhone').value.trim(),
+            birthDate: document.getElementById('inputBirthDate').value,
+            gender,
+            profileImage: document.getElementById('inputProfileImage').value.trim(),
+            currentPassword: document.getElementById('inputCurrentPassword').value,
+            newPassword: document.getElementById('inputNewPassword').value,
+            newPasswordConfirm: document.getElementById('inputNewPasswordConfirm').value
+        };
+
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        const headers = { 'Content-Type': 'application/json' };
+
+        if (csrfToken && csrfHeader) {
+            headers[csrfHeader] = csrfToken;
+        }
+
+        const response = await fetch('/api/me', {
+            method: 'PUT',
+            headers,
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            const message = result.message || '프로필 저장에 실패했습니다.';
+            if (message.includes('현재 비밀번호')) {
+                passwordMessage.textContent = message;
+                passwordMessage.style.display = 'block';
+                return;
+            }
+            alert(message);
+            return;
+        }
+
+        bindUser(result);
+        document.getElementById('inputCurrentPassword').value = '';
+        document.getElementById('inputNewPassword').value = '';
+        document.getElementById('inputNewPasswordConfirm').value = '';
+        alert('프로필이 저장되었습니다.');
     });
 
+    loadProfile();
 });
