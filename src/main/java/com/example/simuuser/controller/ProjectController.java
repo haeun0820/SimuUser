@@ -2,6 +2,7 @@ package com.example.simuuser.controller;
 
 import com.example.simuuser.dto.ProjectCreateRequest;
 import com.example.simuuser.dto.ProjectResponse;
+import com.example.simuuser.dto.UserSearchResponse;
 import com.example.simuuser.service.ProjectService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.List;
@@ -47,5 +49,11 @@ public class ProjectController {
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
+    }
+
+    @ResponseBody
+    @GetMapping("/api/users/search")
+    public List<UserSearchResponse> searchUsers(@RequestParam String email, Authentication authentication) {
+        return projectService.searchInviteCandidates(email, authentication);
     }
 }

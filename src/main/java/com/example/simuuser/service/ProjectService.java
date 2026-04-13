@@ -2,6 +2,7 @@ package com.example.simuuser.service;
 
 import com.example.simuuser.dto.ProjectCreateRequest;
 import com.example.simuuser.dto.ProjectResponse;
+import com.example.simuuser.dto.UserSearchResponse;
 import com.example.simuuser.entity.AppUser;
 import com.example.simuuser.entity.Project;
 import com.example.simuuser.entity.ProjectMember;
@@ -47,7 +48,9 @@ public class ProjectService {
         );
 
         Project savedProject = projectRepository.save(project);
-        List<ProjectMember> savedMembers = saveMembers(savedProject, owner, request.getMembers());
+        List<ProjectMember> savedMembers = new ArrayList<>();
+        savedMembers.add(projectMemberRepository.save(new ProjectMember(savedProject, owner, "OWNER", "ACCEPTED")));
+        savedMembers.addAll(saveMembers(savedProject, owner, request.getMembers()));
 
         return new ProjectResponse(savedProject, savedMembers);
     }
@@ -57,15 +60,29 @@ public class ProjectService {
         AppUser owner = getCurrentUser(authentication);
         Map<Long, Project> visibleProjects = new LinkedHashMap<>();
 
-        projectRepository.findByOwnerOrderByCreatedAtDesc(owner)
-                .forEach(project -> visibleProjects.put(project.getId(), project));
-
-        projectMemberRepository.findByUserOrderByCreatedAtDesc(owner)
+        projectMemberRepository.findByUserAndStatusOrderByCreatedAtDesc(owner, "ACCEPTED")
                 .forEach(member -> visibleProjects.putIfAbsent(member.getProject().getId(), member.getProject()));
 
         return new ArrayList<>(visibleProjects.values()).stream()
                 .sorted(Comparator.comparing(Project::getCreatedAt).reversed())
                 .map(project -> new ProjectResponse(project, projectMemberRepository.findByProjectOrderByCreatedAtAsc(project)))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserSearchResponse> searchInviteCandidates(String email, Authentication authentication) {
+        AppUser currentUser = getCurrentUser(authentication);
+        String keyword = normalize(email);
+
+        if (keyword == null || keyword.length() < 2) {
+            return List.of();
+        }
+
+        return appUserRepository.findTop10ByEmailContainingIgnoreCase(keyword)
+                .stream()
+                .filter(user -> user.getEmail() != null && !user.getEmail().isBlank())
+                .filter(user -> !user.getId().equals(currentUser.getId()))
+                .map(UserSearchResponse::new)
                 .toList();
     }
 
@@ -139,7 +156,7 @@ public class ProjectService {
     private List<ProjectMember> saveMembers(Project project, AppUser owner, List<String> members) {
         return normalizeMembers(members).stream()
                 .map(email -> findMemberByEmail(owner, email))
-                .map(member -> projectMemberRepository.save(new ProjectMember(project, member, "MEMBER")))
+                .map(member -> projectMemberRepository.save(new ProjectMember(project, member, "MEMBER", "PENDING")))
                 .toList();
     }
 

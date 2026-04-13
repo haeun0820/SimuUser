@@ -35,16 +35,20 @@ public class ProjectMember {
     @Column(nullable = false, length = 50)
     private String role;
 
+    @Column(nullable = false, length = 50)
+    private String status;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
     protected ProjectMember() {
     }
 
-    public ProjectMember(Project project, AppUser user, String role) {
+    public ProjectMember(Project project, AppUser user, String role, String status) {
         this.project = project;
         this.user = user;
         this.role = role;
+        this.status = status;
         this.createdAt = LocalDateTime.now();
     }
 
@@ -62,6 +66,10 @@ public class ProjectMember {
 
     public String getRole() {
         return role;
+    }
+
+    public String getStatus() {
+        return status;
     }
 
     public LocalDateTime getCreatedAt() {

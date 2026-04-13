@@ -11,5 +11,5 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Lo
 
     List<ProjectMember> findByProjectOrderByCreatedAtAsc(Project project);
 
-    List<ProjectMember> findByUserOrderByCreatedAtDesc(AppUser user);
+    List<ProjectMember> findByUserAndStatusOrderByCreatedAtDesc(AppUser user, String status);
 }

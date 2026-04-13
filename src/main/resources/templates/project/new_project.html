@@ -178,6 +178,7 @@
                     팀원 <span id="memberCount">0</span>명
                     </button>
                 </div>
+                <div id="userSearchResults" class="member-list" style="display:none;"></div>
                 <div class="field-error" id="err-email">올바른 이메일을 입력해주세요.</div>
                 </div>
 
@@ -221,6 +222,7 @@
         ============================================================ */
 
     const members = [];
+    let inviteSearchTimer;
 
     /* ── 프로젝트 종류 토글 ── */
     document.querySelectorAll('input[name="projectType"]').forEach(radio => {
@@ -232,9 +234,57 @@
 
     /* ── 팀원 추가 ── */
     document.getElementById('btnAddMember').addEventListener('click', addMember);
+    document.getElementById('inviteEmail').addEventListener('input', searchInviteUsers);
     document.getElementById('inviteEmail').addEventListener('keydown', e => {
         if (e.key === 'Enter') { e.preventDefault(); addMember(); }
     });
+
+    function searchInviteUsers() {
+        clearTimeout(inviteSearchTimer);
+        inviteSearchTimer = setTimeout(fetchInviteUsers, 250);
+    }
+
+    async function fetchInviteUsers() {
+        const input = document.getElementById('inviteEmail');
+        const results = document.getElementById('userSearchResults');
+        const keyword = input.value.trim();
+
+        if (keyword.length < 2) {
+        results.style.display = 'none';
+        results.innerHTML = '';
+        return;
+        }
+
+        const response = await fetch(`/api/users/search?email=${encodeURIComponent(keyword)}`);
+        if (!response.ok) {
+        results.style.display = 'none';
+        results.innerHTML = '';
+        return;
+        }
+
+        const users = await response.json();
+        if (users.length === 0) {
+        results.style.display = 'none';
+        results.innerHTML = '';
+        return;
+        }
+
+        results.innerHTML = users.map(user => `
+        <button type="button" class="member-item invite-user-option" data-email="${escHtml(user.email)}">
+            <span class="member-email">${escHtml(user.email)}</span>
+            <span>${escHtml(user.name || user.userId)}</span>
+        </button>`).join('');
+        results.style.display = 'block';
+
+        results.querySelectorAll('.invite-user-option').forEach(button => {
+        button.addEventListener('click', () => {
+            input.value = button.dataset.email;
+            results.style.display = 'none';
+            results.innerHTML = '';
+            input.focus();
+        });
+        });
+    }
 
     function addMember() {
         const input = document.getElementById('inviteEmail');
@@ -257,6 +307,7 @@
         input.classList.remove('error');
         errEl.style.display = 'none';
         errEl.textContent = '올바른 이메일을 입력해주세요.';
+        document.getElementById('userSearchResults').style.display = 'none';
 
         members.push(email);
         input.value = '';
