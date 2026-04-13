@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>시뮬레이션 결과 – SimuUser</title>
+  <link rel="stylesheet" th:href="@{/css/aiuser/ai_user_result.css}">
+  
+  <meta name="_csrf" th:content="${_csrf.token}"/>
+  <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ① 사이드바 -->
+  <div id="sidebar-root" data-active="simulation"></div>
+
+  <!-- ② 메인 영역 -->
+  <div class="main-area">
+
+    <!-- 상단 헤더 / 브레드크럼 -->
+    <header class="top-header">
+      <nav class="breadcrumb-nav" id="breadcrumbNav">
+        <a href="#">분석도구</a>
+        <span class="bc-sep">›</span>
+        <span class="bc-current">AI 가상 유저 시뮬레이션</span>
+      </nav>
+      <div class="header-icons auth-actions">
+
+      <!-- 알림 -->
+      <button class="icon-btn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zM18 16v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
+            fill="#6b7280"/>
+        </svg>
+      </button>
+
+      <!-- 프로필 메뉴 -->
+      <div class="profile-menu">
+        <button class="icon-btn">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="8" r="4" stroke="#6b7280" stroke-width="1.8"/>
+            <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="#6b7280" stroke-width="1.8"/>
+          </svg>
+        </button>
+
+        <div class="dropdown">
+          <form class="logout-form" th:action="@{/mypage}" method="get">
+                    <button class="logout-button" type="submit">마이페이지</button>
+                </form>
+                <!-- <a href="#" class="logout-button">마이페이지</a> -->
+                <form class="logout-form" th:action="@{/logout}" method="post">
+                    <button class="logout-button" type="submit">로그아웃</button>
+                </form>
+        </div>
+      </div>
+
+    </div>
+    </header>
+
+    <!-- 페이지 콘텐츠 -->
+    <main class="page-content">
+
+      <!-- 페이지 타이틀 -->
+      <div class="page-header">
+        <div class="page-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="page-title">AI 가상 유저 시뮬레이션</div>
+          <div class="page-subtitle">타겟 유저의 반응과 구매 의사를 AI로 예측합니다</div>
+        </div>
+      </div>
+
+      <!-- ── 로딩 상태 ── -->
+      <div id="loadingState" class="loading-state" style="display:flex;">
+        <div class="spinner"></div>
+        <div class="loading-text">AI가 가상 유저를 생성하고 있습니다...</div>
+        <div class="loading-sub">잠시만 기다려주세요. 페르소나 분석에 약 10~20초가 소요됩니다.</div>
+      </div>
+
+      <!-- ── 에러 상태 ── -->
+      <div id="errorState" class="error-state" style="display:none;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style="color:#ef4444;margin-bottom:12px;">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          <line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <p class="error-msg">시뮬레이션 중 오류가 발생했습니다.</p>
+        <span>잠시 후 다시 시도해주세요.</span>
+        <div style="margin-top:20px; display:flex; gap:10px; justify-content:center;">
+          <button class="btn-back" id="btnBackErr" th:data-href="@{/aiuser/ai_user}">← 설정으로 돌아가기</button>
+          <button class="btn-retry" id="btnRetryErr">다시 시도</button>
+        </div>
+      </div>
+
+      <!-- ── 결과 콘텐츠 ── -->
+      <div id="resultContent" style="display:none;">
+
+        <!-- 액션 버튼 -->
+        <div class="result-actions">
+          <button class="btn-back" id="btnBack" th:data-href="@{/aiuser/ai_user}">← 설정으로 돌아가기</button>
+          <button class="btn-retry" id="btnRetry">다시 시뮬레이션</button>
+        </div>
+
+        <!-- 통계 카드 3개 -->
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <!-- 전반적인 반응 -->
+        <div class="reaction-card">
+          <div class="reaction-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="16 7 22 7 22 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            전반적인 반응
+          </div>
+          <p class="reaction-text" id="overallReaction"></p>
+        </div>
+
+        <!-- 가상 유저 페르소나 -->
+        <div class="section-heading">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          가상 유저 페르소나
+        </div>
+        <div class="persona-grid cols-3" id="personaGrid"></div>
+
+        <!-- 핵심 인사이트 & 개선 제안 -->
+        <div class="bottom-grid">
+          <div class="insight-card">
+            <div class="insight-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:6px;">
+                <circle cx="12" cy="12" r="10" stroke="#2563eb" stroke-width="2"/>
+                <path d="M12 8v4M12 16h.01" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              핵심 인사이트
+            </div>
+            <ol class="insight-list" id="keyInsights"></ol>
+          </div>
+          <div class="insight-card">
+            <div class="insight-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:6px;">
+                <path d="M9 11l3 3L22 4" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              개선 제안
+            </div>
+            <ol class="insight-list" id="improvements"></ol>
+          </div>
+        </div>
+
+      </div>
+      <!-- /resultContent -->
+
+    </main>
+  </div>
+</div>
+
+<!-- 사이드바 -->
+<script th:src="@{/js/sidebar.js}"></script>
+<!-- 결과 스크립트 -->
+<script th:src="@{/js/aiuser/ai_user_result.js}"></script>
+</body>
+</html>
