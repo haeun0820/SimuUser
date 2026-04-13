@@ -93,6 +93,9 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     private String extractName(String provider, Map<String, Object> attributes) {
         if ("NAVER".equals(provider)) {
             String name = valueOrNull(naverResponse(attributes).get("name"));
+            if (name == null) {
+                name = valueOrNull(naverResponse(attributes).get("nickname"));
+            }
             return name == null ? "NAVER User" : name;
         }
 
@@ -127,6 +130,11 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             return mobile == null ? "SOCIAL" : limit(mobile, 20);
         }
 
+        if ("KAKAO".equals(provider)) {
+            String phoneNumber = valueOrNull(kakaoAccount(attributes).get("phone_number"));
+            return phoneNumber == null ? "SOCIAL" : limit(phoneNumber, 20);
+        }
+
         return "SOCIAL";
     }
 
@@ -145,6 +153,20 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             }
         }
 
+        if ("KAKAO".equals(provider)) {
+            Map<String, Object> account = kakaoAccount(attributes);
+            String birthyear = valueOrNull(account.get("birthyear"));
+            String birthday = valueOrNull(account.get("birthday"));
+
+            if (birthyear != null && birthday != null) {
+                try {
+                    return LocalDate.parse(birthyear + "-" + normalizeKakaoBirthday(birthday));
+                } catch (DateTimeParseException ignored) {
+                    return LocalDate.of(1900, 1, 1);
+                }
+            }
+        }
+
         return LocalDate.of(1900, 1, 1);
     }
 
@@ -157,6 +179,18 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
             }
 
             if ("F".equalsIgnoreCase(gender)) {
+                return "female";
+            }
+        }
+
+        if ("KAKAO".equals(provider)) {
+            String gender = valueOrNull(kakaoAccount(attributes).get("gender"));
+
+            if ("male".equalsIgnoreCase(gender)) {
+                return "male";
+            }
+
+            if ("female".equalsIgnoreCase(gender)) {
                 return "female";
             }
         }
@@ -205,5 +239,13 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
     private String limit(String value, int maxLength) {
         return value.length() <= maxLength ? value : value.substring(0, maxLength);
+    }
+
+    private String normalizeKakaoBirthday(String birthday) {
+        if (birthday.length() == 4) {
+            return birthday.substring(0, 2) + "-" + birthday.substring(2, 4);
+        }
+
+        return birthday;
     }
 }
