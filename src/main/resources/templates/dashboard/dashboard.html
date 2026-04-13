@@ -57,12 +57,38 @@
 
         <!-- 상단 -->
         <div class="dashboard-top">
-        <div class="dashboard-card dashboard-chart">
-            분석 도구 사용 비율
-        </div>
-        <div class="dashboard-card dashboard-chart">
-            분석 횟수
-        </div>
+        <!-- 도넛: 좌측 레전드 + 우측 차트 -->
+          <div class="dashboard-card dashboard-chart">
+            <p class="chart-title">분석 도구 사용 비율</p>
+            <div class="donut-layout">
+              <div class="donut-legend">
+                <span><i style="background:#2563eb"></i>AI 시뮬레이션</span>
+                <span><i style="background:#f59e0b"></i>자동 문서화</span>
+                <span><i style="background:#f97316"></i>기획 피드백 AI</span>
+                <span><i style="background:#ec4899"></i>비용&수익성 분석</span>
+                <span><i style="background:#8b5cf6"></i>시장&경쟁 분석</span>
+                <span><i style="background:#ef4444"></i>시나리오 비교</span>
+              </div>
+              <div class="donut-canvas-wrap">
+                <canvas id="donutChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- 라인 차트 -->
+          <div class="dashboard-card dashboard-chart">
+            <div class="chart-header">
+              <p class="chart-title">분석 횟수</p>
+              <div class="period-btns">
+                <button class="period-btn active" data-p="year">년</button>
+                <button class="period-btn" data-p="month">월</button>
+                <button class="period-btn" data-p="week">주</button>
+              </div>
+            </div>
+            <div class="line-canvas-wrap">
+              <canvas id="lineChart"></canvas>
+            </div>
+          </div>
         </div>
 
         <!-- 중단 -->
@@ -79,7 +105,7 @@
                     <span class="stat-title">전체 프로젝트</span>
                     <span class="stat-icon-bg blue"><i class="icon-folder">📁</i></span>
                 </div>
-                <div class="stat-value">10</div>
+                <div class="stat-value"><p class="page-subtitle" id="projectCountLabel">0</p></div>
             </div>
 
             <div class="stat-card">
@@ -87,7 +113,8 @@
                     <span class="stat-title">총 분석 수</span>
                     <span class="stat-icon-bg purple"><i class="icon-chart">📈</i></span>
                 </div>
-                <div class="stat-value">101</div>
+                <div class="stat-value">101</div> 
+                <!-- 분석수는 아직 js 연동 안함 -->
             </div>
         </div>
     </div>
@@ -111,12 +138,36 @@
         <div class="dashboard-tools">
         <h3>분석 도구</h3>
         <div class="tool-grid">
-            <div class="tool-card">AI 시뮬레이션</div>
-            <div class="tool-card">시장 분석</div>
-            <div class="tool-card">수익성 분석</div>
-            <div class="tool-card">피드백</div>
-            <div class="tool-card">비교</div>
-            <div class="tool-card">문서화</div>
+            <div class="tool-card">
+              <img src="/images/simulation.png" alt="">
+              <p class="tool-card-title">AI 가상 유저 시뮬레이션</p>
+              <p class="tool-card-commend">유저 반응 예측</p>
+            </div>
+            <div class="tool-card">
+              <img src="/images/market.png" alt="">
+              <p class="tool-card-title">시장 & 경쟁 분석</p>
+              <p class="tool-card-commend">경쟁 & TAM/SAM/SOM</p>
+            </div>
+            <div class="tool-card">
+              <img src="/images/money.png" alt="">
+              <p class="tool-card-title">비용 & 수익성 분석</p>
+              <p class="tool-card-commend">BEP 계산</p>
+            </div>
+            <div class="tool-card">
+              <img src="/images/feedback.png" alt="">
+              <p class="tool-card-title">기획 피드백 AI</p>
+              <p class="tool-card-commend">논리 구조 평가</p>
+            </div>
+            <div class="tool-card">
+              <img src="/images/scenario.png" alt="">
+              <p class="tool-card-title">시나리오 비교</p>
+              <p class="tool-card-commend">A안 VS B안</p>
+            </div>
+            <div class="tool-card">
+              <img src="/images/document.png" alt="">
+              <p class="tool-card-title">자동 문서화</p>
+              <p class="tool-card-commend">보고서 생성</p>
+            </div>
         </div>
         </div>
     </main>
@@ -125,6 +176,8 @@
 
 <!-- 사이드바 컴포넌트 -->
 <script th:src="@{/js/sidebar.js}"></script>
+<!-- 차트 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 
 <script>
   /* ============================================================
@@ -198,6 +251,8 @@
       return matchFilter && matchSearch;
     });
 
+    document.getElementById('projectCountLabel').textContent = `${filtered.length}`;
+
     if (filtered.length === 0) {
       grid.innerHTML = `
         <div class="empty-state">
@@ -225,6 +280,64 @@
   function escHtml(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
+
+  // ── 도넛 차트 ──
+  const donutData = [
+    { label: 'AI 시뮬레이션', value: 35, color: '#2563eb' },
+    { label: '자동 문서화',   value: 22, color: '#f59e0b' },
+    { label: '기획 피드백 AI', value: 18, color: '#f97316' },
+    { label: '비용&수익성',   value: 12, color: '#ec4899' },
+    { label: '시장&경쟁',     value:  8, color: '#8b5cf6' },
+    { label: '시나리오 비교', value:  5, color: '#ef4444' },
+  ];
+
+  new Chart(document.getElementById('donutChart'), {
+    type: 'doughnut',
+    data: {
+      labels: donutData.map(d => d.label),
+      datasets: [{ data: donutData.map(d => d.value), backgroundColor: donutData.map(d => d.color), borderWidth: 0, hoverOffset: 6 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false } } }
+  });
+
+  // ── 라인 차트 ──
+  const periodData = {
+    year:  { labels: ['2020','2021','2022','2023','2024'], data: [32,38,55,42,40] },
+    month: { labels: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'], data: [8,10,14,12,18,15,20,17,13,16,19,14] },
+    week:  { labels: ['1주','2주','3주','4주'], data: [12,18,15,22] }
+  };
+  const lineChart = new Chart(document.getElementById('lineChart'), {
+    type: 'line',
+    data: {
+      labels: periodData.year.labels,
+      datasets: [{ data: periodData.year.data, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.07)', borderWidth: 2, pointRadius: 4, pointBackgroundColor: '#2563eb', pointBorderColor: '#fff', pointBorderWidth: 2, tension: 0.35, fill: true }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          grid: { color: 'rgba(0,0,0,0.05)' },
+          ticks: { color: '#9ca3af', font: { size: 11 }, autoSkip: false, maxRotation: 0 }
+        },
+        y: {
+          grid: { color: 'rgba(0,0,0,0.05)' },
+          ticks: { color: '#9ca3af', font: { size: 11 } },
+          min: 0
+        }
+      }
+    }
+  });
+  document.querySelectorAll('.period-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const p = btn.dataset.p;
+      lineChart.data.labels = periodData[p].labels;
+      lineChart.data.datasets[0].data = periodData[p].data;
+      lineChart.update();
+    });
+  });
 </script>
 
 </body>
