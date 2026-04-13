@@ -23,12 +23,36 @@
       <div class="header-icons auth-actions">
 
       <!-- 알림 -->
-      <button class="icon-btn">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zM18 16v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
-            fill="#6b7280"/>
-        </svg>
-      </button>
+      <div class="notification-menu">
+        <button class="icon-btn" id="notiBtn">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zM18 16v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" fill="#6b7280"/>
+          </svg>
+          <span class="noti-badge"></span>
+        </button>
+
+  <div class="noti-dropdown" id="notiDropdown">
+    <div class="noti-header">
+      <button class="clear-all">전체 삭제</button>
+    </div>
+    <div class="noti-list">
+      <div class="noti-item">
+        <div class="noti-content">
+          <strong class="noti-title">AI 시뮬레이션 완료</strong>
+          <p class="noti-text">AI 기반 가상 유저 시뮬레이션 웹의 유저 시뮬레이션이 완료되었습니다. 평균 구매 의사: 81%</p>
+          <span class="noti-time">8일 전</span>
+        </div>
+      </div>
+      <div class="noti-item">
+        <div class="noti-content">
+          <strong class="noti-title">시장 분석 완료</strong>
+          <p class="noti-text">AI 기반 가상 유저 시뮬레이션 웹의 시장 분석이 완료되었습니다. 경쟁 강도: Mid</p>
+          <span class="noti-time">9일 전</span>
+        </div>
+      </div>
+      </div>
+  </div>
+</div>
 
       <!-- 프로필 메뉴 -->
       <div class="profile-menu">
@@ -347,6 +371,35 @@
       lineChart.update();
     });
   });
+
+  // 여기도 알림
+  document.addEventListener('DOMContentLoaded', () => {
+    const notiBtn = document.getElementById('notiBtn');
+    const notiDropdown = document.getElementById('notiDropdown');
+
+    // 알림 버튼 클릭 시 토글
+    notiBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        notiDropdown.classList.toggle('active');
+    });
+
+    // 화면 다른 곳 클릭 시 닫기
+    document.addEventListener('click', (e) => {
+        if (!notiDropdown.contains(e.target) && e.target !== notiBtn) {
+            notiDropdown.classList.remove('active');
+        }
+    });
+
+    // '전체 삭제' 버튼 기능 (예시)
+    const clearBtn = document.querySelector('.clear-all');
+    clearBtn.addEventListener('click', () => {
+        if(confirm('모든 알림을 삭제하시겠습니까?')) {
+            document.querySelector('.noti-list').innerHTML = 
+                '<p style="padding:40px; text-align:center; color:#94a3b8; font-size:13px;">새로운 알림이 없습니다.</p>';
+            document.querySelector('.noti-badge').style.display = 'none';
+        }
+    });
+});
 </script>
 
 </body>
