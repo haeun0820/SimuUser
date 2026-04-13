@@ -3,10 +3,16 @@
 <body>
 <link rel="stylesheet" th:href="@{/css/header/header.css}">
 
-<header class="top-header" th:fragment="header(title)">
+<header class="top-header" th:fragment="header(breadcrumbs)">
   <nav class="breadcrumb-nav">
-    <span class="bc-current" th:text="${title}">대시보드</span>
-  </nav>
+  <th:block th:each="item, iterStat : ${breadcrumbs}">
+    <span th:if="${!iterStat.last}">
+      <span th:text="${item}"></span>
+      <span class="bc-sep">›</span>
+    </span>
+    <span th:if="${iterStat.last}" class="bc-current" th:text="${item}"></span>
+  </th:block>
+</nav>
 
   <div class="header-icons auth-actions">
 
