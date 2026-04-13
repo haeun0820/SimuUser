@@ -62,9 +62,11 @@
 <div id="scenarioContainer" class="scenario-grid grid-2">
     </div>
 
-<div class="action-footer">
-    <button type="button" class="btn-run-compare" id="btnRunCompare">시나리오 비교 실행</button>
-</div>
+<form id="compareForm" th:action="@{/scenario/result}" method="post">
+    <div class="action-footer">
+        <button type="submit" class="btn-run-compare">시나리오 비교 실행</button>
+    </div>
+</form>
         </main>
     </div>
 </div>

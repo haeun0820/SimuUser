@@ -159,3 +159,29 @@ document.addEventListener('DOMContentLoaded', function() {
     scenarioCountSelect.addEventListener('change', renderScenarioInputs);
     renderScenarioInputs();
 });
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const btnRunCompare = document.getElementById('btnRunCompare');
+    const compareForm = document.getElementById('compareForm');
+
+    compareForm.addEventListener('submit', function(e) {
+        // 필요한 로직 처리 후 전송
+        console.log("분석 시작...");
+    });
+
+    if (btnRunCompare) {
+        btnRunCompare.addEventListener('click', function() {
+            // 1. 선택된 프로젝트가 있는지, 시나리오 제목이 입력됐는지 등 유효성 검사를 추가할 수 있습니다.
+            const compareTitle = document.getElementById('compareTitle').value;
+            if (!compareTitle) {
+                alert('비교 제목을 입력해주세요!');
+                return;
+            }
+
+            // 2. 결과 페이지로 이동 (Thymeleaf 경로 또는 실제 파일 경로)
+            // 예: /scenario/result 경로로 이동하고 싶을 때
+            location.href = '/scenario/result'; 
+        });
+    }
+});
