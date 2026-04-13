@@ -98,6 +98,8 @@
             <button class="tab-btn" data-target="tab-market">시장&경쟁 분석</button>
             <button class="tab-btn" data-target="tab-finance">비용&수익성 분석</button>
             <button class="tab-btn" data-target="tab-plan">기획&피드백 AI</button>
+            <button class="tab-btn" data-target="tab-market">시나리오 비교</button>
+            <button class="tab-btn" data-target="tab-finance">자동 문서화</button>
         </div>
 
         <div class="toolbar-bottom" style="margin-top: 20px;">
@@ -120,19 +122,70 @@
         <div id="tab-user-simu" class="tab-content active">
             <div class="analysis-list">
                 <div class="analysis-item">
-                    <div class="item-status success">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                    </div>
-                    <div class="item-info">
-                        <span class="item-title">AI 시뮬레이션 - 기본 세션</span>
-                    </div>
-                    <div class="item-actions">
-                        <button class="btn-edit-small">편집</button>
-                        <button class="btn-icon-only danger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
-                    </div>
+    <div class="item-status success">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+            <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+    </div>
+    <div class="item-info">
+        <span class="item-title">AI 시뮬레이션 - 기본 세션</span>
+    </div>
+    <div class="item-actions">
+        <button class="btn-edit-small">편집</button>
+        <button class="btn-icon-only btn-star" onclick="toggleStar(this)">
+            <svg class="star-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+        </button>
+        <button class="btn-icon-only danger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+    </div>
+</div>
+
+<div id="shareModal" class="popup-overlay hidden">
+    <div class="popup share-popup">
+        <div class="popup-header">
+            <h3 class="share-title">“<span id="modalProjectTitle">프로젝트 제목</span>” 공유</h3>
+        </div>
+        
+        <div class="share-section">
+            <label class="share-label">사용자 추가</label>
+            <div class="share-input-row">
+                <input type="text" id="shareEmailInput" placeholder="이메일 입력 후 엔터..." class="form-input" 
+                    onkeypress="if(event.keyCode==13) { addMemberByEmail(); }">
+            </div>
+        </div>
+
+        <div class="share-section">
+            <label class="share-label">사용자</label>
+            <div class="member-scroll-list" id="modalMemberList">
                 </div>
+        </div>
+
+        <div class="form-actions" style="margin-top: 24px;">
+            <button class="btn-primary" onclick="closeShareModal()" style="min-width: 100px; padding: 10px;">확인</button>
+            <button class="btn-cancel" onclick="closeShareModal()" style="min-width: 100px; padding: 10px;">취소</button>
+        </div>
+    </div>
+</div>
+
+<div id="addTabModal" class="popup-overlay hidden">
+    <div class="popup add-tab-popup">
+        <div class="popup-header">
+            <h2 class="popup-title" style="font-size: 24px; font-weight: 800;">탭 추가</h2>
+        </div>
+        <div class="form-section" style="margin-top: 20px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <label style="font-size: 18px; font-weight: 700; white-space: nowrap;">탭 이름</label>
+                <input type="text" id="newTabName" placeholder="탭 이름을 입력하세요" class="form-input" 
+                       style="background: #f8fafc; border: 1px solid #e2e8f0; height: 45px;">
+            </div>
+        </div>
+        <div class="form-actions" style="margin-top: 30px; gap: 15px;">
+            <button class="btn-cancel" onclick="closeTabModal()" style="flex: 1; height: 50px; background: #eee; font-size: 18px;">취소</button>
+            <button class="btn-primary" onclick="createTab()" style="flex: 1; height: 50px; background: #dbeafe; color: #2563eb; font-size: 18px;">추가</button>
+        </div>
+    </div>
+</div>
             </div>
         </div>
 
@@ -154,6 +207,18 @@
             </div>
         </div>
 
+        <div id="tab-scenario" class="tab-content">
+            <div class="empty-state" style="padding: 40px; text-align: center; color: #94a3b8;">
+                시나리오 비교 기록이 없습니다.
+            </div>
+        </div>
+
+        <div id="tab-document" class="tab-content">
+            <div class="empty-state" style="padding: 40px; text-align: center; color: #94a3b8;">
+                자동 문서화 기록이 없습니다.
+            </div>
+        </div>
+
         <div class="analysis-footer">
             <button class="btn-primary" style="border-radius: 30px; margin-top: 30px;">분석하기</button>
         </div>
@@ -169,73 +234,267 @@
        SimuUser 상세 페이지 로직
        ============================================================ */
 
-    // 전역 변수는 한 번만 선언
     let currentProject = null;
 
-    /* ── 상세 페이지 데이터 로드 ── */
-    /* ── 상세 페이지 데이터 로드 (수정본) ── */
-function loadProjectDetail() {
-    // 현재 URL: http://localhost:8080/project/detail/1776006164459
-    const pathSegments = window.location.pathname.split('/');
-    
-    // 배열의 마지막 요소가 ID입니다.
-    const projectId = pathSegments[pathSegments.length - 1];
+    /* ── [1] 상세 페이지 데이터 로드 ── */
+    function loadProjectDetail() {
+        const pathSegments = window.location.pathname.split('/');
+        const projectId = pathSegments[pathSegments.length - 1];
 
-    console.log("추출된 ID:", projectId); // 디버깅용
+        if (!projectId || projectId === 'detail') {
+            alert("잘못된 접근입니다.");
+            location.href = "/project/all";
+            return;
+        }
 
-    if (!projectId || projectId === 'detail') {
-        alert("잘못된 접근입니다. (ID 없음)");
-        location.href = "/project/all";
-        return;
+        const allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
+        currentProject = allProjects.find(p => String(p.id) === projectId);
+
+        if (currentProject) {
+            const descElem = document.querySelector('.project-description');
+            const viewMoreBtn = document.querySelector('.btn-view-more');
+            
+            document.querySelector('.bc-current').textContent = currentProject.title;
+            document.querySelector('.page-title').textContent = currentProject.title;
+            descElem.textContent = currentProject.description || '설명이 없습니다.';
+
+            // 설명 길이 체크 및 버튼 제어
+            setTimeout(() => {
+                const lineHeight = parseFloat(window.getComputedStyle(descElem).lineHeight);
+                const scrollHeight = descElem.scrollHeight;
+                const maxHeight = lineHeight * 3.1;
+
+                if (scrollHeight <= maxHeight) {
+                    if(viewMoreBtn) viewMoreBtn.classList.add('hidden');
+                    descElem.classList.add('expanded');
+                } else {
+                    if(viewMoreBtn) viewMoreBtn.classList.remove('hidden');
+                }
+            }, 100);
+
+            // 펼치기/접기 이벤트
+            if(viewMoreBtn) {
+                viewMoreBtn.onclick = function() {
+                    const isExpanded = descElem.classList.contains('expanded');
+                    if (isExpanded) {
+                        descElem.classList.remove('expanded');
+                        this.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg> 자세히 보기`;
+                    } else {
+                        descElem.classList.add('expanded');
+                        this.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"></polyline></svg> 설명 접기`;
+                    }
+                };
+            }
+
+            // 협업 정보 반영
+            const collabBadge = document.querySelector('.badge-collab');
+            const collabText = document.querySelector('.collab-members');
+            if (currentProject.type === 'collab') {
+                if(collabBadge) collabBadge.style.display = 'inline-block';
+                if(collabText) collabText.textContent = `With. ${currentProject.members ? currentProject.members.join(', ') : ''}`;
+            } else {
+                if(collabBadge) collabBadge.style.display = 'none';
+                if(collabText) collabText.style.display = 'none';
+            }
+        }
     }
 
-    // LocalStorage에서 프로젝트 검색
-    const allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
-    currentProject = allProjects.find(p => String(p.id) === projectId);
-
-    if (currentProject) {
-        // ... (이후 데이터 반영 로직은 동일) ...
-        const descElem = document.querySelector('.project-description');
-        const viewMoreBtn = document.querySelector('.btn-view-more');
-        
-        document.querySelector('.bc-current').textContent = currentProject.title;
-        document.querySelector('.page-title').textContent = currentProject.title;
-        descElem.textContent = currentProject.description || '설명이 없습니다.';
-        
-        // (이하 생략)
-    } else {
-        // ID는 있는데 LocalStorage에 해당 데이터가 없는 경우
-        alert("해당 프로젝트 데이터를 찾을 수 없습니다.");
-        location.href = "/project/all";
-    }
+    /* ── [2] 탭 시스템 (무한 추가 가능 버전) ── */
+    function openTabModal() {
+    const addTabModal = document.getElementById('addTabModal');
+    addTabModal.classList.remove('hidden');
+    document.getElementById('newTabName').focus();
 }
 
-    /* ── 분석 기록 탭 전환 로직 ── */
-    function initTabs() {
-        const tabBtns = document.querySelectorAll('.analysis-toolbar-tabs .tab-btn');
-        const tabContents = document.querySelectorAll('.analysis-section .tab-content');
+function createTab() {
+    const input = document.getElementById('newTabName');
+    const tabName = input.value.trim();
+    if (!tabName) return alert("탭 이름을 입력해주세요.");
 
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const targetId = btn.getAttribute('data-target');
+    const tabId = "tab-" + Date.now();
 
-                // 버튼 활성화 상태 변경
-                tabBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
+    const tabContainer = document.querySelector('.analysis-toolbar-tabs');
 
-                // 콘텐츠 표시 변경
-                tabContents.forEach(content => {
-                    content.classList.remove('active');
-                    if (content.id === targetId) {
-                        content.classList.add('active');
-                    }
-                });
-            });
+    const newBtn = document.createElement('button');
+    newBtn.className = 'tab-btn';
+    newBtn.setAttribute('data-target', tabId);
+    newBtn.textContent = tabName;
+    tabContainer.appendChild(newBtn);
+
+    const analysisSection = document.querySelector('.analysis-section');
+    const footer = document.querySelector('.analysis-footer');
+
+    const newContent = document.createElement('div');
+    newContent.id = tabId;
+    newContent.className = 'tab-content';
+    newContent.innerHTML = `
+        <div class="empty-state" style="padding: 40px; text-align: center; color: #94a3b8;">
+            "${tabName}" 관련 기록이 없습니다.
+        </div>
+    `;
+
+    analysisSection.insertBefore(newContent, footer);
+
+    closeTabModal();
+    switchTab(newBtn);
+}
+
+function initTabs() {
+    const tabContainer = document.querySelector('.analysis-toolbar-tabs');
+    if (tabContainer) {
+        tabContainer.addEventListener('click', (e) => {
+            const btn = e.target.closest('.tab-btn');
+            if (btn) switchTab(btn);
         });
     }
 
-    // 페이지 로드 시 통합 실행
-    window.addEventListener('DOMContentLoaded', () => {
+    const btnAddTab = document.querySelector('.tab-add-btn');
+    if (btnAddTab) {
+        btnAddTab.onclick = openTabModal; // 🔥 여기만!
+    }
+}
+
+function addNewTab() {
+    const input = document.getElementById('newTabName');
+    const tabName = input.value.trim();
+    if (!tabName) return alert("탭 이름을 입력해주세요.");
+
+    const tabId = "tab-" + Date.now(); // 매번 고유한 ID 생성
+    
+    // 1. 탭 버튼 생성 (appendChild 사용으로 기존 버튼 보존)
+    const tabContainer = document.querySelector('.analysis-toolbar-tabs');
+    const newBtn = document.createElement('button');
+    newBtn.className = 'tab-btn';
+    newBtn.setAttribute('data-target', tabId);
+    newBtn.textContent = tabName;
+    tabContainer.appendChild(newBtn);
+
+    // 2. 탭 콘텐츠 영역 생성
+    const analysisSection = document.querySelector('.analysis-section');
+    const footer = document.querySelector('.analysis-footer'); // 기준점
+    
+    const newContent = document.createElement('div');
+    newContent.id = tabId;
+    newContent.className = 'tab-content'; // 기본적으로 숨김 상태 (CSS에 의해)
+    newContent.innerHTML = `
+        <div class="empty-state" style="padding: 40px; text-align: center; color: #94a3b8;">
+            "${tabName}" 관련 기록이 없습니다.
+        </div>
+    `;
+    
+    // 분석하기 버튼(footer) 바로 위에 삽입 (무한 추가의 핵심)
+    analysisSection.insertBefore(newContent, footer);
+
+    // 3. 모달 닫기
+    closeTabModal();
+    
+    // 4. 생성된 탭을 즉시 활성화
+    switchTab(newBtn);
+}
+
+function switchTab(btn) {
+    const targetId = btn.getAttribute('data-target');
+
+    // 모든 버튼 비활성화 및 클릭된 버튼 활성화
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // 모든 콘텐츠 숨김 및 해당 콘텐츠 표시
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    const targetContent = document.getElementById(targetId);
+    if (targetContent) {
+        targetContent.classList.add('active');
+    }
+}
+
+    /* ── [3] 멤버 관리 (협업 공유) ── */
+    function renderModalMembers() {
+        const listContainer = document.getElementById('modalMemberList');
+        if(!listContainer || !currentProject) return;
+
+        let html = `
+            <div class="share-member-item">
+                <div class="member-profile-info">
+                    <div class="profile-avatar-small"></div>
+                    <div class="member-text"><span class="member-name">정유나(Me)</span><span class="member-email">nfling@gmail.com</span></div>
+                </div>
+                <span class="member-role">소유자</span>
+            </div>`;
+
+        if (currentProject.members) {
+            currentProject.members.forEach((email, idx) => {
+                html += `
+                <div class="share-member-item">
+                    <div class="member-profile-info">
+                        <div class="profile-avatar-small"></div>
+                        <div class="member-text"><span class="member-name">${email.split('@')[0]}</span><span class="member-email">${email}</span></div>
+                    </div>
+                    <button onclick="removeMember(${idx})" style="color:#ef4444; background:none; border:none; cursor:pointer;">삭제</button>
+                </div>`;
+            });
+        }
+        listContainer.innerHTML = html;
+    }
+
+    function addMemberByEmail() {
+        const input = document.getElementById('shareEmailInput');
+        const email = input.value.trim();
+        if(!email.includes('@')) return alert("이메일 형식이 아닙니다.");
+
+        if(!currentProject.members) currentProject.members = [];
+        currentProject.members.push(email);
+        
+        updateLocalStorage();
+        input.value = "";
+        renderModalMembers();
+        loadProjectDetail(); // 요약카드 With 텍스트 갱신
+    }
+
+    function removeMember(idx) {
+        currentProject.members.splice(idx, 1);
+        updateLocalStorage();
+        renderModalMembers();
+        loadProjectDetail();
+    }
+
+    function updateLocalStorage() {
+        const allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
+        const pIdx = allProjects.findIndex(p => String(p.id) === String(currentProject.id));
+        if(pIdx !== -1) {
+            allProjects[pIdx].members = currentProject.members;
+            localStorage.setItem('simu_projects', JSON.stringify(allProjects));
+        }
+    }
+
+    /* ── [4] 모달 제어 및 초기화 ── */
+    const shareModal = document.getElementById('shareModal');
+    const addTabModal = document.getElementById('addTabModal');
+
+    document.querySelector('.btn-add').onclick = () => {
+        document.getElementById('modalProjectTitle').textContent = currentProject.title;
+        renderModalMembers();
+        shareModal.classList.remove('hidden');
+    };
+
+    document.querySelector('.tab-add-btn').onclick = () => {
+        addTabModal.classList.remove('hidden');
+        document.getElementById('newTabName').focus();
+    };
+
+    function closeShareModal() { shareModal.classList.add('hidden'); }
+    function closeTabModal() { addTabModal.classList.add('hidden'); document.getElementById('newTabName').value=""; }
+
+    window.onclick = (e) => {
+        if (e.target == shareModal) closeShareModal();
+        if (e.target == addTabModal) closeTabModal();
+    };
+
+    function toggleStar(btn) { btn.classList.toggle('active'); }
+
+    document.addEventListener('DOMContentLoaded', () => {
         loadProjectDetail();
         initTabs();
     });
