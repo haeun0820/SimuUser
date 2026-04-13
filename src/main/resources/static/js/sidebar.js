@@ -30,7 +30,6 @@
                 </svg>`,
         label: "새 프로젝트",
         href: "/project/new",
-        prefix: "+",
     },
     {
         type: "link",
