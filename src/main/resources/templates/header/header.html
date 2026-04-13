@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<link rel="stylesheet" th:href="@{/css/header/header.css}">
+
+<header class="top-header" th:fragment="header(title)">
+  <nav class="breadcrumb-nav">
+    <span class="bc-current" th:text="${title}">대시보드</span>
+  </nav>
+
+  <div class="header-icons auth-actions">
+
+    <!-- 알림 -->
+    <div class="notification-menu">
+      <button class="icon-btn" id="notiBtn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zM18 16v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
+            fill="#6b7280"/>
+        </svg>
+        <span class="noti-badge"></span>
+      </button>
+
+      <div class="noti-dropdown" id="notiDropdown">
+        <div class="noti-header">
+          <button class="clear-all">전체 삭제</button>
+        </div>
+        <div class="noti-list">
+          <p style="padding:40px; text-align:center; color:#94a3b8;">알림 없음</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 프로필 -->
+    <div class="profile-menu">
+      <button class="icon-btn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="8" r="4" stroke="#6b7280" stroke-width="1.8"/>
+          <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="#6b7280" stroke-width="1.8"/>
+        </svg>
+      </button>
+
+      <div class="dropdown">
+        <form class="logout-form" th:action="@{/mypage}" method="get">
+                    <button class="logout-button" type="submit">마이페이지</button>
+                </form>
+                <!-- <a href="#" class="logout-button">마이페이지</a> -->
+                <form class="logout-form" th:action="@{/logout}" method="post">
+                    <button class="logout-button" type="submit">로그아웃</button>
+                </form>
+      </div>
+    </div>
+
+  </div>
+</header>
+
+<script th:src="@{/js/header.js}"></script>
+
+<script>
+    // 여기도 알림
+  document.addEventListener('DOMContentLoaded', () => {
+    const notiBtn = document.getElementById('notiBtn');
+    const notiDropdown = document.getElementById('notiDropdown');
+
+    // 알림 버튼 클릭 시 토글
+    notiBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        notiDropdown.classList.toggle('active');
+    });
+
+    // 화면 다른 곳 클릭 시 닫기
+    document.addEventListener('click', (e) => {
+        if (!notiDropdown.contains(e.target) && e.target !== notiBtn) {
+            notiDropdown.classList.remove('active');
+        }
+    });
+
+    // '전체 삭제' 버튼 기능 (예시)
+    const clearBtn = document.querySelector('.clear-all');
+    clearBtn.addEventListener('click', () => {
+        if(confirm('모든 알림을 삭제하시겠습니까?')) {
+            document.querySelector('.noti-list').innerHTML = 
+                '<p style="padding:40px; text-align:center; color:#94a3b8; font-size:13px;">새로운 알림이 없습니다.</p>';
+            document.querySelector('.noti-badge').style.display = 'none';
+        }
+    });
+});
+</script>
+</body>
+</html>
