@@ -30,6 +30,9 @@ public class AppUser {
     @Column(length = 100)
     private String email;
 
+    @Column(length = 500)
+    private String profileImage;
+
     @Column(nullable = false, length = 20)
     private String phone;
 
@@ -97,6 +100,10 @@ public class AppUser {
         return email;
     }
 
+    public String getProfileImage() {
+        return profileImage;
+    }
+
     public String getPhone() {
         return phone;
     }
@@ -119,5 +126,21 @@ public class AppUser {
 
     public String getProviderId() {
         return providerId;
+    }
+
+    public void updateProfile(String name, String phone, LocalDate birthDate, String gender, String profileImage) {
+        this.name = name;
+        this.phone = phone;
+        this.birthDate = birthDate;
+        this.gender = gender;
+        this.profileImage = profileImage;
+    }
+
+    public void changePassword(String password) {
+        this.password = password;
+    }
+
+    public void setProfileImage(String profileImage) {
+        this.profileImage = profileImage;
     }
 }

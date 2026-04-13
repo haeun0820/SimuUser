@@ -75,9 +75,10 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         String phone = extractPhone(provider, attributes);
         LocalDate birthDate = extractBirthDate(provider, attributes);
         String gender = extractGender(provider, attributes);
+        String profileImage = extractProfileImage(provider, attributes);
         String userId = provider.toLowerCase() + "_" + providerId;
 
-        return new AppUser(
+        AppUser user = new AppUser(
                 name,
                 userId,
                 "{oauth2}",
@@ -88,6 +89,9 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 provider,
                 providerId
         );
+        user.setProfileImage(profileImage);
+
+        return user;
     }
 
     private String extractName(String provider, Map<String, Object> attributes) {
@@ -196,6 +200,18 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         }
 
         return "UNKNOWN";
+    }
+
+    private String extractProfileImage(String provider, Map<String, Object> attributes) {
+        if ("NAVER".equals(provider)) {
+            return valueOrNull(naverResponse(attributes).get("profile_image"));
+        }
+
+        if ("KAKAO".equals(provider)) {
+            return valueOrNull(kakaoProperties(attributes).get("profile_image"));
+        }
+
+        return valueOrNull(attributes.get("picture"));
     }
 
     @SuppressWarnings("unchecked")

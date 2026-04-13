@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:if="${_csrf}" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:if="${_csrf}" th:content="${_csrf.headerName}">
     <title>마이페이지 – SimuUser</title>
     <link rel="stylesheet" th:href="@{/css/project/project.css}">
     <link rel="stylesheet" th:href="@{/css/mypage/mypage.css}">
@@ -92,15 +94,52 @@
                     
                     <form id="profileEditForm">
                         <div class="form-group">
-                            <label>닉네임</label>
-                            <input type="text" id="inputNickname" value="닉네임" placeholder="닉네임 뜨고 입력하는 칸">
+                            <label for="inputName">이름</label>
+                            <input type="text" id="inputName" value="닉네임" placeholder="이름을 입력하세요.">
                         </div>
                         <div class="form-group">
-                            <label>이메일</label>
+                            <label for="inputUserId">아이디</label>
+                            <input type="text" id="inputUserId" value="userId" readonly style="background-color: #f8fafc;">
+                            <small style="color: #94a3b8; font-size: 11px; margin-top: 4px; display: block;">아이디는 변경할 수 없습니다.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="inputEmail">이메일</label>
                             <input type="email" id="inputEmail" value="homerun@gmail.com" readonly style="background-color: #f8fafc;">
                             <small style="color: #94a3b8; font-size: 11px; margin-top: 4px; display: block;">네이버, 애플, 카카오, 구글 연동 이메일은 변경할 수 없습니다.</small>
                         </div>
-                        
+                        <div class="form-group">
+                            <label for="inputProfileImage">프로필 이미지 URL</label>
+                            <input type="url" id="inputProfileImage" placeholder="https://example.com/profile.png">
+                        </div>
+                        <div class="form-group">
+                            <label for="inputPhone">전화번호</label>
+                            <input type="tel" id="inputPhone" placeholder="010-0000-0000">
+                        </div>
+                        <div class="form-group">
+                            <label for="inputBirthDate">생년월일</label>
+                            <input type="date" id="inputBirthDate">
+                        </div>
+                        <div class="form-group">
+                            <label>성별</label>
+                            <div class="profile-radio-group">
+                                <label><input type="radio" name="inputGender" value="male"> 남성</label>
+                                <label><input type="radio" name="inputGender" value="female"> 여성</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="inputCurrentPassword">현재 비밀번호</label>
+                            <input type="password" id="inputCurrentPassword" autocomplete="current-password" placeholder="비밀번호 변경 시 입력">
+                            <p id="passwordMismatchMessage" class="profile-error-message"></p>
+                        </div>
+                        <div class="form-group">
+                            <label for="inputNewPassword">새 비밀번호</label>
+                            <input type="password" id="inputNewPassword" autocomplete="new-password" placeholder="새 비밀번호">
+                        </div>
+                        <div class="form-group">
+                            <label for="inputNewPasswordConfirm">새 비밀번호 확인</label>
+                            <input type="password" id="inputNewPasswordConfirm" autocomplete="new-password" placeholder="새 비밀번호 확인">
+                        </div>
+
                         <div class="form-actions">
                             <button type="submit" class="btn-save">저장하기</button>
                         </div>
