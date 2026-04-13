@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마이페이지 – SimuUser</title>
+    <link rel="stylesheet" th:href="@{/css/project/project.css}">
+    <link rel="stylesheet" th:href="@{/css/mypage/mypage.css}">
+</head>
+<body>
+<div class="app-layout">
+
+    <div id="sidebar-root" data-active=""></div>
+
+    <div class="main-area">
+
+        <header class="top-header">
+            <nav class="breadcrumb-nav">
+                <span class="bc-current" style="font-size: 18px; font-weight: bold; color: #111;">마이페이지</span>
+            </nav>
+            <div class="header-icons auth-actions">
+                <button class="icon-btn">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zM18 16v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" fill="#6b7280"/>
+                    </svg>
+                </button>
+                <div class="profile-menu">
+                    <button class="icon-btn profile-trigger">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="8" r="4" stroke="#333" stroke-width="2"/>
+                            <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="#333" stroke-width="2"/>
+                        </svg>
+                    </button>
+                    <div class="dropdown">
+                        <form class="logout-form" action="/mypage" method="get">
+                            <button class="logout-button" type="submit">마이페이지</button>
+                        </form>
+                        <form class="logout-form" th:action="@{/logout}" method="post">
+                            <button class="logout-button" type="submit">로그아웃</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="page-content">
+            
+            <div class="profile-banner">
+                <div class="profile-avatar-large">
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="8" r="4" fill="white"/>
+                        <path d="M4 20c0-4 4-6 8-6s8 2 8 6" fill="white"/>
+                    </svg>
+                </div>
+                <div class="profile-info">
+                    <h2 class="profile-name" id="displayNickname">닉네임</h2>
+                    <p class="profile-email" id="displayEmail">homerun@gmail.com</p>
+                    <div class="profile-stats">
+                        <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg> <span id="projectCountLabel">0개 프로젝트</span></span>
+                        <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"></path></svg> <span id="analysisCountLabel">3개 분석</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mypage-tabs">
+                <button class="tab-btn active" data-target="tab-projects">내 프로젝트</button>
+                <button class="tab-btn" data-target="tab-history">분석 기록</button>
+                <button class="tab-btn" data-target="tab-profile">프로필 편집</button>
+            </div>
+
+            <div id="tab-projects" class="tab-content active">
+                <div class="list-container" id="myProjectsList">
+                    </div>
+            </div>
+
+            <div id="tab-history" class="tab-content">
+                <div class="list-container" id="myHistoryList">
+                    </div>
+            </div>
+
+            <div id="tab-profile" class="tab-content">
+                <div class="profile-edit-card">
+                    <div class="edit-avatar-section">
+                        <div class="profile-avatar-medium">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="8" r="4" fill="white"/>
+                                <path d="M4 20c0-4 4-6 8-6s8 2 8 6" fill="white"/>
+                            </svg>
+                        </div>
+                        <button class="btn-change-image">이미지 변경</button>
+                    </div>
+                    
+                    <form id="profileEditForm">
+                        <div class="form-group">
+                            <label>닉네임</label>
+                            <input type="text" id="inputNickname" value="닉네임" placeholder="닉네임 뜨고 입력하는 칸">
+                        </div>
+                        <div class="form-group">
+                            <label>이메일</label>
+                            <input type="email" id="inputEmail" value="homerun@gmail.com" readonly style="background-color: #f8fafc;">
+                            <small style="color: #94a3b8; font-size: 11px; margin-top: 4px; display: block;">네이버, 애플, 카카오, 구글 연동 이메일은 변경할 수 없습니다.</small>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn-save">저장하기</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<script src="/js/sidebar.js"></script>
+<script src="/js/mypage/mypage.js"></script>
+</body>
+</html>
