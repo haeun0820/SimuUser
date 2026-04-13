@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SimuUser</title>
+  <link rel="stylesheet" th:href="@{/css/project/exact_project.css}">
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ① 사이드바 -->
+  <div id="sidebar-root" data-active="all-projects"></div>
+
+  <!-- ② 메인 영역 -->
+  <div class="main-area">
+
+    <!-- 상단 헤더 / 브레드크럼 -->
+    <header class="top-header">
+        <nav class="breadcrumb-nav">
+            <a th:href="@{/project/all}">프로젝트</a>
+            <span class="bc-sep">›</span>
+            <span class="bc-current">로딩 중...</span>
+        </nav>
+      <div class="header-icons auth-actions">
+
+      <!-- 알림 -->
+      <button class="icon-btn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zM18 16v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
+            fill="#6b7280"/>
+        </svg>
+      </button>
+
+      <!-- 프로필 메뉴 -->
+      <div class="profile-menu">
+        <button class="icon-btn">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="8" r="4" stroke="#6b7280" stroke-width="1.8"/>
+            <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="#6b7280" stroke-width="1.8"/>
+          </svg>
+        </button>
+
+        <div class="dropdown">
+          <form class="logout-form" th:action="@{/mypage}" method="get">
+                    <button class="logout-button" type="submit">마이페이지</button>
+                </form>
+                <!-- <a href="#" class="logout-button">마이페이지</a> -->
+                <form class="logout-form" th:action="@{/logout}" method="post">
+                    <button class="logout-button" type="submit">로그아웃</button>
+                </form>
+        </div>
+      </div>
+
+    </div>
+    </header>
+
+    <!-- 페이지 콘텐츠 -->
+    <main class="page-content">
+        <div class="card project-summary-card">
+        <div class="summary-header">
+            <div class="summary-title-area">
+                <h2 class="page-title">프로젝트 제목</h2>
+                <span class="project-type-badge badge-collab">협업</span>
+                <span class="collab-members">With. 최연주, 이하은</span>
+            </div>
+            <button class="btn-add" style="padding: 8px 16px;">협업 공유</button>
+        </div>
+        
+        <div class="summary-meta">
+            <span class="project-time">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15 15"></polyline>
+                </svg>
+                방금 전
+            </span>
+        </div>
+
+        <div class="summary-body">
+            <p class="project-description">설명을 불러오는 중입니다...</p>
+            <button class="btn-view-more hidden">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+                자세히 보기
+            </button>
+        </div>
+    </div>
+
+    <section class="analysis-section">
+        <div class="section-header">
+            <h3 class="section-title">분석 기록 & 문서</h3>
+            <button class="tab-add-btn">탭 추가 +</button>
+        </div>
+
+        <div class="mypage-tabs analysis-toolbar-tabs">
+            <button class="tab-btn active" data-target="tab-user-simu">AI 유저 시뮬레이션</button>
+            <button class="tab-btn" data-target="tab-market">시장&경쟁 분석</button>
+            <button class="tab-btn" data-target="tab-finance">비용&수익성 분석</button>
+            <button class="tab-btn" data-target="tab-plan">기획&피드백 AI</button>
+        </div>
+
+        <div class="toolbar-bottom" style="margin-top: 20px;">
+            <div class="sort-options">
+                <label class="radio-label">
+                    <input type="radio" name="sort" checked>
+                    <span class="radio-dot"></span> 최신순
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="sort">
+                    <span class="radio-dot"></span> 즐겨찾기순
+                </label>
+            </div>
+            <div class="search-box">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" placeholder="시뮬레이션 검색...">
+            </div>
+        </div>
+
+        <div id="tab-user-simu" class="tab-content active">
+            <div class="analysis-list">
+                <div class="analysis-item">
+                    <div class="item-status success">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </div>
+                    <div class="item-info">
+                        <span class="item-title">AI 시뮬레이션 - 기본 세션</span>
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn-edit-small">편집</button>
+                        <button class="btn-icon-only danger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-market" class="tab-content">
+            <div class="empty-state" style="padding: 40px; text-align: center; color: #94a3b8;">
+                시장 분석 데이터가 없습니다. 분석을 시작해보세요!
+            </div>
+        </div>
+
+        <div id="tab-finance" class="tab-content">
+            <div class="empty-state" style="padding: 40px; text-align: center; color: #94a3b8;">
+                수익성 분석 데이터가 없습니다.
+            </div>
+        </div>
+
+        <div id="tab-plan" class="tab-content">
+            <div class="empty-state" style="padding: 40px; text-align: center; color: #94a3b8;">
+                기획 피드백 기록이 없습니다.
+            </div>
+        </div>
+
+        <div class="analysis-footer">
+            <button class="btn-primary" style="border-radius: 30px; margin-top: 30px;">분석하기</button>
+        </div>
+    </section>
+    </main>
+</div>
+
+<!-- 사이드바 컴포넌트 -->
+<script th:src="@{/js/sidebar.js}"></script>
+
+<script>
+    /* ============================================================
+       SimuUser 상세 페이지 로직
+       ============================================================ */
+
+    // 전역 변수는 한 번만 선언
+    let currentProject = null;
+
+    /* ── 상세 페이지 데이터 로드 ── */
+    /* ── 상세 페이지 데이터 로드 (수정본) ── */
+function loadProjectDetail() {
+    // 현재 URL: http://localhost:8080/project/detail/1776006164459
+    const pathSegments = window.location.pathname.split('/');
+    
+    // 배열의 마지막 요소가 ID입니다.
+    const projectId = pathSegments[pathSegments.length - 1];
+
+    console.log("추출된 ID:", projectId); // 디버깅용
+
+    if (!projectId || projectId === 'detail') {
+        alert("잘못된 접근입니다. (ID 없음)");
+        location.href = "/project/all";
+        return;
+    }
+
+    // LocalStorage에서 프로젝트 검색
+    const allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
+    currentProject = allProjects.find(p => String(p.id) === projectId);
+
+    if (currentProject) {
+        // ... (이후 데이터 반영 로직은 동일) ...
+        const descElem = document.querySelector('.project-description');
+        const viewMoreBtn = document.querySelector('.btn-view-more');
+        
+        document.querySelector('.bc-current').textContent = currentProject.title;
+        document.querySelector('.page-title').textContent = currentProject.title;
+        descElem.textContent = currentProject.description || '설명이 없습니다.';
+        
+        // (이하 생략)
+    } else {
+        // ID는 있는데 LocalStorage에 해당 데이터가 없는 경우
+        alert("해당 프로젝트 데이터를 찾을 수 없습니다.");
+        location.href = "/project/all";
+    }
+}
+
+    /* ── 분석 기록 탭 전환 로직 ── */
+    function initTabs() {
+        const tabBtns = document.querySelectorAll('.analysis-toolbar-tabs .tab-btn');
+        const tabContents = document.querySelectorAll('.analysis-section .tab-content');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetId = btn.getAttribute('data-target');
+
+                // 버튼 활성화 상태 변경
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // 콘텐츠 표시 변경
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                    if (content.id === targetId) {
+                        content.classList.add('active');
+                    }
+                });
+            });
+        });
+    }
+
+    // 페이지 로드 시 통합 실행
+    window.addEventListener('DOMContentLoaded', () => {
+        loadProjectDetail();
+        initTabs();
+    });
+</script>
+</body>
+</html>
