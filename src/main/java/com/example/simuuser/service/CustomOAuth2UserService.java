@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 
@@ -71,6 +72,9 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     private AppUser createOAuth2User(String provider, String providerId, Map<String, Object> attributes) {
         String name = extractName(provider, attributes);
         String email = extractEmail(provider, attributes);
+        String phone = extractPhone(provider, attributes);
+        LocalDate birthDate = extractBirthDate(provider, attributes);
+        String gender = extractGender(provider, attributes);
         String userId = provider.toLowerCase() + "_" + providerId;
 
         return new AppUser(
@@ -78,9 +82,9 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 userId,
                 "{oauth2}",
                 email,
-                "SOCIAL",
-                LocalDate.of(1900, 1, 1),
-                "UNKNOWN",
+                phone,
+                birthDate,
+                gender,
                 provider,
                 providerId
         );
@@ -115,6 +119,49 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         }
 
         return valueOrNull(attributes.get("email"));
+    }
+
+    private String extractPhone(String provider, Map<String, Object> attributes) {
+        if ("NAVER".equals(provider)) {
+            String mobile = valueOrNull(naverResponse(attributes).get("mobile"));
+            return mobile == null ? "SOCIAL" : limit(mobile, 20);
+        }
+
+        return "SOCIAL";
+    }
+
+    private LocalDate extractBirthDate(String provider, Map<String, Object> attributes) {
+        if ("NAVER".equals(provider)) {
+            Map<String, Object> response = naverResponse(attributes);
+            String birthyear = valueOrNull(response.get("birthyear"));
+            String birthday = valueOrNull(response.get("birthday"));
+
+            if (birthyear != null && birthday != null) {
+                try {
+                    return LocalDate.parse(birthyear + "-" + birthday);
+                } catch (DateTimeParseException ignored) {
+                    return LocalDate.of(1900, 1, 1);
+                }
+            }
+        }
+
+        return LocalDate.of(1900, 1, 1);
+    }
+
+    private String extractGender(String provider, Map<String, Object> attributes) {
+        if ("NAVER".equals(provider)) {
+            String gender = valueOrNull(naverResponse(attributes).get("gender"));
+
+            if ("M".equalsIgnoreCase(gender)) {
+                return "male";
+            }
+
+            if ("F".equalsIgnoreCase(gender)) {
+                return "female";
+            }
+        }
+
+        return "UNKNOWN";
     }
 
     @SuppressWarnings("unchecked")
@@ -154,5 +201,9 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
         String text = value.toString().trim();
         return text.isEmpty() ? null : text;
+    }
+
+    private String limit(String value, int maxLength) {
+        return value.length() <= maxLength ? value : value.substring(0, maxLength);
     }
 }
