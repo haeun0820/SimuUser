@@ -84,7 +84,7 @@
 
         <div class="filter-tabs">
           <button class="filter-tab active" data-filter="all">
-            <span class="filter-dot" style="background:#011b53;"></span>
+            <span class="filter-dot" style="background:#011b53;"></span>전체
           </button>
           <button class="filter-tab" data-filter="collab">
             <span class="filter-dot" style="background:#f59e0b;"></span>협업
@@ -135,6 +135,7 @@
     return `${day}일 전`;
   }
 
+
   /* ── 카드 렌더 ── */
   function renderCard(p) {
     const isCollab = p.type === 'collab';
@@ -150,6 +151,7 @@
       ? `<span style="font-size:11.5px;background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:20px;">${escHtml(industryMap[p.industry] || p.industry)}</span>`
       : '';
 
+    // 하나의 백틱(`) 안에 모든 HTML 구조를 넣어야 합니다.
     return `
       <div class="project-card" data-id="${p.id}">
         <div class="project-card-head">
@@ -171,9 +173,17 @@
           ${memberInfo}
         </div>
         <div class="project-card-action">
-          <button class="btn-detail">상세 보기 →</button>
+          <button class="btn-detail" onclick="goToDetail('${p.id}')">상세 보기 →</button>
         </div>
       </div>`;
+  }
+
+    /* ── 상세 페이지 이동 함수 추가 ── */
+  function goToDetail(projectId) {
+    // 상세 페이지 파일명이 project_detail.html 이라고 가정할 때
+    // 프로젝트 ID를 쿼리 스트링(?id=...)으로 전달합니다.
+    window.location.href = `/project/detail/${projectId}`; 
+    // 타임리프/서버 환경이라면 URL 구조에 맞춰 수정하세요 (예: `/projects/${projectId}`)
   }
 
   /* ── 렌더링 ── */
