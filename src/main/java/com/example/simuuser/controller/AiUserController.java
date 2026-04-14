@@ -1,33 +1,54 @@
 package com.example.simuuser.controller;
 
-import java.util.Map;
-
+import com.example.simuuser.dto.ProjectResponse;
+import com.example.simuuser.service.ProjectService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/aiuser")
 public class AiUserController {
 
-    // application.properties 에 gemini.api.key=AIzaSy... 형태로 추가
-    private String geminiApiKey = "AIzaSyBXR90EGyObExOSWVPMQKXw1vcX9kMslkE";
+    private final ObjectMapper objectMapper;
+    private final ProjectService projectService;
+    private final RestTemplate restTemplate;
+    private final String geminiApiKey;
+    private final String geminiModel;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-    private final RestTemplate restTemplate = new RestTemplate();
-
-    // ── 페이지 라우팅 ──────────────────────────────────────────────
+    public AiUserController(
+            ObjectMapper objectMapper,
+            ProjectService projectService,
+            @Value("${gemini.api.key:}") String geminiApiKey,
+            @Value("${gemini.model:gemini-1.5-flash}") String geminiModel
+    ) {
+        this.objectMapper = objectMapper;
+        this.projectService = projectService;
+        this.restTemplate = new RestTemplate();
+        this.geminiApiKey = geminiApiKey;
+        this.geminiModel = geminiModel;
+    }
 
     @GetMapping("/ai_user")
-    public String aiUserPage() {
+    public String aiUserPage(Model model, Authentication authentication) {
+        List<ProjectResponse> projects = projectService.findMine(authentication);
+        model.addAttribute("projects", projects);
         return "aiuser/ai_user";
     }
 
@@ -36,118 +57,254 @@ public class AiUserController {
         return "aiuser/ai_user_result";
     }
 
-    // ── Gemini API 프록시 ───────────────────────────────────────
-
     @PostMapping("/simulate")
     @ResponseBody
     public ResponseEntity<?> simulate(@RequestBody Map<String, Object> body) {
+        int personaCount = clamp(number(body.get("personaCount"), 3), 2, 3);
+
+        if (geminiApiKey == null || geminiApiKey.isBlank()) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "GEMINI_API_KEY가 설정되지 않았습니다."));
+        }
+
         try {
-            // 실제 AI가 고민하는 것처럼 1.5초 딜레이 (1500ms)
-            Thread.sleep(1500);
+            Map<String, Object> requestBody = buildGeminiRequest(buildPrompt(body, personaCount));
+            Map<String, Object> geminiResponse = callGemini(requestBody);
+            String resultText = extractText(geminiResponse);
+            Map<String, Object> result = parseJsonResult(resultText);
 
-            int personaCount = body.get("personaCount") instanceof Number
-                    ? ((Number) body.get("personaCount")).intValue() : 3;
-
-            // 가짜(Mock) 응답 데이터 만들기
-            Map<String, Object> mockResult = new java.util.HashMap<>();
-            mockResult.put("avgPurchaseIntent", 82);
-            mockResult.put("overallReaction", "대체로 긍정적이며, 특히 핵심 타겟인 2030 세대에서 즉각적인 반응을 보입니다. 다만 초기 진입 장벽(가격, 복잡도)에 대한 우려가 일부 있습니다.");
-
-            // 페르소나 리스트 만들기
-            java.util.List<Map<String, Object>> personas = new java.util.ArrayList<>();
-            
-            Map<String, Object> p1 = new java.util.HashMap<>();
-            p1.put("name", "김민지");
-            p1.put("age", 28);
-            p1.put("job", "서비스 기획자");
-            p1.put("consumerType", "신중형");
-            p1.put("purchaseScore", 85);
-            p1.put("positiveReactions", java.util.Arrays.asList("UI가 직관적이고 깔끔하다", "내가 딱 필요했던 기능"));
-            p1.put("negativeReactions", java.util.Arrays.asList("초기 세팅 과정이 조금 길다"));
-            p1.put("churnPoints", java.util.Arrays.asList("푸시 알림이 너무 자주 올 때"));
-            personas.add(p1);
-
-            Map<String, Object> p2 = new java.util.HashMap<>();
-            p2.put("name", "이준호");
-            p2.put("age", 35);
-            p2.put("job", "마케터");
-            p2.put("consumerType", "소비형");
-            p2.put("purchaseScore", 60);
-            p2.put("positiveReactions", java.util.Arrays.asList("데이터 시각화가 훌륭하다"));
-            p2.put("negativeReactions", java.util.Arrays.asList("가격 대비 차별성이 부족하다"));
-            p2.put("churnPoints", java.util.Arrays.asList("무료 체험 기간이 끝나는 시점"));
-            personas.add(p2);
-
-            Map<String, Object> p3 = new java.util.HashMap<>();
-            p3.put("name", "박소연");
-            p3.put("age", 23);
-            p3.put("job", "대학생");
-            p3.put("consumerType", "충동형");
-            p3.put("purchaseScore", 95);
-            p3.put("positiveReactions", java.util.Arrays.asList("트렌디하고 친구들에게 공유하기 좋다", "재밌다"));
-            p3.put("negativeReactions", java.util.Arrays.asList("데이터를 많이 쓸 것 같다"));
-            p3.put("churnPoints", java.util.Arrays.asList("앱 로딩이 3초 이상 걸릴 때"));
-            personas.add(p3);
-
-            // 요청한 페르소나 수만큼 잘라서 넣기
-            mockResult.put("personas", personas.subList(0, Math.min(personaCount, personas.size())));
-
-            mockResult.put("keyInsights", java.util.Arrays.asList(
-                    "20대 유저는 소셜 공유와 시각적 디자인에 가장 크게 반응합니다.",
-                    "30대 직장인 그룹은 '시간 단축'을 핵심 가치로 평가합니다."
-            ));
-            mockResult.put("improvements", java.util.Arrays.asList(
-                    "초기 온보딩 과정을 2단계 이하로 축소하여 이탈을 방지하세요.",
-                    "첫 결제 시 무료 체험 기간을 제공해 심리적 장벽을 낮추세요."
-            ));
-
-            return ResponseEntity.ok(mockResult);
-
+            return ResponseEntity.ok(normalizeResult(result, personaCount));
+        } catch (RestClientException e) {
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                    .body(Map.of("error", "Gemini API 호출 중 오류가 발생했습니다: " + e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            Map<String, String> errorMap = new java.util.HashMap<>();
-            errorMap.put("error", "서버 내부 오류: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMap);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "AI 응답 처리 중 오류가 발생했습니다: " + e.getMessage()));
         }
     }
 
-    // ── 프롬프트 빌더 ─────────────────────────────────────────────
+    private Map<String, Object> callGemini(Map<String, Object> requestBody) {
+        String url = UriComponentsBuilder
+                .fromUriString("https://generativelanguage.googleapis.com/v1beta/models/" + geminiModel + ":generateContent")
+                .queryParam("key", geminiApiKey)
+                .toUriString();
 
-    private String buildPrompt(Map<String, Object> p) {
-        int personaCount = p.get("personaCount") instanceof Number
-                ? ((Number) p.get("personaCount")).intValue() : 3;
+        @SuppressWarnings("unchecked")
+        Map<String, Object> response = restTemplate.postForObject(url, requestBody, Map.class);
+        if (response == null) {
+            throw new IllegalArgumentException("Gemini 응답이 비어 있습니다.");
+        }
+        return response;
+    }
 
-        return "당신은 스타트업 서비스 아이디어를 검증하는 AI 시뮬레이션 전문가입니다.\n\n"
-            + "다음 서비스 아이디어에 대해 가상 유저 " + personaCount + "명의 반응을 시뮬레이션해주세요.\n\n"
-            + "[서비스 정보]\n"
-            + "- 서비스 아이디어: " + p.getOrDefault("serviceIdea", "미입력") + "\n"
-            + "- 상세 설명: "       + p.getOrDefault("description",  "없음")  + "\n"
-            + "- 타겟 유저: "       + p.getOrDefault("targetUser",   "없음")  + "\n"
-            + "- 산업 분야: "       + p.getOrDefault("industry",     "미지정") + "\n\n"
-            + "[시뮬레이션 설정]\n"
-            + "- 페르소나 수: " + personaCount + "명\n"
-            + "- 성별: "       + p.getOrDefault("gender", "전체") + "\n"
-            + "- 나이대: "     + p.getOrDefault("ages",   "전체") + "\n"
-            + "- 직업: "       + p.getOrDefault("job",    "미입력") + "\n\n"
-            + "아래 JSON 형식으로만 응답해주세요.\n\n" // Gemini는 generationConfig로 강제하므로 마크다운 빼달라는 말은 생략해도 됩니다.
-            + "{\n"
-            + "  \"avgPurchaseIntent\": <0-100 정수, 평균 구매 의사 %>,\n"
-            + "  \"overallReaction\": \"<전반적인 반응 2-3문장>\",\n"
-            + "  \"personas\": [\n"
-            + "    {\n"
-            + "      \"name\": \"<한국인 이름>\",\n"
-            + "      \"age\": <나이 정수>,\n"
-            + "      \"job\": \"<직업>\",\n"
-            + "      \"consumerType\": \"<소비형|절약형|충동형|신중형 중 하나>\",\n"
-            + "      \"purchaseScore\": <0-100 정수>,\n"
-            + "      \"positiveReactions\": [\"<반응1>\", \"<반응2>\", \"<반응3>\"],\n"
-            + "      \"negativeReactions\": [\"<반응1>\", \"<반응2>\", \"<반응3>\"],\n"
-            + "      \"churnPoints\": [\"<이탈포인트1>\", \"<이탈포인트2>\"]\n"
-            + "    }\n"
-            + "  ],\n"
-            + "  \"keyInsights\": [\"<인사이트1>\", \"<인사이트2>\", \"<인사이트3>\", \"<인사이트4>\"],\n"
-            + "  \"improvements\": [\"<개선제안1>\", \"<개선제안2>\", \"<개선제안3>\", \"<개선제안4>\"]\n"
-            + "}\n\n"
-            + "페르소나는 정확히 " + personaCount + "명이어야 하며, 각각 다른 개성과 관점을 가져야 합니다.\n"
-            + "현실적이고 구체적인 내용으로 작성해주세요.";
+    private Map<String, Object> buildGeminiRequest(String prompt) {
+        return Map.of(
+                "contents", List.of(
+                        Map.of("parts", List.of(Map.of("text", prompt)))
+                ),
+                "generationConfig", Map.of(
+                        "temperature", 0.7,
+                        "responseMimeType", "application/json"
+                )
+        );
+    }
+
+    private String extractText(Map<String, Object> geminiResponse) {
+        Object candidatesObject = geminiResponse.get("candidates");
+        if (!(candidatesObject instanceof List<?> candidates) || candidates.isEmpty()) {
+            throw new IllegalArgumentException("Gemini 응답에 candidates가 없습니다.");
+        }
+
+        Object firstCandidate = candidates.get(0);
+        if (!(firstCandidate instanceof Map<?, ?> candidate)) {
+            throw new IllegalArgumentException("Gemini 응답 형식이 올바르지 않습니다.");
+        }
+
+        Object contentObject = candidate.get("content");
+        if (!(contentObject instanceof Map<?, ?> content)) {
+            throw new IllegalArgumentException("Gemini 응답에 content가 없습니다.");
+        }
+
+        Object partsObject = content.get("parts");
+        if (!(partsObject instanceof List<?> parts) || parts.isEmpty()) {
+            throw new IllegalArgumentException("Gemini 응답에 parts가 없습니다.");
+        }
+
+        Object firstPart = parts.get(0);
+        if (!(firstPart instanceof Map<?, ?> part)) {
+            throw new IllegalArgumentException("Gemini 응답 part 형식이 올바르지 않습니다.");
+        }
+
+        Object text = part.get("text");
+        if (text == null || text.toString().isBlank()) {
+            throw new IllegalArgumentException("Gemini 응답 text가 비어 있습니다.");
+        }
+
+        return text.toString();
+    }
+
+    private Map<String, Object> parseJsonResult(String text) throws Exception {
+        return objectMapper.readValue(stripMarkdownFence(text), new TypeReference<>() {});
+    }
+
+    private String stripMarkdownFence(String text) {
+        String trimmed = text.trim();
+        if (!trimmed.startsWith("```")) {
+            return trimmed;
+        }
+
+        int firstLineEnd = trimmed.indexOf('\n');
+        int lastFence = trimmed.lastIndexOf("```");
+        if (firstLineEnd < 0 || lastFence <= firstLineEnd) {
+            return trimmed;
+        }
+
+        return trimmed.substring(firstLineEnd + 1, lastFence).trim();
+    }
+
+    private Map<String, Object> normalizeResult(Map<String, Object> result, int personaCount) {
+        List<Map<String, Object>> personas = asPersonaList(result.get("personas"), personaCount);
+        return Map.of(
+                "avgPurchaseIntent", clamp(number(result.get("avgPurchaseIntent"), 0), 0, 100),
+                "overallReaction", text(result.get("overallReaction"), "AI가 전반적인 반응을 생성하지 못했습니다."),
+                "personas", personas,
+                "keyInsights", asStringList(result.get("keyInsights")),
+                "improvements", asStringList(result.get("improvements"))
+        );
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> asPersonaList(Object value, int personaCount) {
+        if (!(value instanceof List<?> rawPersonas)) {
+            throw new IllegalArgumentException("AI 응답에 personas 배열이 없습니다.");
+        }
+
+        List<Map<String, Object>> personas = rawPersonas.stream()
+                .filter(Map.class::isInstance)
+                .map(item -> normalizePersona((Map<String, Object>) item))
+                .toList();
+
+        if (personas.isEmpty()) {
+            throw new IllegalArgumentException("AI 응답에 사용할 수 있는 페르소나가 없습니다.");
+        }
+
+        return personas.stream()
+                .limit(personaCount)
+                .toList();
+    }
+
+    private Map<String, Object> normalizePersona(Map<String, Object> persona) {
+        return Map.of(
+                "name", text(persona.get("name"), "가상 유저"),
+                "age", clamp(number(persona.get("age"), 0), 0, 120),
+                "job", text(persona.get("job"), "직업 미입력"),
+                "consumerType", text(persona.get("consumerType"), "일반형"),
+                "purchaseScore", clamp(number(persona.get("purchaseScore"), 0), 0, 100),
+                "positiveReactions", asStringList(persona.get("positiveReactions")),
+                "negativeReactions", asStringList(persona.get("negativeReactions")),
+                "churnPoints", asStringList(persona.get("churnPoints"))
+        );
+    }
+
+    private List<String> asStringList(Object value) {
+        if (!(value instanceof List<?> list)) {
+            return List.of();
+        }
+
+        return list.stream()
+                .filter(item -> item != null && !item.toString().isBlank())
+                .map(Object::toString)
+                .toList();
+    }
+
+    private String buildPrompt(Map<String, Object> body, int personaCount) {
+        String serviceIdea = text(body.get("serviceIdea"), "미입력");
+        String description = text(body.get("description"), "없음");
+        String targetUser = text(body.get("targetUser"), "없음");
+        String industry = text(body.get("industry"), "미지정");
+        String gender = text(body.get("gender"), "전체");
+        String ages = text(body.get("ages"), "전체");
+        String job = text(body.get("job"), "미입력");
+
+        return """
+                당신은 스타트업 서비스 아이디어를 검증하는 AI 가상 유저 시뮬레이션 전문가입니다.
+
+                아래 서비스 정보를 기준으로 실제 타겟 유저처럼 반응하는 가상 유저 %d명을 생성하고,
+                구매 의사, 긍정 반응, 부정 반응, 이탈 포인트, 핵심 인사이트, 개선 제안을 작성해 주세요.
+
+                [서비스 정보]
+                - 서비스 아이디어: %s
+                - 상세 설명: %s
+                - 타겟 유저: %s
+                - 산업 분야: %s
+
+                [시뮬레이션 설정]
+                - 페르소나 수: %d명
+                - 성별: %s
+                - 나이대: %s
+                - 직업: %s
+
+                반드시 아래 JSON 형식만 반환하세요. 설명 문장, 마크다운, 코드블록은 넣지 마세요.
+                {
+                  "avgPurchaseIntent": 0,
+                  "overallReaction": "전반적인 반응 2~3문장",
+                  "personas": [
+                    {
+                      "name": "한국어 이름",
+                      "age": 28,
+                      "job": "직업",
+                      "consumerType": "신중형",
+                      "purchaseScore": 80,
+                      "positiveReactions": ["긍정 반응 1", "긍정 반응 2", "긍정 반응 3"],
+                      "negativeReactions": ["부정 반응 1", "부정 반응 2", "부정 반응 3"],
+                      "churnPoints": ["이탈 포인트 1", "이탈 포인트 2"]
+                    }
+                  ],
+                  "keyInsights": ["인사이트 1", "인사이트 2", "인사이트 3", "인사이트 4"],
+                  "improvements": ["개선 제안 1", "개선 제안 2", "개선 제안 3", "개선 제안 4"]
+                }
+
+                personas 배열 길이는 반드시 %d개여야 합니다.
+                avgPurchaseIntent와 purchaseScore는 0부터 100 사이 정수여야 합니다.
+                응답은 한국어로 작성하세요.
+                """.formatted(
+                personaCount,
+                serviceIdea,
+                description,
+                targetUser,
+                industry,
+                personaCount,
+                gender,
+                ages,
+                job,
+                personaCount
+        );
+    }
+
+    private String text(Object value, String fallback) {
+        if (value == null) {
+            return fallback;
+        }
+
+        String text = value.toString().trim();
+        return text.isEmpty() ? fallback : text;
+    }
+
+    private int number(Object value, int fallback) {
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+
+        try {
+            return Integer.parseInt(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
+    }
+
+    private int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
     }
 }
