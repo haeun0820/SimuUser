@@ -20,13 +20,11 @@
             <span class="bc-current">로딩 중...</span>
         </nav>
       <div class="header-icons auth-actions">
-
       <button class="icon-btn">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
           <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zM18 16v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" fill="#6b7280"/>
         </svg>
       </button>
-
       <div class="profile-menu">
         <button class="icon-btn">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -34,17 +32,15 @@
             <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="#6b7280" stroke-width="1.8"/>
           </svg>
         </button>
-
         <div class="dropdown">
           <form class="logout-form" th:action="@{/mypage}" method="get">
-                    <button class="logout-button" type="submit">마이페이지</button>
-                </form>
-                <form class="logout-form" th:action="@{/logout}" method="post">
-                    <button class="logout-button" type="submit">로그아웃</button>
-                </form>
+            <button class="logout-button" type="submit">마이페이지</button>
+          </form>
+          <form class="logout-form" th:action="@{/logout}" method="post">
+            <button class="logout-button" type="submit">로그아웃</button>
+          </form>
         </div>
       </div>
-
     </div>
     </header>
 
@@ -107,12 +103,13 @@
             </div>
             <div class="search-box">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" placeholder="시뮬레이션 검색...">
+                <input type="text" id="analysisSearchInput" placeholder="검색...">
             </div>
         </div>
 
+        <!-- AI 유저 시뮬레이션 탭 -->
         <div id="tab-user-simu" class="tab-content active">
-            <div class="analysis-list">
+            <div class="analysis-list" id="simuAnalysisList">
                 <div class="analysis-item">
                     <div class="item-status success">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
@@ -132,9 +129,13 @@
                         <button class="btn-icon-only danger"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
                     </div>
                 </div>
-            </div> </div> <div id="tab-market" class="tab-content">
-            <div class="empty-state" style="padding: 40px; text-align: center; color: #94a3b8;">
-                시장 분석 데이터가 없습니다. 분석을 시작해보세요!
+            </div>
+        </div>
+
+        <!-- 시장&경쟁 분석 탭 -->
+        <div id="tab-market" class="tab-content">
+            <div class="analysis-list" id="marketAnalysisList">
+                <!-- JS로 렌더링 -->
             </div>
         </div>
 
@@ -143,19 +144,16 @@
                 수익성 분석 데이터가 없습니다.
             </div>
         </div>
-
         <div id="tab-plan" class="tab-content">
             <div class="empty-state" style="padding: 40px; text-align: center; color: #94a3b8;">
                 기획 피드백 기록이 없습니다.
             </div>
         </div>
-
         <div id="tab-scenario" class="tab-content">
             <div class="empty-state" style="padding: 40px; text-align: center; color: #94a3b8;">
                 시나리오 비교 기록이 없습니다.
             </div>
         </div>
-
         <div id="tab-document" class="tab-content">
             <div class="empty-state" style="padding: 40px; text-align: center; color: #94a3b8;">
                 자동 문서화 기록이 없습니다.
@@ -163,34 +161,32 @@
         </div>
 
         <div class="analysis-footer" style="text-align: center;">
-            <button class="btn-primary" style="border-radius: 30px; margin-top: 30px; padding: 12px 40px; font-size: 16px;">분석하기</button>
+            <button class="btn-primary" id="btnAnalyze" style="border-radius: 30px; margin-top: 30px; padding: 12px 40px; font-size: 16px;">분석하기</button>
         </div>
     </section>
     </main>
+  </div>
 </div>
 
 <script th:src="@{/js/sidebar.js}"></script>
 
+<!-- 협업 공유 모달 -->
 <div id="shareModal" class="popup-overlay hidden">
     <div class="popup share-popup">
         <div class="popup-header">
-            <h3 class="share-title">“<span id="modalProjectTitle">프로젝트 제목</span>” 공유</h3>
+            <h3 class="share-title">"<span id="modalProjectTitle">프로젝트 제목</span>" 공유</h3>
         </div>
-        
         <div class="share-section">
             <label class="share-label">사용자 추가</label>
             <div class="share-input-row">
-                <input type="text" id="shareEmailInput" placeholder="이메일 입력 후 엔터..." class="form-input" 
+                <input type="text" id="shareEmailInput" placeholder="이메일 입력 후 엔터..." class="form-input"
                     onkeypress="if(event.keyCode==13) { addMemberByEmail(); }">
             </div>
         </div>
-
         <div class="share-section">
             <label class="share-label">사용자</label>
-            <div class="member-scroll-list" id="modalMemberList">
-                </div>
+            <div class="member-scroll-list" id="modalMemberList"></div>
         </div>
-
         <div class="form-actions" style="margin-top: 24px;">
             <button class="btn-primary" onclick="closeShareModal()" style="min-width: 100px; padding: 10px;">확인</button>
             <button class="btn-cancel" onclick="closeShareModal()" style="min-width: 100px; padding: 10px;">취소</button>
@@ -198,6 +194,7 @@
     </div>
 </div>
 
+<!-- 탭 추가 모달 -->
 <div id="addTabModal" class="popup-overlay hidden">
     <div class="popup add-tab-popup">
         <div class="popup-header">
@@ -206,7 +203,7 @@
         <div class="form-section" style="margin-top: 20px;">
             <div style="display: flex; align-items: center; gap: 15px;">
                 <label style="font-size: 18px; font-weight: 700; white-space: nowrap;">탭 이름</label>
-                <input type="text" id="newTabName" placeholder="탭 이름을 입력하세요" class="form-input" 
+                <input type="text" id="newTabName" placeholder="탭 이름을 입력하세요" class="form-input"
                        style="background: #f8fafc; border: 1px solid #e2e8f0; height: 45px;">
             </div>
         </div>
@@ -218,279 +215,355 @@
 </div>
 
 <script>
-    /* ============================================================
-       SimuUser 상세 페이지 로직
-       ============================================================ */
+  /* ============================================================
+     exact_project.js (inline) – 프로젝트 상세 페이지
+     ============================================================ */
 
-    let currentProject = null;
+  let currentProject = null;
+  let currentTabId = 'tab-user-simu';
 
-    /* ── [1] 상세 페이지 데이터 로드 ── */
-    function loadProjectDetail() {
-        const pathSegments = window.location.pathname.split('/');
-        const projectId = pathSegments[pathSegments.length - 1];
+  /* ── [1] 프로젝트 상세 데이터 로드 ── */
+  function loadProjectDetail() {
+    const pathSegments = window.location.pathname.split('/');
+    const projectId = pathSegments[pathSegments.length - 1];
 
-        if (!projectId || projectId === 'detail') {
-            alert("잘못된 접근입니다.");
-            location.href = "/project/all";
-            return;
-        }
-
-        const allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
-        currentProject = allProjects.find(p => String(p.id) === projectId);
-
-        if (currentProject) {
-            const descElem = document.querySelector('.project-description');
-            const viewMoreBtn = document.querySelector('.btn-view-more');
-            
-            document.querySelector('.bc-current').textContent = currentProject.title;
-            document.querySelector('.page-title').textContent = currentProject.title;
-            descElem.textContent = currentProject.description || '설명이 없습니다.';
-
-            // 설명 길이 체크 및 버튼 제어
-            setTimeout(() => {
-                const lineHeight = parseFloat(window.getComputedStyle(descElem).lineHeight);
-                const scrollHeight = descElem.scrollHeight;
-                const maxHeight = lineHeight * 3.1;
-
-                if (scrollHeight <= maxHeight) {
-                    if(viewMoreBtn) viewMoreBtn.classList.add('hidden');
-                    descElem.classList.add('expanded');
-                } else {
-                    if(viewMoreBtn) viewMoreBtn.classList.remove('hidden');
-                }
-            }, 100);
-
-            // 펼치기/접기 이벤트
-            if(viewMoreBtn) {
-                viewMoreBtn.onclick = function() {
-                    const isExpanded = descElem.classList.contains('expanded');
-                    if (isExpanded) {
-                        descElem.classList.remove('expanded');
-                        this.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg> 자세히 보기`;
-                    } else {
-                        descElem.classList.add('expanded');
-                        this.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"></polyline></svg> 설명 접기`;
-                    }
-                };
-            }
-
-            // 협업 정보 반영
-            const collabBadge = document.querySelector('.badge-collab');
-            const collabText = document.querySelector('.collab-members');
-            if (currentProject.type === 'collab') {
-                if(collabBadge) collabBadge.style.display = 'inline-block';
-                if(collabText) collabText.textContent = `With. ${currentProject.members ? currentProject.members.join(', ') : ''}`;
-            } else {
-                if(collabBadge) collabBadge.style.display = 'none';
-                if(collabText) collabText.style.display = 'none';
-            }
-        }
+    if (!projectId || projectId === 'detail') {
+      alert("잘못된 접근입니다.");
+      location.href = "/project/all";
+      return;
     }
 
-    /* ── [2] 탭 시스템 (무한 추가 가능 버전) ── */
-    
-    // 💡 1. 탭 추가 모달 열기 (안전한 방식으로 변경)
-    function openTabModal() {
-        const modal = document.getElementById('addTabModal');
-        const input = document.getElementById('newTabName');
-        
-        modal.classList.remove('hidden');
-        input.value = ""; // 창을 열 때마다 이전 입력값 깔끔하게 비우기
-        setTimeout(() => input.focus(), 10); // 창이 열린 후 바로 타자 칠 수 있게 포커스
-    }
+    const allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
+    currentProject = allProjects.find(p => String(p.id) === projectId);
 
-    // 💡 2. 탭 추가 모달 닫기 (절대 실패하지 않는 방식으로 변경)
-    function closeTabModal() {
-        document.getElementById('addTabModal').classList.add('hidden');
-    }
+    if (currentProject) {
+      const descElem = document.querySelector('.project-description');
+      const viewMoreBtn = document.querySelector('.btn-view-more');
 
-    function createTab() {
-        const input = document.getElementById('newTabName');
-        const tabName = input.value.trim();
+      document.querySelector('.bc-current').textContent = currentProject.title;
+      document.querySelector('.page-title').textContent = currentProject.title;
+      descElem.textContent = currentProject.description || '설명이 없습니다.';
 
-        if (!tabName) {
-            alert("탭 이름을 입력해주세요.");
-            return false;
+      setTimeout(() => {
+        const lineHeight = parseFloat(window.getComputedStyle(descElem).lineHeight);
+        const scrollHeight = descElem.scrollHeight;
+        const maxHeight = lineHeight * 3.1;
+
+        if (scrollHeight <= maxHeight) {
+          if (viewMoreBtn) viewMoreBtn.classList.add('hidden');
+          descElem.classList.add('expanded');
+        } else {
+          if (viewMoreBtn) viewMoreBtn.classList.remove('hidden');
         }
+      }, 100);
 
-        const exists = Array.from(document.querySelectorAll('.tab-btn'))
-            .some(btn => btn.textContent.trim() === tabName);
+      if (viewMoreBtn) {
+        viewMoreBtn.onclick = function () {
+          const isExpanded = descElem.classList.contains('expanded');
+          if (isExpanded) {
+            descElem.classList.remove('expanded');
+            this.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg> 자세히 보기`;
+          } else {
+            descElem.classList.add('expanded');
+            this.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"></polyline></svg> 설명 접기`;
+          }
+        };
+      }
 
-        if (exists) {
-            alert("이미 존재하는 탭 이름입니다.");
-            return false;
-        }
+      const collabBadge = document.querySelector('.badge-collab');
+      const collabText = document.querySelector('.collab-members');
+      if (currentProject.type === 'collab') {
+        if (collabBadge) collabBadge.style.display = 'inline-block';
+        if (collabText) collabText.textContent = `With. ${currentProject.members ? currentProject.members.join(', ') : ''}`;
+      } else {
+        if (collabBadge) collabBadge.style.display = 'none';
+        if (collabText) collabText.style.display = 'none';
+      }
+    }
+  }
 
-        const tabId = "tab-" + Date.now();
-        const tabContainer = document.querySelector('.analysis-toolbar-tabs');
+  /* ── [2] 시장&경쟁 분석 탭 렌더링 ── */
+  function renderMarketAnalysisList() {
+    const listEl = document.getElementById('marketAnalysisList');
+    if (!listEl || !currentProject) return;
 
-        const newBtn = document.createElement('button');
-        // 💡 핵심 변경: 새로 추가된 탭 버튼에 'custom-tab' 이라는 식별자(클래스)를 추가합니다.
-        newBtn.className = 'tab-btn custom-tab'; 
-        newBtn.setAttribute('data-target', tabId);
-        newBtn.textContent = tabName;
-        tabContainer.appendChild(newBtn);
+    const analyses = currentProject.marketAnalyses || [];
 
-        const analysisSection = document.querySelector('.analysis-section');
-        const footer = document.querySelector('.analysis-footer');
-
-        const newContent = document.createElement('div');
-        newContent.id = tabId;
-        newContent.className = 'tab-content';
-        newContent.innerHTML = `
-            <div class="empty-state" style="padding: 40px; text-align: center; color: #94a3b8;">
-                "${tabName}" 관련 기록이 없습니다.
-            </div>
-        `;
-
-        // 새 콘텐츠를 footer 바로 위에 삽입
-        analysisSection.insertBefore(newContent, footer);
-
-        // 새 탭으로 이동
-        switchTab(newBtn);
-
-        // 모달 닫기
-        document.getElementById('addTabModal').classList.add('hidden');
-        input.value = "";
+    if (analyses.length === 0) {
+      listEl.innerHTML = `
+        <div class="empty-state" style="padding: 40px; text-align: center; color: #94a3b8;">
+          시장 분석 데이터가 없습니다. 분석을 시작해보세요!
+        </div>`;
+      return;
     }
 
-    function initTabs() {
-        const tabContainer = document.querySelector('.analysis-toolbar-tabs');
-        if (tabContainer) {
-            tabContainer.addEventListener('click', (e) => {
-                const btn = e.target.closest('.tab-btn');
-                if (btn) switchTab(btn);
-            });
-        }
+    listEl.innerHTML = analyses.map((a, idx) => `
+      <div class="analysis-item" data-analysis-id="${a.id}">
+        <div class="item-status success">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <div class="item-info">
+          <span class="item-title">${escHtml(a.title)}</span>
+          <span class="item-date" style="font-size:12px; color:#94a3b8; margin-left:10px;">${timeAgo(a.createdAt)}</span>
+        </div>
+        <div class="item-actions">
+          <button class="btn-edit-small" onclick="viewMarketResult('${a.id}')">보기</button>
+          <button class="btn-icon-only btn-star ${a.starred ? 'active' : ''}" onclick="toggleMarketStar(this, '${a.id}')">
+            <svg class="star-icon" width="20" height="20" viewBox="0 0 24 24" fill="${a.starred ? '#f59e0b' : 'none'}" stroke="${a.starred ? '#f59e0b' : 'currentColor'}" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          </button>
+          <button class="btn-icon-only danger" onclick="deleteMarketAnalysis('${a.id}')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </div>
+      </div>`).join('');
+  }
 
-        const btnAddTab = document.querySelector('.tab-add-btn');
-        if (btnAddTab) {
-            btnAddTab.onclick = openTabModal; 
-        }
+  function viewMarketResult(analysisId) {
+    const pathSegments = window.location.pathname.split('/');
+    const projectId = pathSegments[pathSegments.length - 1];
+    window.location.href = `/market/result?projectId=${projectId}&from=detail&analysisId=${analysisId}`;
+  }
+
+  function toggleMarketStar(btn, analysisId) {
+    if (!currentProject || !currentProject.marketAnalyses) return;
+    const a = currentProject.marketAnalyses.find(x => x.id === analysisId);
+    if (a) {
+      a.starred = !a.starred;
+      updateLocalStorage();
+      renderMarketAnalysisList();
+    }
+  }
+
+  function deleteMarketAnalysis(analysisId) {
+    if (!confirm('이 분석 결과를 삭제하시겠습니까?')) return;
+    if (!currentProject || !currentProject.marketAnalyses) return;
+    currentProject.marketAnalyses = currentProject.marketAnalyses.filter(x => x.id !== analysisId);
+    updateLocalStorage();
+    renderMarketAnalysisList();
+  }
+
+  /* ── [3] 탭 시스템 ── */
+  function openTabModal() {
+    const modal = document.getElementById('addTabModal');
+    const input = document.getElementById('newTabName');
+    modal.classList.remove('hidden');
+    input.value = '';
+    setTimeout(() => input.focus(), 10);
+  }
+
+  function closeTabModal() {
+    document.getElementById('addTabModal').classList.add('hidden');
+  }
+
+  function createTab() {
+    const input = document.getElementById('newTabName');
+    const tabName = input.value.trim();
+
+    if (!tabName) { alert("탭 이름을 입력해주세요."); return false; }
+
+    const exists = Array.from(document.querySelectorAll('.tab-btn'))
+      .some(btn => btn.textContent.trim() === tabName);
+
+    if (exists) { alert("이미 존재하는 탭 이름입니다."); return false; }
+
+    const tabId = "tab-" + Date.now();
+    const tabContainer = document.querySelector('.analysis-toolbar-tabs');
+
+    const newBtn = document.createElement('button');
+    newBtn.className = 'tab-btn custom-tab';
+    newBtn.setAttribute('data-target', tabId);
+    newBtn.textContent = tabName;
+    tabContainer.appendChild(newBtn);
+
+    const analysisSection = document.querySelector('.analysis-section');
+    const footer = document.querySelector('.analysis-footer');
+
+    const newContent = document.createElement('div');
+    newContent.id = tabId;
+    newContent.className = 'tab-content';
+    newContent.innerHTML = `
+      <div class="empty-state" style="padding: 40px; text-align: center; color: #94a3b8;">
+        "${tabName}" 관련 기록이 없습니다.
+      </div>`;
+    analysisSection.insertBefore(newContent, footer);
+
+    switchTab(newBtn);
+    document.getElementById('addTabModal').classList.add('hidden');
+    input.value = '';
+  }
+
+  function initTabs() {
+    const tabContainer = document.querySelector('.analysis-toolbar-tabs');
+    if (tabContainer) {
+      tabContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('.tab-btn');
+        if (btn) switchTab(btn);
+      });
     }
 
-    function switchTab(btn) {
-        const targetId = btn.getAttribute('data-target');
+    const btnAddTab = document.querySelector('.tab-add-btn');
+    if (btnAddTab) btnAddTab.onclick = openTabModal;
+  }
 
-        // 모든 탭 버튼 비활성화 후 클릭된 버튼 활성화
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+  function switchTab(btn) {
+    const targetId = btn.getAttribute('data-target');
+    currentTabId = targetId;
 
-        // 모든 콘텐츠 숨김 후 타겟 콘텐츠 표시
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        
-        const targetContent = document.getElementById(targetId);
-        if (targetContent) {
-            targetContent.classList.add('active');
-        }
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
 
-        // 💡 핵심 변경: 클릭한 탭이 추가한 탭(custom-tab)이면 '분석하기' 푸터를 숨깁니다.
-        const footer = document.querySelector('.analysis-footer');
-        if (footer) {
-            if (btn.classList.contains('custom-tab')) {
-                footer.style.display = 'none';   // 숨기기
-            } else {
-                footer.style.display = 'block';  // 기본 탭이면 다시 보이기
-            }
-        }
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+    const targetContent = document.getElementById(targetId);
+    if (targetContent) targetContent.classList.add('active');
+
+    const footer = document.querySelector('.analysis-footer');
+    if (footer) {
+      footer.style.display = btn.classList.contains('custom-tab') ? 'none' : 'block';
     }
 
-    /* ── [3] 멤버 관리 (협업 공유) ── */
-    function renderModalMembers() {
-        const listContainer = document.getElementById('modalMemberList');
-        if(!listContainer || !currentProject) return;
+    // 분석하기 버튼 동작: 탭에 따라 이동 경로 결정
+    updateAnalyzeButton(targetId);
 
-        let html = `
-            <div class="share-member-item">
-                <div class="member-profile-info">
-                    <div class="profile-avatar-small"></div>
-                    <div class="member-text"><span class="member-name">정유나(Me)</span><span class="member-email">nfling@gmail.com</span></div>
-                </div>
-                <span class="member-role">소유자</span>
-            </div>`;
-
-        if (currentProject.members) {
-            currentProject.members.forEach((email, idx) => {
-                html += `
-                <div class="share-member-item">
-                    <div class="member-profile-info">
-                        <div class="profile-avatar-small"></div>
-                        <div class="member-text"><span class="member-name">${email.split('@')[0]}</span><span class="member-email">${email}</span></div>
-                    </div>
-                    <button onclick="removeMember(${idx})" style="color:#ef4444; background:none; border:none; cursor:pointer;">삭제</button>
-                </div>`;
-            });
-        }
-        listContainer.innerHTML = html;
+    // 시장&경쟁 탭 진입 시 목록 렌더링
+    if (targetId === 'tab-market') {
+      renderMarketAnalysisList();
     }
+  }
 
-    function addMemberByEmail() {
-        const input = document.getElementById('shareEmailInput');
-        const email = input.value.trim();
-        if(!email.includes('@')) return alert("이메일 형식이 아닙니다.");
+  /* ── [4] 분석하기 버튼 ── */
+  function updateAnalyzeButton(tabId) {
+    const btn = document.getElementById('btnAnalyze');
+    if (!btn) return;
 
-        if(!currentProject.members) currentProject.members = [];
-        currentProject.members.push(email);
-        
-        updateLocalStorage();
-        input.value = "";
-        renderModalMembers();
-        loadProjectDetail(); // 요약카드 With 텍스트 갱신
-    }
+    const pathSegments = window.location.pathname.split('/');
+    const projectId = pathSegments[pathSegments.length - 1];
 
-    function removeMember(idx) {
-        currentProject.members.splice(idx, 1);
-        updateLocalStorage();
-        renderModalMembers();
-        loadProjectDetail();
-    }
-
-    function updateLocalStorage() {
-        const allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
-        const pIdx = allProjects.findIndex(p => String(p.id) === String(currentProject.id));
-        if(pIdx !== -1) {
-            allProjects[pIdx].members = currentProject.members;
-            localStorage.setItem('simu_projects', JSON.stringify(allProjects));
-        }
-    }
-
-    /* ── [4] 모달 제어 및 초기화 ── */
-    const shareModal = document.getElementById('shareModal');
-    const addTabModal = document.getElementById('addTabModal');
-
-    document.querySelector('.btn-add').onclick = () => {
-        document.getElementById('modalProjectTitle').textContent = currentProject.title;
-        renderModalMembers();
-        shareModal.classList.remove('hidden');
+    // 탭별 분석 페이지 URL 맵
+    const analyzeUrlMap = {
+      'tab-user-simu': `/aiuser/ai_user?projectId=${projectId}&from=detail`,
+      'tab-market':    `/market?projectId=${projectId}&from=detail`,
+      'tab-finance':   `#`,
+      'tab-plan':      `#`,
+      'tab-scenario':  `/scenario?projectId=${projectId}&from=detail`,
+      'tab-document':  `#`,
     };
 
-    // 💡 협업 공유 모달 닫기
-    function closeShareModal() {
-        shareModal.classList.add('hidden');
-    }
-
-    // 💡 탭 추가 모달 닫기 (새로 추가된 함수!)
-    function closeTabModal() {
-        addTabModal.classList.add('hidden');
-    }
-
-    // 바깥 영역 클릭 시 닫기 (안전한 방식으로 변경)
-    window.onclick = (e) => {
-        const shareModal = document.getElementById('shareModal');
-        const addTabModal = document.getElementById('addTabModal');
-        
-        if (e.target === shareModal) closeShareModal();
-        if (e.target === addTabModal) closeTabModal();
+    btn.onclick = () => {
+      const url = analyzeUrlMap[tabId] || '#';
+      if (url !== '#') window.location.href = url;
     };
+  }
 
-    function toggleStar(btn) { btn.classList.toggle('active'); }
+  /* ── [5] 멤버 관리 (협업 공유) ── */
+  function renderModalMembers() {
+    const listContainer = document.getElementById('modalMemberList');
+    if (!listContainer || !currentProject) return;
 
-    document.addEventListener('DOMContentLoaded', () => {
-        loadProjectDetail();
-        initTabs();
-    });
+    let html = `
+      <div class="share-member-item">
+        <div class="member-profile-info">
+          <div class="profile-avatar-small"></div>
+          <div class="member-text"><span class="member-name">나(소유자)</span><span class="member-email">me@simuuser.com</span></div>
+        </div>
+        <span class="member-role">소유자</span>
+      </div>`;
+
+    if (currentProject.members) {
+      currentProject.members.forEach((email, idx) => {
+        html += `
+        <div class="share-member-item">
+          <div class="member-profile-info">
+            <div class="profile-avatar-small"></div>
+            <div class="member-text"><span class="member-name">${email.split('@')[0]}</span><span class="member-email">${email}</span></div>
+          </div>
+          <button onclick="removeMember(${idx})" style="color:#ef4444; background:none; border:none; cursor:pointer;">삭제</button>
+        </div>`;
+      });
+    }
+    listContainer.innerHTML = html;
+  }
+
+  function addMemberByEmail() {
+    const input = document.getElementById('shareEmailInput');
+    const email = input.value.trim();
+    if (!email.includes('@')) return alert("이메일 형식이 아닙니다.");
+    if (!currentProject.members) currentProject.members = [];
+    currentProject.members.push(email);
+    updateLocalStorage();
+    input.value = '';
+    renderModalMembers();
+    loadProjectDetail();
+  }
+
+  function removeMember(idx) {
+    currentProject.members.splice(idx, 1);
+    updateLocalStorage();
+    renderModalMembers();
+    loadProjectDetail();
+  }
+
+  function updateLocalStorage() {
+    const allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
+    const pIdx = allProjects.findIndex(p => String(p.id) === String(currentProject.id));
+    if (pIdx !== -1) {
+      allProjects[pIdx] = { ...allProjects[pIdx], ...currentProject };
+      localStorage.setItem('simu_projects', JSON.stringify(allProjects));
+    }
+  }
+
+  /* ── [6] 모달 제어 ── */
+  const shareModal = document.getElementById('shareModal');
+  const addTabModal = document.getElementById('addTabModal');
+
+  document.querySelector('.btn-add').onclick = () => {
+    if (currentProject) {
+      document.getElementById('modalProjectTitle').textContent = currentProject.title;
+    }
+    renderModalMembers();
+    shareModal.classList.remove('hidden');
+  };
+
+  function closeShareModal() { shareModal.classList.add('hidden'); }
+
+  window.onclick = (e) => {
+    if (e.target === shareModal) closeShareModal();
+    if (e.target === addTabModal) closeTabModal();
+  };
+
+  function toggleStar(btn) { btn.classList.toggle('active'); }
+
+  function timeAgo(isoStr) {
+    if (!isoStr) return '';
+    const diff = Date.now() - new Date(isoStr).getTime();
+    const min = Math.floor(diff / 60000);
+    if (min < 1) return '방금 전';
+    if (min < 60) return `${min}분 전`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr}시간 전`;
+    return `${Math.floor(hr / 24)}일 전`;
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadProjectDetail();
+    initTabs();
+    updateAnalyzeButton('tab-user-simu');
+  });
 </script>
 </body>
 </html>
