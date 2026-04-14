@@ -108,33 +108,34 @@
         let menuHtml = "";
 
         MENU_ITEMS.forEach((item) => {
-        if (item.type === "section") {
-            menuHtml += `<div class="sb-section-label">${item.label}</div>`;
-        } else {
-            const isActive = item.id === activeId;
-            menuHtml += `
-            <a href="${item.href}" class="sb-menu-item${isActive ? " active" : ""}" data-id="${item.id}">
-                <span class="sb-icon">${item.icon}</span>
-                <span class="sb-label">${item.prefix ? item.prefix + " " : ""}${item.label}</span>
-            </a>`;
-        }
+            if (item.type === "section") {
+                menuHtml += `<div class="sb-section-label">${item.label}</div>`;
+            } else {
+                const isActive = item.id === activeId;
+                menuHtml += `
+                <a href="${item.href}" class="sb-menu-item${isActive ? " active" : ""}" data-id="${item.id}">
+                    <span class="sb-icon">${item.icon}</span>
+                    <span class="sb-label">${item.prefix ? item.prefix + " " : ""}${item.label}</span>
+                </a>`;
+            }
         });
 
         return `
         <aside class="sidebar">
             <div class="sb-top">
-            <div class="sb-logo">
+            <a href="/" class="sb-logo" style="text-decoration: none;">
                 <div class="sb-logo-icon">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
                 </div>
                 <span class="sb-logo-text">SimuUser</span>
-            </div>
+            </a>
             <nav class="sb-nav">
                 ${menuHtml}
             </nav>
             </div>
+            
             <div class="sb-bottom">
             <a href="#" class="sb-menu-item">
                 <span class="sb-icon">
