@@ -111,6 +111,16 @@ public class AiUserController {
         }
     }
 
+    @GetMapping("/results/{resultId}")
+    @ResponseBody
+    public ResponseEntity<?> result(@PathVariable Long resultId, Authentication authentication) {
+        try {
+            return ResponseEntity.ok(aiSimulationResultService.findOne(resultId, authentication));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     private Map<String, Object> callGemini(Map<String, Object> requestBody) {
         List<String> models = GEMINI_FALLBACK_MODEL.equals(geminiModel)
                 ? List.of(geminiModel)

@@ -68,6 +68,20 @@ public class AiSimulationResultService {
     }
 
     @Transactional(readOnly = true)
+    public AiSimulationResultResponse findOne(Long resultId, Authentication authentication) {
+        if (resultId == null) {
+            throw new IllegalArgumentException("resultId is required.");
+        }
+
+        AppUser currentUser = projectService.getCurrentUser(authentication);
+        AiSimulationResult result = aiSimulationResultRepository.findById(resultId)
+                .orElseThrow(() -> new IllegalArgumentException("AI simulation result not found."));
+        findAccessibleProject(result.getProject().getId(), currentUser);
+
+        return new AiSimulationResultResponse(result, fromJson(result.getResultJson()));
+    }
+
+    @Transactional(readOnly = true)
     public List<AiSimulationResultResponse> findByProject(Long projectId, Authentication authentication) {
         if (projectId == null) {
             throw new IllegalArgumentException("projectId is required.");

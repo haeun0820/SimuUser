@@ -295,7 +295,32 @@
       }
 
       await loadMarketAnalyses(projectId);
+      await loadAiUserAnalyses(projectId);
+      renderAiUserAnalysisList();
       renderMarketAnalysisList();
+    }
+  }
+
+  async function loadAiUserAnalyses(projectId) {
+    if (!currentProject) return;
+
+    try {
+      const response = await fetch(`/aiuser/results/project/${projectId}`, {
+        headers: { Accept: 'application/json' }
+      });
+      if (!response.ok) return;
+
+      const analyses = await response.json();
+      currentProject.aiUserAnalyses = analyses.map(item => ({
+        id: String(item.id),
+        type: 'aiuser',
+        title: 'AI 유저 시뮬레이션',
+        createdAt: item.createdAt,
+        result: item.result,
+        starred: false
+      }));
+    } catch (error) {
+      console.error(error);
     }
   }
 
@@ -323,6 +348,43 @@
   }
 
   /* ── [2] 시장&경쟁 분석 탭 렌더링 ── */
+  function renderAiUserAnalysisList() {
+    const listEl = document.getElementById('simuAnalysisList');
+    if (!listEl || !currentProject) return;
+
+    const analyses = currentProject.aiUserAnalyses || [];
+
+    if (analyses.length === 0) {
+      listEl.innerHTML = `
+        <div class="empty-state" style="padding: 40px; text-align: center; color: #94a3b8;">
+          AI 유저 시뮬레이션 결과가 없습니다. 분석을 시작해보세요.
+        </div>`;
+      return;
+    }
+
+    listEl.innerHTML = analyses.map(a => `
+      <div class="analysis-item" data-analysis-id="${a.id}">
+        <div class="item-status success">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <div class="item-info">
+          <span class="item-title">${escHtml(a.title)}</span>
+          <span class="item-date" style="font-size:12px; color:#94a3b8; margin-left:10px;">${timeAgo(a.createdAt)}</span>
+        </div>
+        <div class="item-actions">
+          <button class="btn-edit-small" onclick="viewAiUserResult('${a.id}')">보기</button>
+        </div>
+      </div>`).join('');
+  }
+
+  function viewAiUserResult(analysisId) {
+    const pathSegments = window.location.pathname.split('/');
+    const projectId = pathSegments[pathSegments.length - 1];
+    window.location.href = `/aiuser/result?projectId=${projectId}&from=detail&resultId=${analysisId}`;
+  }
+
   function renderMarketAnalysisList() {
     const listEl = document.getElementById('marketAnalysisList');
     if (!listEl || !currentProject) return;

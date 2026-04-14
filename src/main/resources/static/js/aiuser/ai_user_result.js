@@ -24,6 +24,12 @@
     'linear-gradient(135deg,#059669,#0891b2)'
   ];
 
+  let currentParams = null;
+  let currentResult = null;
+  let savedResultId = null;
+  const urlParams = new URLSearchParams(window.location.search);
+  const resultId = urlParams.get('resultId');
+
   function escHtml(value) {
     return String(value ?? '')
       .replace(/&/g, '&amp;')
@@ -52,6 +58,15 @@
 
   function cacheResult(params, result) {
     localStorage.setItem('simu_result', JSON.stringify({ params, result }));
+  }
+
+  function markSaved(id) {
+    savedResultId = id || savedResultId;
+    const button = document.getElementById('btnSave');
+    if (!button) return;
+
+    button.disabled = true;
+    button.textContent = '저장됨';
   }
 
   function initBreadcrumb(params) {
@@ -120,6 +135,69 @@
     return response.json();
   }
 
+  async function saveSimulationResult(params, result) {
+    if (!params?.project?.id) {
+      throw new Error('프로젝트 정보가 없습니다.');
+    }
+    if (!result) {
+      throw new Error('저장할 분석 결과가 없습니다.');
+    }
+
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+    const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
+    if (csrfToken && csrfHeader) {
+      headers[csrfHeader] = csrfToken;
+    }
+
+    const response = await fetch('/aiuser/results', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        projectId: params.project.id,
+        personaCount: params.personaCount,
+        gender: genderLabels[params.gender] || params.gender || '',
+        ages: params.ages || [],
+        job: params.job || '',
+        result
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorMessage = errorText || `Server error ${response.status}`;
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.error || errorMessage;
+      } catch (error) {
+        // Keep the raw response text when the server does not return JSON.
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
+  async function loadSavedSimulationResult(id) {
+    const response = await fetch(`/aiuser/results/${id}`, {
+      headers: { Accept: 'application/json' }
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorMessage = errorText || `Server error ${response.status}`;
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.error || errorMessage;
+      } catch (error) {
+        // Keep the raw response text when the server does not return JSON.
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
   function renderStats(result, personaCount) {
     const element = document.getElementById('statsGrid');
     if (!element) return;
@@ -146,12 +224,11 @@
     }
   }
 
-  function renderPersonas(result) {
+  function renderPersonas(result, params) {
     const element = document.getElementById('personaGrid');
     const personas = Array.isArray(result.personas) ? result.personas : [];
     if (!element) return;
 
-    const params = loadParams();
     const selectedGender = params ? genderLabels[params.gender] : '전체';
 
     element.className = `persona-grid cols-${Math.max(2, Math.min(personas.length, 4))}`;
@@ -256,9 +333,11 @@ element.innerHTML = personas.map((persona, index) => {
   }
 
   function renderResult(result, params) {
+    currentParams = params;
+    currentResult = result;
     renderStats(result, params.personaCount);
     renderOverallReaction(result);
-    renderPersonas(result);
+    renderPersonas(result, params);
     renderInsights(result);
     hideLoading();
   }
@@ -293,13 +372,56 @@ element.innerHTML = personas.map((persona, index) => {
     document.getElementById('btnRetry')?.addEventListener('click', runSimulation);
     document.getElementById('btnRetryErr')?.addEventListener('click', runSimulation);
 
-    document.getElementById('btnSave')?.addEventListener('click', () => {
-    // 여기에 저장 로직을 작성하세요 (예: 서버 API 호출 또는 PDF 다운로드 등)
-    alert('결과가 저장되었습니다!');});
+    document.getElementById('btnSave')?.addEventListener('click', async event => {
+      if (savedResultId) return;
+
+      const button = event.currentTarget;
+      button.disabled = true;
+
+      try {
+        const params = currentParams || loadParams();
+        const result = currentResult || loadCachedResult(params);
+        const saved = await saveSimulationResult(params, result);
+        markSaved(saved.id);
+        alert('결과가 저장되었습니다!');
+        if (params?.project?.id) {
+          setTimeout(() => {
+            window.location.href = `/project/detail/${params.project.id}`;
+          }, 800);
+        }
+      } catch (error) {
+        console.error(error);
+        button.disabled = false;
+        alert(`결과 저장에 실패했습니다. ${error.message}`);
+      }
+    });
   }
 
   function init() {
     initButtons();
+    if (resultId) {
+      showLoading();
+      loadSavedSimulationResult(resultId)
+        .then(saved => {
+          savedResultId = saved.id;
+          const params = {
+            project: { id: saved.projectId },
+            personaCount: saved.personaCount,
+            gender: saved.gender,
+            ages: saved.ages,
+            job: saved.job
+          };
+          initBreadcrumb(params);
+          renderResult(saved.result, params);
+          markSaved(saved.id);
+        })
+        .catch(error => {
+          console.error(error);
+          showError(`저장된 결과를 불러오지 못했습니다. ${error.message}`);
+        });
+      return;
+    }
+
     const params = loadParams();
     if (!params) {
       showError('Simulation settings are missing. Go back to settings and start again.');

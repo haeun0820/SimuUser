@@ -47,7 +47,7 @@ public class AiSimulationResult {
     private String overallReaction;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String resultJson;
 
     @Column(nullable = false)
