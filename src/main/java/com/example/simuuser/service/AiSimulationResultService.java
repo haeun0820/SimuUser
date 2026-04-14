@@ -30,14 +30,13 @@ public class AiSimulationResultService {
             AiSimulationResultRepository aiSimulationResultRepository,
             ProjectRepository projectRepository,
             ProjectMemberRepository projectMemberRepository,
-            ProjectService projectService,
-            ObjectMapper objectMapper
+            ProjectService projectService
     ) {
         this.aiSimulationResultRepository = aiSimulationResultRepository;
         this.projectRepository = projectRepository;
         this.projectMemberRepository = projectMemberRepository;
         this.projectService = projectService;
-        this.objectMapper = objectMapper;
+        this.objectMapper = new ObjectMapper();
     }
 
     @Transactional
