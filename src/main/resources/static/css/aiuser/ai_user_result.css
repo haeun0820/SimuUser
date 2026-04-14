@@ -282,7 +282,7 @@ body {
 }
 .persona-info { flex: 1; min-width: 0; }
 .persona-name { font-size: 14px; font-weight: 700; color: var(--text); }
-.persona-meta { font-size: 12px; color: var(--text-sub); }
+
 .persona-score {
   font-size: 13px;
   font-weight: 700;
@@ -408,6 +408,31 @@ body {
   transition: background 0.12s;
 }
 .btn-retry:hover { background: var(--primary-hover); }
+
+.btn-save {
+  padding: 12px 24px;
+  background: #059669; /* 저장 느낌의 녹색 계열 */
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background 0.12s;
+}
+
+.btn-save:hover {
+  background: #047857;
+}
+
+.persona-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 
 /* Error state */
 .error-state {

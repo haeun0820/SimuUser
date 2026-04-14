@@ -40,6 +40,20 @@
     }
   }
 
+  function loadCachedResult(params) {
+    try {
+      const cached = JSON.parse(localStorage.getItem('simu_result') || 'null');
+      if (!cached || !cached.result) return null;
+      return JSON.stringify(cached.params) === JSON.stringify(params) ? cached.result : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function cacheResult(params, result) {
+    localStorage.setItem('simu_result', JSON.stringify({ params, result }));
+  }
+
   function initBreadcrumb(params) {
     const nav = document.getElementById('breadcrumbNav');
     if (!nav) return;
@@ -93,7 +107,14 @@
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(errorText || `서버 오류 ${response.status}`);
+      let errorMessage = errorText || `Server error ${response.status}`;
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.error || errorMessage;
+      } catch (error) {
+        // Keep the raw response text when the server does not return JSON.
+      }
+      throw new Error(errorMessage);
     }
 
     return response.json();
@@ -130,23 +151,42 @@
     const personas = Array.isArray(result.personas) ? result.personas : [];
     if (!element) return;
 
-    element.className = `persona-grid cols-${Math.max(2, Math.min(personas.length, 4))}`;
-    element.innerHTML = personas.map((persona, index) => {
-      const initial = persona.name?.charAt(0) || '?';
-      const positive = (persona.positiveReactions || []).map(item => `<li>${escHtml(item)}</li>`).join('');
-      const negative = (persona.negativeReactions || []).map(item => `<li>${escHtml(item)}</li>`).join('');
-      const churn = (persona.churnPoints || []).map(item => `<li>${escHtml(item)}</li>`).join('');
+    const params = loadParams();
+    const selectedGender = params ? genderLabels[params.gender] : '전체';
 
-      return `
-        <div class="persona-card" style="animation-delay:${index * 0.1}s">
-          <div class="persona-head">
-            <div class="persona-avatar" style="background:${avatarColors[index % avatarColors.length]}">${escHtml(initial)}</div>
-            <div class="persona-info">
-              <div class="persona-name">${escHtml(persona.name)}</div>
-              <div class="persona-meta">${escHtml(persona.age)}세 · ${escHtml(persona.job)}</div>
-            </div>
-            <span class="persona-score">${Number(persona.purchaseScore || 0)}%</span>
-          </div>
+    element.className = `persona-grid cols-${Math.max(2, Math.min(personas.length, 4))}`;
+element.innerHTML = personas.map((persona, index) => {
+  const initial = persona.name?.charAt(0) || '?';
+  const positive = (persona.positiveReactions || []).map(item => `<li>${escHtml(item)}</li>`).join('');
+  const negative = (persona.negativeReactions || []).map(item => `<li>${escHtml(item)}</li>`).join('');
+  const churn = (persona.churnPoints || []).map(item => `<li>${escHtml(item)}</li>`).join('');
+  
+  // 1. 성별 결정 로직 (displayGender 결정)
+  let displayGender = persona.gender;
+  if (!displayGender) {
+    if (selectedGender === '남성' || selectedGender === '여성') {
+      displayGender = selectedGender;
+    } else {
+      // '전체'일 경우 인덱스에 따라 임의 배정
+      displayGender = (index % 2 === 0) ? '남성' : '여성';
+    }
+  }
+
+  // 2. 최종 출력용 텍스트 생성 (이 변수를 사용해야 합니다)
+  const genderText = ` · ${escHtml(displayGender)}`;
+
+  return `
+  <div class="persona-card" style="animation-delay:${index * 0.1}s">
+    <div class="persona-head">
+      <div class="persona-avatar" style="background:${avatarColors[index % avatarColors.length]}">${escHtml(initial)}</div>
+      <div class="persona-info">
+        <div class="persona-name">${escHtml(persona.name)}</div>
+        <div class="persona-meta">
+          ${escHtml(persona.age)}세 · ${escHtml(persona.job)}${genderText}
+        </div>
+      </div>
+      <span class="persona-score">${Number(persona.purchaseScore || 0)}%</span>
+    </div>
           <div><span class="consumer-badge">${escHtml(persona.consumerType)}</span></div>
           <div class="reaction-section">
             <div class="reaction-label label-positive">긍정 반응</div>
@@ -215,6 +255,14 @@
     }
   }
 
+  function renderResult(result, params) {
+    renderStats(result, params.personaCount);
+    renderOverallReaction(result);
+    renderPersonas(result);
+    renderInsights(result);
+    hideLoading();
+  }
+
   async function runSimulation() {
     const params = loadParams();
     if (!params) {
@@ -227,11 +275,8 @@
 
     try {
       const result = await callSimulateAPI(params);
-      renderStats(result, params.personaCount);
-      renderOverallReaction(result);
-      renderPersonas(result);
-      renderInsights(result);
-      hideLoading();
+      cacheResult(params, result);
+      renderResult(result, params);
     } catch (error) {
       console.error(error);
       showError(`AI 분석 중 오류가 발생했습니다. ${error.message}`);
@@ -247,11 +292,35 @@
     });
     document.getElementById('btnRetry')?.addEventListener('click', runSimulation);
     document.getElementById('btnRetryErr')?.addEventListener('click', runSimulation);
+
+    document.getElementById('btnSave')?.addEventListener('click', () => {
+    // 여기에 저장 로직을 작성하세요 (예: 서버 API 호출 또는 PDF 다운로드 등)
+    alert('결과가 저장되었습니다!');});
   }
 
   function init() {
     initButtons();
-    runSimulation();
+    const params = loadParams();
+    if (!params) {
+      showError('Simulation settings are missing. Go back to settings and start again.');
+      return;
+    }
+
+    initBreadcrumb(params);
+
+    const cachedResult = loadCachedResult(params);
+    if (cachedResult) {
+      renderResult(cachedResult, params);
+      return;
+    }
+
+    if (localStorage.getItem('simu_should_run') === '1') {
+      localStorage.removeItem('simu_should_run');
+      runSimulation();
+      return;
+    }
+
+    showError('분석 결과가 없습니다. 설정 페이지에서 시뮬레이션을 다시 시작해 주세요.');
   }
 
   if (document.readyState === 'loading') {

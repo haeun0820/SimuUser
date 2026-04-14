@@ -1,6 +1,8 @@
 package com.example.simuuser.controller;
 
+import com.example.simuuser.dto.AiSimulationResultSaveRequest;
 import com.example.simuuser.dto.ProjectResponse;
+import com.example.simuuser.service.AiSimulationResultService;
 import com.example.simuuser.service.ProjectService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,17 +31,21 @@ public class AiUserController {
 
     private final ObjectMapper objectMapper;
     private final ProjectService projectService;
+    private final AiSimulationResultService aiSimulationResultService;
     private final RestTemplate restTemplate;
     private final String geminiApiKey;
     private final String geminiModel;
+    private static final String GEMINI_FALLBACK_MODEL = "gemini-2.5-flash-lite";
 
     public AiUserController(
             ProjectService projectService,
+            AiSimulationResultService aiSimulationResultService,
             @Value("${gemini.api.key:}") String geminiApiKey,
-            @Value("${gemini.model:gemini-1.5-flash}") String geminiModel
+            @Value("${gemini.model:gemini-2.5-flash}") String geminiModel
     ) {
         this.objectMapper = new ObjectMapper();
         this.projectService = projectService;
+        this.aiSimulationResultService = aiSimulationResultService;
         this.restTemplate = new RestTemplate();
         this.geminiApiKey = geminiApiKey;
         this.geminiModel = geminiModel;
@@ -75,7 +82,7 @@ public class AiUserController {
             return ResponseEntity.ok(normalizeResult(result, personaCount));
         } catch (RestClientException e) {
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                    .body(Map.of("error", "Gemini API 호출 중 오류가 발생했습니다: " + e.getMessage()));
+                    .body(Map.of("error", toGeminiErrorMessage(e)));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
@@ -84,9 +91,51 @@ public class AiUserController {
         }
     }
 
+    @PostMapping("/results")
+    @ResponseBody
+    public ResponseEntity<?> saveResult(@RequestBody AiSimulationResultSaveRequest request, Authentication authentication) {
+        try {
+            return ResponseEntity.ok(aiSimulationResultService.save(request, authentication));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/results/project/{projectId}")
+    @ResponseBody
+    public ResponseEntity<?> projectResults(@PathVariable Long projectId, Authentication authentication) {
+        try {
+            return ResponseEntity.ok(aiSimulationResultService.findByProject(projectId, authentication));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     private Map<String, Object> callGemini(Map<String, Object> requestBody) {
+        List<String> models = GEMINI_FALLBACK_MODEL.equals(geminiModel)
+                ? List.of(geminiModel)
+                : List.of(geminiModel, GEMINI_FALLBACK_MODEL);
+        RestClientException lastException = null;
+
+        for (String model : models) {
+            try {
+                return callGeminiModel(model, requestBody);
+            } catch (RestClientException e) {
+                lastException = e;
+                if (!isTemporaryGeminiUnavailable(e)) {
+                    throw e;
+                }
+            }
+        }
+
+        throw lastException == null
+                ? new IllegalArgumentException("Gemini response is empty.")
+                : lastException;
+    }
+
+    private Map<String, Object> callGeminiModel(String model, Map<String, Object> requestBody) {
         String url = UriComponentsBuilder
-                .fromUriString("https://generativelanguage.googleapis.com/v1beta/models/" + geminiModel + ":generateContent")
+                .fromUriString("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent")
                 .queryParam("key", geminiApiKey)
                 .toUriString();
 
@@ -96,6 +145,23 @@ public class AiUserController {
             throw new IllegalArgumentException("Gemini 응답이 비어 있습니다.");
         }
         return response;
+    }
+
+    private boolean isTemporaryGeminiUnavailable(RestClientException e) {
+        String message = e.getMessage();
+        return message != null
+                && (message.contains("503")
+                || message.contains("UNAVAILABLE")
+                || message.contains("Service Unavailable")
+                || message.contains("high demand"));
+    }
+
+    private String toGeminiErrorMessage(RestClientException e) {
+        if (isTemporaryGeminiUnavailable(e)) {
+            return "Gemini model is currently busy. Please try again shortly.";
+        }
+
+        return "Gemini API call failed: " + e.getMessage();
     }
 
     private Map<String, Object> buildGeminiRequest(String prompt) {
