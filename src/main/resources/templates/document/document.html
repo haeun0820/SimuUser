@@ -34,11 +34,16 @@
             <div class="project-select-card">
                 <div class="project-select-header">
                     <span class="section-title">프로젝트 선택</span>
+                    <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
                     <div class="project-filter-tabs">
                         <label><input type="radio" name="projectFilter" value="all" checked><span class="radio-dot"></span><span>전체</span></label>
                         <label><input type="radio" name="projectFilter" value="collab"><span class="radio-dot"></span><span>협업</span></label>
                         <label><input type="radio" name="projectFilter" value="personal"><span class="radio-dot"></span><span>개인</span></label>
                     </div>
+                    <a th:href="@{/project/new}" class="btn-new-proj" style="text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                        새로 만들기 +
+                    </a>
+                </div>
                 </div>
                 <div class="project-list-scroll" id="projectListScroll">
                     </div>

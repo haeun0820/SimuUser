@@ -163,6 +163,56 @@ body {
     resize: none;
 }
 
+/* 래이디오래이디오 라디오. */
+project-filter-tabs {
+    gap: 20px;
+}
+
+.radio-dot {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #d1d5db;
+    border-radius: 50%;
+    display: inline-block;
+    position: relative;
+}
+
+input[type="radio"]:checked + .radio-dot {
+    border-color: #6366f1;
+    background-color: #6366f1;
+}
+
+input[type="radio"]:checked + .radio-dot::after {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #fff;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+input[type="radio"] {
+    display: none;
+}
+
+/* 버튼 왜 css 안 먹히냐 쉬발~ */
+.btn-new-proj {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2563eb;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+  text-decoration: none;
+  transition: opacity 0.12s;
+}
+.btn-new-proj:hover { opacity: 0.7; }
+
 /* ── 실행 버튼 (하단 고정 혹은 하단 배치) ── */
 .btn-run-analysis {
     width: 100%;
@@ -262,3 +312,4 @@ body {
 .radio-circle {
     display: none; /* 이제 input 자체를 꾸미므로 필요 없음 */
 }
+

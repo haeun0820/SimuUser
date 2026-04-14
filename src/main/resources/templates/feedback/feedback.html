@@ -33,20 +33,16 @@
       <div class="selection-section">
         <div class="selection-header">
           <h2 class="selection-title">프로젝트 선택</h2>
-          <div class="filter-radios" id="filterRadios">
-            <label class="radio-option">
-              <input type="radio" name="projectFilter" value="all" checked>
-              <span class="radio-circle"></span><span>전체</span>
-            </label>
-            <label class="radio-option">
-              <input type="radio" name="projectFilter" value="collab">
-              <span class="radio-circle"></span><span>협업</span>
-            </label>
-            <label class="radio-option">
-              <input type="radio" name="projectFilter" value="personal">
-              <span class="radio-circle"></span><span>개인</span>
-            </label>
-          </div>
+          <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+                    <div class="project-filter-tabs">
+                        <label><input type="radio" name="projectFilter" value="all" checked><span class="radio-dot"></span><span>전체</span></label>
+                        <label><input type="radio" name="projectFilter" value="collab"><span class="radio-dot"></span><span>협업</span></label>
+                        <label><input type="radio" name="projectFilter" value="personal"><span class="radio-dot"></span><span>개인</span></label>
+                    </div>
+                    <a th:href="@{/project/new}" class="btn-new-proj" style="text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                        새로 만들기 +
+                    </a>
+            </div>
         </div>
         <div class="project-list-container">
           <div class="project-list" id="projectList"></div>
