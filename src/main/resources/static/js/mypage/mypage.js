@@ -119,7 +119,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 : '';
 
             return `
-                <div class="list-item" onclick="location.href='/project/${p.id}'">
+                <div class="list-item" onclick="location.href='/project/detail/${p.id}'">
                     <div class="list-item-content">
                         <div class="item-title-row">
                             <h3 class="item-title">${escHtml(p.title)}</h3>
