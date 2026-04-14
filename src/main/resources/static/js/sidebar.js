@@ -81,7 +81,7 @@
                 <path d="M12 8v4l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                 </svg>`,
         label: "기획 & 피드백 AI",
-        href: "#",
+        href: "/feedback",
     },
     {
         type: "link",

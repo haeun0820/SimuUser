@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>기획 & 피드백 AI – SimuUser</title>
+  <link rel="stylesheet" th:href="@{/css/feedback/feedback.css}">
+  <link rel="stylesheet" th:href="@{/css/header/header.css}">
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar-aside-wrapper" style="width: 240px; flex-shrink: 0;">
+    <div id="sidebar-root" data-active="feedback"></div>
+  </aside>
+
+  <div class="main-area">
+    <header th:replace="~{header/header :: header(${ {'분석도구','기획 & 피드백 AI'} })}"></header>
+
+    <main class="page-content">
+      <div class="tool-page-header">
+        <div class="tool-icon-wrap" style="background-color: #4F46E5;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+            <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
+            <path d="M12 6v6l4 2"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="tool-title">기획 & 피드백 AI</h1>
+          <p class="tool-subtitle">기획서를 분석하여 논리 구조, 리스크, 실패 시나리오를 평가합니다</p>
+        </div>
+      </div>
+
+      <div class="selection-section">
+        <div class="selection-header">
+          <h2 class="selection-title">프로젝트 선택</h2>
+          <div class="filter-radios" id="filterRadios">
+            <label class="radio-option">
+              <input type="radio" name="projectFilter" value="all" checked>
+              <span class="radio-circle"></span><span>전체</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="projectFilter" value="collab">
+              <span class="radio-circle"></span><span>협업</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="projectFilter" value="personal">
+              <span class="radio-circle"></span><span>개인</span>
+            </label>
+          </div>
+        </div>
+        <div class="project-list-container">
+          <div class="project-list" id="projectList"></div>
+        </div>
+      </div>
+
+      <div class="input-method-section">
+        <h2 class="selection-title">분석 방법 선택</h2>
+        <div class="method-tabs">
+          <label class="method-tab">
+            <input type="radio" name="inputMethod" value="file" checked>
+            <span class="tab-label">파일 업로드</span>
+          </label>
+          <label class="method-tab">
+            <input type="radio" name="inputMethod" value="text">
+            <span class="tab-label">직접 입력</span>
+          </label>
+        </div>
+
+        <div id="fileInputArea" class="method-content active">
+          <div class="file-upload-box" id="dropZone">
+            <input type="file" id="filePicker" hidden>
+            <div class="upload-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+              </svg>
+            </div>
+            <p id="fileNameDisplay">파일을 드래그하거나 클릭하여 업로드하세요</p>
+          </div>
+        </div>
+
+        <div id="textInputArea" class="method-content">
+          <textarea class="feedback-textarea" placeholder="기획서 내용을 입력해주세요. 서비스 개요, 핵심 기능, 타겟 유저 등을 포함하면 더 정확한 분석이 가능합니다."></textarea>
+        </div>
+      </div>
+
+      <div class="action-area">
+        <button class="btn-run-analysis" id="btnRunFeedback" disabled>
+          기획 피드백 실행
+        </button>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">AI가 기획서를 분석하고 있습니다...</div>
+</div>
+
+<script th:src="@{/js/sidebar.js}"></script>
+<script th:src="@{/js/header.js}"></script>
+<script th:src="@{/js/feedback/feedback.js}"></script>
+</body>
+</html>
