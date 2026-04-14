@@ -6,6 +6,7 @@
   /* ── URL 파라미터 ── */
   const urlParams = new URLSearchParams(window.location.search);
   const projectId = urlParams.get('projectId');
+  const analysisId = urlParams.get('analysisId');
   const fromDetail = urlParams.get('from') === 'detail';
 
   /* ── 선택된 프로젝트 ── */
@@ -18,6 +19,78 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  async function callMarketAnalyzeAPI(project) {
+    if (!project?.id) {
+      throw new Error('Project information is missing.');
+    }
+
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+    const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
+    if (csrfToken && csrfHeader) {
+      headers[csrfHeader] = csrfToken;
+    }
+
+    const response = await fetch('/market/analyze', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ projectId: project.id })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorMessage = errorText || `Server error ${response.status}`;
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.error || errorMessage;
+      } catch (error) {
+        // Keep the raw response text when the server does not return JSON.
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
+  async function loadAnalysisResult(project) {
+    if (analysisId) {
+      const response = await fetch(`/market/results/${analysisId}`, {
+        headers: { Accept: 'application/json' }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = errorText || `Server error ${response.status}`;
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.error || errorMessage;
+        } catch (error) {
+          // Keep the raw response text when the server does not return JSON.
+        }
+        throw new Error(errorMessage);
+      }
+
+      const saved = await response.json();
+      if (saved.projectId && !currentProject) {
+        currentProject = { id: saved.projectId };
+      }
+      return saved.result;
+    }
+
+    const cachedResult = sessionStorage.getItem('market_analysis_result');
+    if (cachedResult) {
+      try {
+        return JSON.parse(cachedResult);
+      } catch (error) {
+        sessionStorage.removeItem('market_analysis_result');
+      }
+    }
+
+    const result = await callMarketAnalyzeAPI(project);
+    sessionStorage.setItem('market_analysis_result', JSON.stringify(result));
+    return result;
   }
 
   /* ── 더미 분석 결과 생성 ── */
@@ -183,8 +256,38 @@
   }
 
   /* ── 결과 저장 (localStorage) ── */
-  function saveResult(result) {
+  async function saveResult(result) {
     if (!projectId) return;
+
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+    const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
+    if (csrfToken && csrfHeader) {
+      headers[csrfHeader] = csrfToken;
+    }
+
+    const response = await fetch('/market/results', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        projectId: Number(projectId),
+        result
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorMessage = errorText || `Server error ${response.status}`;
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.error || errorMessage;
+      } catch (error) {
+        // Keep the raw response text when the server does not return JSON.
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
 
     const allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
     const pIdx = allProjects.findIndex(p => String(p.id) === projectId);
@@ -220,9 +323,9 @@
   /* ── 뒤로 가기 ── */
   function goBack() {
     if (fromDetail && projectId) {
-      window.location.href = `/market?projectId=${projectId}&from=detail`;
+      window.location.href = `/market/market?projectId=${projectId}&from=detail`;
     } else {
-      window.location.href = '/market';
+      window.location.href = '/market/market';
     }
   }
 
@@ -249,15 +352,29 @@
 
     renderBreadcrumb();
 
-    // 분석 결과 생성
-    const result = generateAnalysisResult(currentProject);
+    // 분석 결과 로드
+    let result;
+    try {
+      result = await loadAnalysisResult(currentProject);
+    } catch (error) {
+      console.error(error);
+      alert(`AI 분석 결과를 불러오지 못했습니다. ${error.message}`);
+      result = generateAnalysisResult(currentProject);
+    }
     renderResult(result);
 
     // 저장 버튼
     const btnSave = document.getElementById('btnSave');
     if (btnSave) {
-      btnSave.addEventListener('click', () => {
-        saveResult(result);
+      btnSave.addEventListener('click', async () => {
+        btnSave.disabled = true;
+        try {
+        const saved = await saveResult(result);
+        if (saved?.id) {
+          const params = new URLSearchParams(window.location.search);
+          params.set('analysisId', saved.id);
+          window.history.replaceState(null, '', `/market/result?${params.toString()}`);
+        }
         showToast();
         // 프로젝트 상세로 이동 (저장 후)
         if (projectId) {
@@ -265,7 +382,16 @@
             window.location.href = `/project/detail/${projectId}`;
           }, 1800);
         }
+        } catch (error) {
+          console.error(error);
+          btnSave.disabled = false;
+          alert(`결과 저장에 실패했습니다. ${error.message}`);
+        }
       });
+      if (analysisId) {
+        btnSave.disabled = true;
+        btnSave.textContent = '저장됨';
+      }
     }
 
     // 뒤로 가기 버튼

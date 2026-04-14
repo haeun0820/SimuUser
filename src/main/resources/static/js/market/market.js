@@ -136,9 +136,50 @@
     if (btn) btn.disabled = !selectedProjectId;
   }
 
+  async function callMarketAnalyzeAPI(project) {
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+    const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
+    if (csrfToken && csrfHeader) {
+      headers[csrfHeader] = csrfToken;
+    }
+
+    const response = await fetch('/market/analyze', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        projectId: project.id,
+        title: project.title,
+        description: project.description,
+        targetUser: project.targetUser,
+        industry: project.industry
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorMessage = errorText || `Server error ${response.status}`;
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.error || errorMessage;
+      } catch (error) {
+        // Keep the raw response text when the server does not return JSON.
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
   /* ── 분석 실행 ── */
-  function runAnalysis() {
+  async function runAnalysis() {
     if (!selectedProjectId) return;
+
+    const project = allProjects.find(p => String(p.id) === selectedProjectId);
+    if (!project) return;
+
+    const btn = document.getElementById('btnRunAnalysis');
+    if (btn) btn.disabled = true;
 
     // 로딩 오버레이 표시
     let overlay = document.getElementById('loadingOverlay');
@@ -155,19 +196,24 @@
     }
 
     // 선택한 프로젝트 정보를 sessionStorage에 저장
-    const project = allProjects.find(p => String(p.id) === selectedProjectId);
-    if (project) {
-      sessionStorage.setItem('market_selected_project', JSON.stringify(project));
-      sessionStorage.setItem('market_from_detail', fromDetail ? 'true' : 'false');
-    }
+    sessionStorage.setItem('market_selected_project', JSON.stringify(project));
+    sessionStorage.setItem('market_from_detail', fromDetail ? 'true' : 'false');
+    sessionStorage.removeItem('market_analysis_result');
 
-    // 1.5초 후 결과 페이지로 이동
-    setTimeout(() => {
+    try {
+      const result = await callMarketAnalyzeAPI(project);
+      sessionStorage.setItem('market_analysis_result', JSON.stringify(result));
+
       const params = new URLSearchParams();
       params.set('projectId', selectedProjectId);
       if (fromDetail) params.set('from', 'detail');
       window.location.href = `/market/result?${params.toString()}`;
-    }, 1500);
+    } catch (error) {
+      console.error(error);
+      if (overlay) overlay.classList.remove('active');
+      if (btn) btn.disabled = false;
+      alert(`AI 분석 중 오류가 발생했습니다. ${error.message}`);
+    }
   }
 
   /* ── 라디오 필터 이벤트 ── */
