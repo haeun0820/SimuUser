@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SimuUser</title>
+  <link rel="stylesheet" th:href="@{/css/document/document.css}">
+  <link rel="stylesheet" th:href="@{/css/header/header.css}">
+</head>
+<body>
+<div class="app-layout">
+    <div id="sidebar-root" data-active="document"></div>
+
+    <div class="main-area">
+        <header th:replace="~{header/header :: header(${ {'분석도구','자동 문서화'} })}"></header>
+
+        <main class="page-content">
+            <div class="page-header">
+                <div class="page-icon" style="background-color: #8b5cf6;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                </div>
+                <div>
+                    <div class="page-title">자동 문서화</div>
+                    <div class="page-subtitle">분석 결과를 자동으로 기획서와 보고서로 변환합니다</div>
+                </div>
+            </div>
+
+            <div class="project-select-card">
+                <div class="project-select-header">
+                    <span class="section-title">프로젝트 선택</span>
+                    <div class="project-filter-tabs">
+                        <label><input type="radio" name="projectFilter" value="all" checked><span class="radio-dot"></span><span>전체</span></label>
+                        <label><input type="radio" name="projectFilter" value="collab"><span class="radio-dot"></span><span>협업</span></label>
+                        <label><input type="radio" name="projectFilter" value="personal"><span class="radio-dot"></span><span>개인</span></label>
+                    </div>
+                </div>
+                <div class="project-list-scroll" id="projectListScroll">
+                    </div>
+            </div>
+
+            <div class="document-section">
+                <div class="doc-toolbar">
+                    <div class="doc-tabs">
+                        <button class="doc-tab active" data-filter="all">전체</button>
+                        <button class="doc-tab" data-filter="기획서">기획서</button>
+                        <button class="doc-tab" data-filter="보고서">보고서</button>
+                        <button class="doc-tab" data-filter="분석결과">분석결과</button>
+                    </div>
+                    <button class="btn-ai-generate" id="openCreateModal">AI 문서 자동 생성</button>
+                </div>
+
+                <div id="documentListContainer" class="doc-list-container">
+                    <div class="empty-state">
+                        <div class="empty-icon">📄</div>
+                        <p>아직 생성된 문서가 없습니다.<br>문서를 AI를 이용해 자동 생성해보세요</p>
+                        <button class="btn-primary-outline" id="btnFirstGenerate">첫 문서 생성하기</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div id="createModal" class="modal-overlay">
+    <div class="modal-content">
+        <h2 class="modal-title">AI 문서 자동 생성</h2>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">문서 종류</label>
+                <div class="doc-type-selector">
+                    <button class="type-btn active" data-type="기획서">기획서</button>
+                    <button class="type-btn" data-type="보고서">보고서</button>
+                    <button class="type-btn" data-type="분석결과">분석결과</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">문서 이름</label>
+                <input type="text" id="newDocTitle" class="form-input" placeholder="문서 이름을 입력해주세요">
+            </div>
+            <div class="form-group">
+                <label class="form-label">문서 설명</label>
+                <textarea id="newDocDesc" class="form-input" rows="5" placeholder="문서에 대한 설명을 입력해주세요"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" id="closeCreateModal">취소</button>
+            <button class="btn-submit" id="confirmGenerate">추가</button>
+        </div>
+    </div>
+</div>
+
+<div id="detailModal" class="modal-overlay">
+    <div class="modal-content detail-modal">
+        <div class="detail-header">
+            <div>
+                <h2 id="viewTitle" class="modal-title" style="margin:0;">문서 제목</h2>
+                <span id="viewTypeTag" class="type-tag tag-blue">기획서</span>
+            </div>
+            <div class="detail-actions">
+                <button class="btn-sub">다운로드</button>
+                <button class="btn-sub">문서 열기</button>
+            </div>
+        </div>
+        <div class="detail-body">
+            <div id="viewDescription" class="view-description-box">
+                </div>
+        </div>
+        <button class="modal-close-btn" id="closeDetailModal">✕</button>
+    </div>
+</div>
+
+<!-- 사이드바 -->
+<script th:src="@{/js/sidebar.js}"></script>
+<script th:src="@{/js/header.js}"></script>
+<!-- 페이지 스크립트 -->
+<script th:src="@{/js/document/document.js}"></script>
+</body>
+</html>

@@ -35,4 +35,9 @@ public class TestController {
         // 결과 페이지 HTML 경로 리턴
         return "scenario/scenario_result";
 }
+
+    @GetMapping("/document")
+    public String document() {
+        return "document/document";
+    }
 }

@@ -100,7 +100,7 @@
                 <path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                 </svg>`,
         label: "자동 문서화",
-        href: "#",
+        href: "/document",
         },
     ];
 
