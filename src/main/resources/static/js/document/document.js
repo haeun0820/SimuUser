@@ -8,6 +8,8 @@ let allProjects = [];
 let currentFilter = 'all'; // 프로젝트 필터 (전체/협업/개인)
 let selectedProjectId = null;
 
+let currentDocId = null; // 현재 상세보기 중인 문서 ID 저장용
+
 /* ── 메인 실행부 (하나의 리스너로 통합) ── */
 document.addEventListener('DOMContentLoaded', function() {
     // 1. 문서 관련 요소 및 이벤트
@@ -70,6 +72,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
         renderDocuments();
         createModal.style.display = 'none';
+
+        const openEditorBtn = document.getElementById('btnOpenEditor');
+        if (openEditorBtn) {
+            openEditorBtn.onclick = () => {
+                if (currentDocId) {
+                    openDocEditor(currentDocId);
+                }
+            };
+        }
     };
 
     // 문서 종류 버튼 선택
@@ -229,6 +240,8 @@ function showDetail(id) {
     const doc = generatedDocs.find(d => d.id === id);
     if(!doc) return;
 
+    currentDocId = id; // 전역 변수에 현재 문서 ID 저장
+
     document.getElementById('viewTitle').innerText = doc.title;
     document.getElementById('viewTypeTag').innerText = doc.type;
     document.getElementById('viewTypeTag').className = `type-tag ${getTypeClass(doc.type)}`;
@@ -236,6 +249,22 @@ function showDetail(id) {
     
     document.getElementById('detailModal').style.display = 'flex';
 }
+
+// document.js 내부
+function openDocEditor(id) {
+    const doc = generatedDocs.find(d => d.id === id);
+    if (!doc) return;
+
+    // 편집 페이지로 넘길 데이터를 저장 (혹은 ID만 넘기고 에디터에서 서버 API 호출)
+    localStorage.setItem('currentEditDoc', JSON.stringify(doc));
+    
+    // 새 창 열기
+    window.open('document_editor.html', '_blank');
+}
+
+// 상세보기 팝업의 '문서 열기' 버튼 이벤트 바인딩 예시
+// HTML에 id="btnOpenEditor"가 있다고 가정
+// document.getElementById('btnOpenEditor').onclick = () => openDocEditor(currentDocId);
 
 /* ── 삭제 기능 ── */
 function deleteDoc(id) {

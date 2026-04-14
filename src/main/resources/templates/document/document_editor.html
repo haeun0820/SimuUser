@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>SimuUser Editor</title>
+    <link rel="stylesheet" href="document_editor.css">
+</head>
+<body>
+    <div class="editor-container">
+        <header class="editor-header">
+            <h1 id="headerTitle">문서 제목</h1>
+            <p id="headerDesc">문서 설명</p>
+        </header>
+
+        <div class="editor-toolbar">
+            <div class="toolbar-group">
+                <button class="tool-btn">－</button>
+                <input type="text" class="font-size-input" value="12">
+                <button class="tool-btn">＋</button>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <button class="tool-btn bold">B</button>
+                <button class="tool-btn italic">I</button>
+                <button class="tool-btn underline">U</button>
+                <button class="tool-btn color">A</button>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <button class="tool-btn">🖼️</button>
+                <button class="tool-btn">➕</button>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group">
+                <button class="tool-btn">≡</button>
+                <button class="tool-btn">⁝≡</button>
+                <button class="tool-btn">≡</button>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="toolbar-group right">
+                <button class="tool-btn">💬</button>
+                <button class="tool-btn">🕒</button>
+                <button class="save-btn" id="btnSave">저장</button>
+            </div>
+        </div>
+
+        <main class="editor-main">
+            <div class="paper-page" contenteditable="true" id="editorPage">
+                </div>
+        </main>
+
+        <footer class="editor-footer">
+            <button class="add-tab-btn" id="btnAddTab">＋</button>
+            <div class="tabs-container" id="tabsContainer">
+                <div class="tab-item active" data-tab="1">탭 1</div>
+                <div class="tab-item" data-tab="2">탭 2</div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="document_editor.js"></script>
+</body>
+</html>
