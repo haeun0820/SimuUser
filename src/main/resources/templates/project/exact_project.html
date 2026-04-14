@@ -375,6 +375,17 @@
         </div>
         <div class="item-actions">
           <button class="btn-edit-small" onclick="viewAiUserResult('${a.id}')">보기</button>
+          <button class="btn-icon-only btn-star ${a.starred ? 'active' : ''}" onclick="toggleMarketStar(this, '${a.id}')">
+            <svg class="star-icon" width="20" height="20" viewBox="0 0 24 24" fill="${a.starred ? '#f59e0b' : 'none'}" stroke="${a.starred ? '#f59e0b' : 'currentColor'}" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          </button>
+          <button class="btn-icon-only danger" onclick="deleteMarketAnalysis('${a.id}')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
         </div>
       </div>`).join('');
   }
@@ -384,6 +395,38 @@
     const projectId = pathSegments[pathSegments.length - 1];
     window.location.href = `/aiuser/result?projectId=${projectId}&from=detail&resultId=${analysisId}`;
   }
+
+  function toggleMarketStar(btn, analysisId) {
+    if (!currentProject) return;
+
+    // 1. 데이터 찾기 (AI 유저 혹은 시장 분석 리스트 전체에서 검색)
+    const allAnalyses = [
+        ...(currentProject.aiUserAnalyses || []),
+        ...(currentProject.marketAnalyses || [])
+    ];
+    
+    const target = allAnalyses.find(x => x.id === String(analysisId));
+
+    if (target) {
+        // 데이터 변경
+        target.starred = !target.starred;
+        updateLocalStorage();
+
+        // 2. UI 변경
+        // 클릭된 버튼(btn)에 active 클래스 토글
+        btn.classList.toggle('active');
+
+        // SVG 내부 속성 변경 (CSS가 안 먹을 경우를 대비한 확실한 방법)
+        const icon = btn.querySelector('.star-icon');
+        if (target.starred) {
+            icon.setAttribute('fill', '#f59e0b');
+            icon.setAttribute('stroke', '#f59e0b');
+        } else {
+            icon.setAttribute('fill', 'none');
+            icon.setAttribute('stroke', 'currentColor');
+        }
+    }
+}
 
   function renderMarketAnalysisList() {
     const listEl = document.getElementById('marketAnalysisList');
@@ -640,7 +683,21 @@
     if (e.target === addTabModal) closeTabModal();
   };
 
-  function toggleStar(btn) { btn.classList.toggle('active'); }
+  // 기존 toggleStar 함수 수정
+function toggleStar(btn) {
+    // active 클래스를 토글 (CSS에서 이 클래스를 기준으로 색상을 바꿈)
+    btn.classList.toggle('active');
+    
+    // SVG 속성을 직접 건드리고 싶다면 아래 코드 추가 (CSS만으로 안 될 때)
+    const icon = btn.querySelector('.star-icon');
+    if (btn.classList.contains('active')) {
+        icon.setAttribute('fill', '#f59e0b');
+        icon.setAttribute('stroke', '#f59e0b');
+    } else {
+        icon.setAttribute('fill', 'none');
+        icon.setAttribute('stroke', 'currentColor');
+    }
+}
 
   function timeAgo(isoStr) {
     if (!isoStr) return '';
