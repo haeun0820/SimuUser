@@ -40,4 +40,10 @@ public class TestController {
     public String document() {
         return "document/document";
     }
+
+    @GetMapping("/document/editor")
+    public String openEditor(@RequestParam Long id) {
+        // id를 기반으로 DB에서 문서를 조회하는 로직을 추가할 수도 있습니다.
+        return "document/document_editor"; // templates/document/editor.html 을 호출
+    }
 }

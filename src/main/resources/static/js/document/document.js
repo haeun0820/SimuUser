@@ -255,11 +255,11 @@ function openDocEditor(id) {
     const doc = generatedDocs.find(d => d.id === id);
     if (!doc) return;
 
-    // 편집 페이지로 넘길 데이터를 저장 (혹은 ID만 넘기고 에디터에서 서버 API 호출)
+    // localStorage에 저장 (에디터 페이지에서 꺼내 쓰기용)
     localStorage.setItem('currentEditDoc', JSON.stringify(doc));
     
-    // 새 창 열기
-    window.open('document_editor.html', '_blank');
+    // 스프링 부트가 관리하는 경로로 새 창 열기 (ID 포함)
+    window.open('/document/editor?id=' + id, '_blank');
 }
 
 // 상세보기 팝업의 '문서 열기' 버튼 이벤트 바인딩 예시

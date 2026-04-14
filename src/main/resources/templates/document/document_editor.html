@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>SimuUser Editor</title>
-    <link rel="stylesheet" href="document_editor.css">
+    <link rel="stylesheet" th:href="@{/css/document/document_editor.css}">
 </head>
 <body>
     <div class="editor-container">
@@ -14,43 +14,107 @@
 
         <div class="editor-toolbar">
             <div class="toolbar-group">
-                <button class="tool-btn">－</button>
-                <input type="text" class="font-size-input" value="12">
-                <button class="tool-btn">＋</button>
+                <button class="tool-btn" onclick="changeFontSize('minus')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+                <input type="text" class="font-size-input" id="fontSizeDisplay" value="12" readonly>
+                <button class="tool-btn" onclick="changeFontSize('plus')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
             </div>
             <div class="toolbar-divider"></div>
+            
             <div class="toolbar-group">
-                <button class="tool-btn bold">B</button>
-                <button class="tool-btn italic">I</button>
-                <button class="tool-btn underline">U</button>
-                <button class="tool-btn color">A</button>
+                <button class="tool-btn format-btn" data-command="bold" title="굵게"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path></svg></button>
+                <button class="tool-btn format-btn" data-command="italic" title="기울임"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="4" x2="10" y2="4"></line><line x1="14" y1="20" x2="5" y2="20"></line><line x1="15" y1="4" x2="9" y2="20"></line></svg></button>
+                <button class="tool-btn format-btn" data-command="underline" title="밑줄"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"></path><line x1="4" y1="21" x2="20" y2="21"></line></svg></button>
+                <button class="tool-btn color-btn" onclick="document.getElementById('colorPicker').click()" title="글자색"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-18-7 18"></path><path d="M7 16h10"></path></svg><div class="color-indicator"></div></button>
+                <input type="color" id="colorPicker" style="display:none" onchange="changeColor(this.value)">
             </div>
             <div class="toolbar-divider"></div>
+
             <div class="toolbar-group">
-                <button class="tool-btn">🖼️</button>
-                <button class="tool-btn">➕</button>
+                <button class="tool-btn" data-command="insertImage" title="이미지 삽입"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></button>
+                <button class="tool-btn" data-command="addPage" title="페이지 추가"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg></button>
             </div>
             <div class="toolbar-divider"></div>
+
             <div class="toolbar-group">
-                <button class="tool-btn">≡</button>
-                <button class="tool-btn">⁝≡</button>
-                <button class="tool-btn">≡</button>
+                <button class="tool-btn format-btn" data-command="justifyLeft"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="17" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="17" y1="18" x2="3" y2="18"></line></svg></button>
+                <button class="tool-btn format-btn" data-command="justifyCenter"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="10" x2="6" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="18" y1="18" x2="6" y2="18"></line></svg></button>
+                <button class="tool-btn format-btn" data-command="justifyRight"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" y1="10" x2="7" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="7" y2="18"></line></svg></button>
             </div>
+
             <div class="toolbar-divider"></div>
+                <div class="toolbar-group">
+                    <button class="tool-btn format-btn" data-command="insertUnorderedList" title="체크리스트">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 11 12 14 22 4"></polyline>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                        </svg>
+                    </button>
+                    <button class="tool-btn format-btn" data-command="insertUnorderedList" title="글머리 기호">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="8" y1="6" x2="21" y2="6"></line>
+                            <line x1="8" y1="12" x2="21" y2="12"></line>
+                            <line x1="8" y1="18" x2="21" y2="18"></line>
+                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                        </svg>
+                    </button>
+                    <button class="tool-btn format-btn" data-command="insertOrderedList" title="번호 매기기">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="10" y1="6" x2="21" y2="6"></line>
+                            <line x1="10" y1="12" x2="21" y2="12"></line>
+                            <line x1="10" y1="18" x2="21" y2="18"></line>
+                            <path d="M4 6h1v4"></path>
+                            <path d="M4 10h2"></path>
+                            <path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+            <div class="toolbar-divider"></div>
+
             <div class="toolbar-group right">
-                <button class="tool-btn">💬</button>
-                <button class="tool-btn">🕒</button>
+                <button class="tool-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></button>
+                <button class="tool-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></button>
                 <button class="save-btn" id="btnSave">저장</button>
             </div>
         </div>
 
         <main class="editor-main">
-            <div class="paper-page" contenteditable="true" id="editorPage">
-                </div>
+            <div class="paper-page" contenteditable="true" id="editorPage"></div>
         </main>
 
+        
+
+<aside id="rightSidebar" class="editor-sidebar">
+    <div id="commentSidebar" class="sidebar-content">
+        <div class="sidebar-header">
+            <h3>댓글</h3>
+            <button class="side-close-btn" onclick="toggleSidebar('comment')">×</button>
+        </div>
+        <div class="comment-list" id="commentList">
+            <div class="comment-item">
+                <div class="comment-user">나는윤냥 <span class="comment-date">오후 8:48 4월 1일</span></div>
+                <div class="comment-bubble">이게 시장 분석 방법 중 하나</div>
+            </div>
+        </div>
+        <div class="comment-input-wrapper">
+            <input type="text" id="commentInput" placeholder="댓글 입력...">
+        </div>
+    </div>
+
+    <div id="versionSidebar" class="sidebar-content">
+        <div class="sidebar-header">
+            <h3>버전 기록</h3>
+            <button class="side-close-btn" onclick="toggleSidebar('version')">×</button>
+        </div>
+        <div id="timelineContainer" class="timeline-list">
+            </div>
+    </div>
+</aside>
+
         <footer class="editor-footer">
-            <button class="add-tab-btn" id="btnAddTab">＋</button>
+            <button class="add-tab-btn" id="btnAddTab"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
             <div class="tabs-container" id="tabsContainer">
                 <div class="tab-item active" data-tab="1">탭 1</div>
                 <div class="tab-item" data-tab="2">탭 2</div>
@@ -58,6 +122,6 @@
         </footer>
     </div>
 
-    <script src="document_editor.js"></script>
+    <script th:src="@{/js/document/document_editor.js}"></script>
 </body>
 </html>
