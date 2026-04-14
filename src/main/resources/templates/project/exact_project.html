@@ -223,7 +223,7 @@
   let currentTabId = 'tab-user-simu';
 
   /* ── [1] 프로젝트 상세 데이터 로드 ── */
-  function loadProjectDetail() {
+  async function loadProjectDetail() {
     const pathSegments = window.location.pathname.split('/');
     const projectId = pathSegments[pathSegments.length - 1];
 
@@ -235,6 +235,20 @@
 
     const allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
     currentProject = allProjects.find(p => String(p.id) === projectId);
+
+    if (!currentProject) {
+      try {
+        const response = await fetch('/api/projects', {
+          headers: { Accept: 'application/json' }
+        });
+        if (response.ok) {
+          const projects = await response.json();
+          currentProject = projects.find(p => String(p.id) === projectId) || null;
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
 
     if (currentProject) {
       const descElem = document.querySelector('.project-description');
@@ -279,6 +293,32 @@
         if (collabBadge) collabBadge.style.display = 'none';
         if (collabText) collabText.style.display = 'none';
       }
+
+      await loadMarketAnalyses(projectId);
+      renderMarketAnalysisList();
+    }
+  }
+
+  async function loadMarketAnalyses(projectId) {
+    if (!currentProject) return;
+
+    try {
+      const response = await fetch(`/market/results/project/${projectId}`, {
+        headers: { Accept: 'application/json' }
+      });
+      if (!response.ok) return;
+
+      const analyses = await response.json();
+      currentProject.marketAnalyses = analyses.map(item => ({
+        id: String(item.id),
+        type: 'market',
+        title: item.title || '시장 & 경쟁 분석',
+        createdAt: item.createdAt,
+        result: item.result,
+        starred: false
+      }));
+    } catch (error) {
+      console.error(error);
     }
   }
 
@@ -449,7 +489,7 @@
     // 탭별 분석 페이지 URL 맵
     const analyzeUrlMap = {
       'tab-user-simu': `/aiuser/ai_user?projectId=${projectId}&from=detail`,
-      'tab-market':    `/market?projectId=${projectId}&from=detail`,
+      'tab-market':    `/market/market?projectId=${projectId}&from=detail`,
       'tab-finance':   `#`,
       'tab-plan':      `#`,
       'tab-scenario':  `/scenario?projectId=${projectId}&from=detail`,
