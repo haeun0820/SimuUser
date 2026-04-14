@@ -86,7 +86,7 @@ public class ProjectService {
                 .toList();
     }
 
-    private AppUser getCurrentUser(Authentication authentication) {
+    public AppUser getCurrentUser(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new IllegalStateException("로그인이 필요합니다.");
         }
