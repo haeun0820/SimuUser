@@ -1,0 +1,216 @@
+/* ============================================================
+   market.css – 시장 & 경쟁 분석 (프로젝트 선택) 페이지
+   ============================================================ */
+
+/* 기본 초기화 */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Pretendard', sans-serif;
+    background: #f8fafc;
+    color: #1e293b;
+}
+
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.main-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: #f8fafc;
+}
+
+/* ── 페이지 내부 콘텐츠 패딩 ── */
+.page-content {
+    padding: 32px 40px;
+    max-width: 1000px; /* 너무 퍼지지 않게 제한 */
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* ── 헤더 스타일 (이미지 상단 부분) ── */
+.tool-page-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.tool-icon-wrap {
+    width: 48px;
+    height: 48px;
+    background: #4F46E5; /* 기획 피드백 아이콘 배경색 */
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.tool-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.tool-subtitle {
+    font-size: 14px;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+/* 점수 카드 영역 */
+.score-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.score-card {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    text-align: center;
+    border: 1px solid #e2e8f0;
+}
+
+.score-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 12px;
+}
+
+.score-value {
+    display: block;
+    font-size: 32px;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 16px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #f1f5f9;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #ef4444; /* 이미지의 붉은 계열 바 반영 */
+    border-radius: 3px;
+}
+
+/* 강점/약점 분석 영역 */
+.analysis-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.analysis-card {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.analysis-card h3 {
+    font-size: 15px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.strength h3 { color: #10b981; }
+.weakness h3 { color: #ef4444; }
+
+.analysis-card ul {
+    list-style: none;
+    padding: 0;
+}
+
+.analysis-card li {
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 8px;
+    color: #475569;
+    position: relative;
+    padding-left: 18px;
+}
+
+.strength li::before { content: "✓"; position: absolute; left: 0; color: #10b981; }
+.weakness li::before { content: "✕"; position: absolute; left: 0; color: #ef4444; }
+
+/* 일반 섹션 카드 (부족한 요소, 개선 방향 등) */
+.section-card {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 20px;
+}
+
+.section-card h3 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #334155;
+}
+
+/* 태그 스타일 */
+.tag-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tag {
+    background: #fef3c7; /* 이미지의 연노랑색 */
+    color: #92400e;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* 개선 방향 리스트 */
+.improvement-list {
+    padding-left: 20px;
+}
+
+.improvement-list li {
+    font-size: 14px;
+    color: #475569;
+    line-height: 1.8;
+    margin-bottom: 10px;
+}
+
+/* 빈 행 & 시나리오 박스 (이미지 하단 반영) */
+.empty-row {
+    height: 32px;
+    background: #fffbeb;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.scenario-box {
+    background: #f8fafc;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #64748b;
+    border: 1px solid #f1f5f9;
+}

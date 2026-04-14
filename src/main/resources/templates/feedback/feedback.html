@@ -66,8 +66,9 @@
           </label>
         </div>
 
+        <form th:action="@{/feedbackresult}" method="POST" enctype="multipart/form-data" id="feedbackForm">
         <div id="fileInputArea" class="method-content active">
-          <div class="file-upload-box" id="dropZone">
+          <div class="file-upload-box" id="dropZone" onclick="document.getElementById('filePicker').click()">
             <input type="file" id="filePicker" hidden>
             <div class="upload-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -84,10 +85,10 @@
       </div>
 
       <div class="action-area">
-        <button class="btn-run-analysis" id="btnRunFeedback" disabled>
-          기획 피드백 실행
+        <button type="submit" class="btn-run-analysis" id="btnRunFeedback">
+            기획 피드백 실행
         </button>
-      </div>
+        </div>
     </main>
   </div>
 </div>
