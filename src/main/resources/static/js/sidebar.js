@@ -123,40 +123,41 @@
         return `
         <aside class="sidebar">
             <div class="sb-top">
-            <a href="/" class="sb-logo" style="text-decoration: none;">
-                <div class="sb-logo-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                </div>
-                <span class="sb-logo-text">SimuUser</span>
-            </a>
-            <nav class="sb-nav">
-                ${menuHtml}
-            </nav>
+                <a href="/" class="sb-logo" style="text-decoration: none;">
+                    <div class="sb-logo-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    </div>
+                    <span class="sb-logo-text">SimuUser</span>
+                </a>
+                <nav class="sb-nav">
+                    ${menuHtml}
+                </nav>
             </div>
             
             <div class="sb-bottom">
-            <a href="#" class="sb-menu-item">
-                <span class="sb-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                </svg>
-                </span>
-                <span class="sb-label">문의</span>
-            </a>
-            <div class="sb-user">
-                <div class="sb-avatar">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="8" r="4" stroke="white" stroke-width="1.8"/>
-                    <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="white" stroke-width="1.8"/>
-                </svg>
-                </div>
-                <div class="sb-user-info">
-                <div class="sb-user-name">닉네임</div>
-                <div class="sb-user-email">dkdlrh12@gmail.com</div>
-                </div>
-            </div>
+                <a href="#" class="sb-menu-item">
+                    <span class="sb-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    </svg>
+                    </span>
+                    <span class="sb-label">문의</span>
+                </a>
+
+                <a href="/mypage" class="sb-user" style="text-decoration: none; cursor: pointer;">
+                    <div class="sb-avatar">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="8" r="4" stroke="white" stroke-width="1.8"/>
+                            <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="white" stroke-width="1.8"/>
+                        </svg>
+                    </div>
+                    <div class="sb-user-info">
+                        <div class="sb-user-name">닉네임</div>
+                        <div class="sb-user-email">dkdlrh12@gmail.com</div>
+                    </div>
+                </a>
             </div>
         </aside>`;
     }
@@ -254,21 +255,45 @@
         .sb-user-email { font-size: 11px; color: #4a6080; margin-top: 1px; }
     `;
 
-    function init() {
+    async function init() {
         const root = document.getElementById("sidebar-root");
         if (!root) return;
 
         const activeId = root.dataset.active || "";
 
-        // Inject CSS
+        // 1. CSS 주입 (기존과 동일)
         if (!document.getElementById("sidebar-style")) {
-        const style = document.createElement("style");
-        style.id = "sidebar-style";
-        style.textContent = sidebarCSS;
-        document.head.appendChild(style);
+            const style = document.createElement("style");
+            style.id = "sidebar-style";
+            style.textContent = sidebarCSS;
+            document.head.appendChild(style);
         }
 
+        // 2. 초기 렌더링
         root.outerHTML = renderSidebar(activeId);
+
+        // 3. 실제 사용자 데이터 연동 (추가된 부분)
+        try {
+            const response = await fetch('/api/me');
+            if (response.ok) {
+                const user = await response.json();
+                
+                // 사이드바가 렌더링된 후 DOM 요소를 찾아 값을 교체합니다.
+                const userNameElem = document.querySelector('.sb-user-name');
+                const userEmailElem = document.querySelector('.sb-user-email');
+                const userAvatarElem = document.querySelector('.sb-avatar');
+
+                if (userNameElem) userNameElem.textContent = user.name || "사용자";
+                if (userEmailElem) userEmailElem.textContent = user.email || "";
+                
+                // 만약 프로필 이미지가 있다면 아바타 아이콘 대신 이미지를 보여줍니다.
+                if (user.profileImage && userAvatarElem) {
+                    userAvatarElem.innerHTML = `<img src="${user.profileImage}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+                }
+            }
+        } catch (error) {
+            console.error("사이드바 사용자 정보 로드 실패:", error);
+        }
     }
 
     if (document.readyState === "loading") {
