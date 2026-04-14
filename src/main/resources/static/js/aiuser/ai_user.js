@@ -26,6 +26,20 @@
       .replace(/"/g, '&quot;');
   }
 
+  function normalizeProject(project) {
+    const id = project.id ?? project.projectId;
+    return {
+      id: Number(id),
+      title: project.title ?? project.name ?? '',
+      description: project.description ?? '',
+      targetUser: project.targetUser ?? '',
+      industry: project.industry ?? '',
+      type: project.type ?? 'personal',
+      members: Array.isArray(project.members) ? project.members : [],
+      createdAt: project.createdAt ?? project.updatedAt ?? ''
+    };
+  }
+
   function timeAgo(isoString) {
     if (!isoString) return '';
 
@@ -43,7 +57,9 @@
   }
 
   function setProjects(projects) {
-    allProjects = Array.isArray(projects) ? projects : [];
+    allProjects = Array.isArray(projects)
+      ? projects.map(normalizeProject).filter(project => Number.isFinite(project.id))
+      : [];
     renderProjects();
   }
 
@@ -102,9 +118,8 @@
       const badge = isCollab
         ? '<span class="type-badge badge-collab">협업</span>'
         : '<span class="type-badge badge-personal">개인</span>';
-      const members = Array.isArray(project.members) ? project.members : [];
-      const memberHtml = isCollab && members.length
-        ? `<span class="members">With. ${members.map(escHtml).join(', ')}</span>`
+      const memberHtml = isCollab && project.members.length
+        ? `<span class="members">With. ${project.members.map(escHtml).join(', ')}</span>`
         : '';
 
       return `
@@ -242,18 +257,7 @@
     });
   }
 
-  function initBreadcrumb() {
-    const nav = document.getElementById('breadcrumbNav');
-    if (!nav) return;
-
-    nav.innerHTML = `
-      <a href="#">분석도구</a>
-      <span class="bc-sep">/</span>
-      <span class="bc-current">AI 가상 유저 시뮬레이션</span>`;
-  }
-
   function init() {
-    initBreadcrumb();
     initFilterTabs();
     initAgeCheckboxes();
     initNewProjectButton();
