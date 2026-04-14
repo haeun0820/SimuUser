@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>시장 &amp; 경쟁 분석 – SimuUser</title>
   <link rel="stylesheet" th:href="@{/css/market/market.css}">
+  <link rel="stylesheet" th:href="@{/css/header/header.css}">
 </head>
 <body>
 <div class="app-layout">
@@ -15,42 +16,7 @@
 
   <div class="main-area">
 
-    <header class="top-header">
-      <nav class="breadcrumb-nav" id="breadcrumbNav">
-        </nav>
-      <div class="header-icons">
-        <button class="icon-btn" id="notiBtn">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zM18 16v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" fill="#6b7280"/>
-          </svg>
-          <div id="notiDropdown" class="noti-dropdown">
-            <div class="noti-header-row">
-              <span class="noti-title">알림</span>
-              <button class="clear-all">모두 삭제</button>
-            </div>
-            <div class="noti-list">
-              <p style="padding:40px; text-align:center; color:#94a3b8;">새로운 알림이 없습니다.</p>
-            </div>
-          </div>
-        </button>
-        <div class="profile-menu">
-          <button class="icon-btn">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="8" r="4" stroke="#6b7280" stroke-width="1.8"/>
-              <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="#6b7280" stroke-width="1.8"/>
-            </svg>
-          </button>
-          <div class="dropdown">
-            <form th:action="@{/mypage}" method="get">
-              <button class="logout-button" type="submit">마이페이지</button>
-            </form>
-            <form th:action="@{/logout}" method="post">
-              <button class="logout-button" type="submit">로그아웃</button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </header>
+    <header th:replace="~{header/header :: header(${ {'분석도구','시장 & 경쟁 분석'} })}"></header>
 
     <main class="page-content">
       <div class="tool-page-header">
