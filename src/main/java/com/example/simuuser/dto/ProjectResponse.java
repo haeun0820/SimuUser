@@ -3,7 +3,6 @@ package com.example.simuuser.dto;
 import com.example.simuuser.entity.Project;
 import com.example.simuuser.entity.ProjectMember;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 public class ProjectResponse {
@@ -15,7 +14,7 @@ public class ProjectResponse {
     private final String industry;
     private final String type;
     private final List<String> members;
-    private final LocalDateTime createdAt;
+    private final String createdAt;
 
     public ProjectResponse(Project project, List<ProjectMember> members, Long currentUserId) {
         this.id = project.getId();
@@ -30,7 +29,7 @@ public class ProjectResponse {
                 .map(member -> member.getUser().getEmail())
                 .filter(email -> email != null && !email.isBlank())
                 .toList();
-        this.createdAt = project.getCreatedAt();
+        this.createdAt = project.getCreatedAt() == null ? null : project.getCreatedAt().toString();
     }
 
     public Long getId() {
@@ -61,7 +60,7 @@ public class ProjectResponse {
         return members;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public String getCreatedAt() {
         return createdAt;
     }
 }
