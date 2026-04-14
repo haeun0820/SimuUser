@@ -245,6 +245,8 @@
     };
 
     localStorage.setItem('simu_params', JSON.stringify(params));
+    localStorage.removeItem('simu_result');
+    localStorage.setItem('simu_should_run', '1');
 
     const resultUrl = document.getElementById('resultPageUrl')?.value || '/aiuser/result';
     window.location.href = resultUrl;

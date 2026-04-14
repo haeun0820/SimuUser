@@ -40,6 +40,20 @@
     }
   }
 
+  function loadCachedResult(params) {
+    try {
+      const cached = JSON.parse(localStorage.getItem('simu_result') || 'null');
+      if (!cached || !cached.result) return null;
+      return JSON.stringify(cached.params) === JSON.stringify(params) ? cached.result : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function cacheResult(params, result) {
+    localStorage.setItem('simu_result', JSON.stringify({ params, result }));
+  }
+
   function initBreadcrumb(params) {
     const nav = document.getElementById('breadcrumbNav');
     if (!nav) return;
@@ -93,7 +107,14 @@
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(errorText || `서버 오류 ${response.status}`);
+      let errorMessage = errorText || `Server error ${response.status}`;
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.error || errorMessage;
+      } catch (error) {
+        // Keep the raw response text when the server does not return JSON.
+      }
+      throw new Error(errorMessage);
     }
 
     return response.json();
@@ -215,6 +236,14 @@
     }
   }
 
+  function renderResult(result, params) {
+    renderStats(result, params.personaCount);
+    renderOverallReaction(result);
+    renderPersonas(result);
+    renderInsights(result);
+    hideLoading();
+  }
+
   async function runSimulation() {
     const params = loadParams();
     if (!params) {
@@ -227,11 +256,8 @@
 
     try {
       const result = await callSimulateAPI(params);
-      renderStats(result, params.personaCount);
-      renderOverallReaction(result);
-      renderPersonas(result);
-      renderInsights(result);
-      hideLoading();
+      cacheResult(params, result);
+      renderResult(result, params);
     } catch (error) {
       console.error(error);
       showError(`AI 분석 중 오류가 발생했습니다. ${error.message}`);
@@ -251,7 +277,27 @@
 
   function init() {
     initButtons();
-    runSimulation();
+    const params = loadParams();
+    if (!params) {
+      showError('Simulation settings are missing. Go back to settings and start again.');
+      return;
+    }
+
+    initBreadcrumb(params);
+
+    const cachedResult = loadCachedResult(params);
+    if (cachedResult) {
+      renderResult(cachedResult, params);
+      return;
+    }
+
+    if (localStorage.getItem('simu_should_run') === '1') {
+      localStorage.removeItem('simu_should_run');
+      runSimulation();
+      return;
+    }
+
+    showError('분석 결과가 없습니다. 설정 페이지에서 시뮬레이션을 다시 시작해 주세요.');
   }
 
   if (document.readyState === 'loading') {
