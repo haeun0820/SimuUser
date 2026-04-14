@@ -33,12 +33,11 @@ public class AiUserController {
     private final String geminiModel;
 
     public AiUserController(
-            ObjectMapper objectMapper,
             ProjectService projectService,
             @Value("${gemini.api.key:}") String geminiApiKey,
             @Value("${gemini.model:gemini-1.5-flash}") String geminiModel
     ) {
-        this.objectMapper = objectMapper;
+        this.objectMapper = new ObjectMapper();
         this.projectService = projectService;
         this.restTemplate = new RestTemplate();
         this.geminiApiKey = geminiApiKey;
