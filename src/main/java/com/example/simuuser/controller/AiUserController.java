@@ -264,6 +264,7 @@ public class AiUserController {
         return Map.of(
                 "name", text(persona.get("name"), "가상 유저"),
                 "age", clamp(number(persona.get("age"), 0), 0, 120),
+                "gender", text(persona.get("gender"), "전체"),
                 "job", text(persona.get("job"), "직업 미입력"),
                 "consumerType", text(persona.get("consumerType"), "일반형"),
                 "purchaseScore", clamp(number(persona.get("purchaseScore"), 0), 0, 100),
@@ -319,6 +320,7 @@ public class AiUserController {
                     {
                       "name": "한국어 이름",
                       "age": 28,
+                      "gender": "남성 또는 여성",
                       "job": "직업",
                       "consumerType": "신중형",
                       "purchaseScore": 80,
@@ -332,6 +334,7 @@ public class AiUserController {
                 }
 
                 personas 배열 길이는 반드시 %d개여야 합니다.
+                각 persona의 gender는 시뮬레이션 설정의 성별 조건(%s)을 반영해 "남성" 또는 "여성" 또는 "전체" 중 하나로 작성해야 합니다.
                 avgPurchaseIntent와 purchaseScore는 0부터 100 사이 정수여야 합니다.
                 응답은 한국어로 작성하세요.
                 """.formatted(
@@ -344,7 +347,8 @@ public class AiUserController {
                 gender,
                 ages,
                 job,
-                personaCount
+                personaCount,
+                gender
         );
     }
 

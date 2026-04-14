@@ -146,47 +146,38 @@
     }
   }
 
-  function renderPersonas(result) {
+  function renderPersonas(result, params) {
     const element = document.getElementById('personaGrid');
     const personas = Array.isArray(result.personas) ? result.personas : [];
+    const fallbackGender = genderLabels[params?.gender] || params?.gender || '';
     if (!element) return;
 
-    const params = loadParams();
-    const selectedGender = params ? genderLabels[params.gender] : '전체';
-
     element.className = `persona-grid cols-${Math.max(2, Math.min(personas.length, 4))}`;
-element.innerHTML = personas.map((persona, index) => {
-  const initial = persona.name?.charAt(0) || '?';
-  const positive = (persona.positiveReactions || []).map(item => `<li>${escHtml(item)}</li>`).join('');
-  const negative = (persona.negativeReactions || []).map(item => `<li>${escHtml(item)}</li>`).join('');
-  const churn = (persona.churnPoints || []).map(item => `<li>${escHtml(item)}</li>`).join('');
-  
-  // 1. 성별 결정 로직 (displayGender 결정)
-  let displayGender = persona.gender;
-  if (!displayGender) {
-    if (selectedGender === '남성' || selectedGender === '여성') {
-      displayGender = selectedGender;
-    } else {
-      // '전체'일 경우 인덱스에 따라 임의 배정
-      displayGender = (index % 2 === 0) ? '남성' : '여성';
-    }
-  }
+    element.innerHTML = personas.map((persona, index) => {
+      const initial = persona.name?.charAt(0) || '?';
+      let personaGender = persona.gender || fallbackGender;
+      if (!personaGender || personaGender === genderLabels.all) {
+        personaGender = index % 2 === 0 ? genderLabels.male : genderLabels.female;
+      }
+      const meta = [
+        `${persona.age}세`,
+        personaGender,
+        persona.job
+      ].filter(Boolean).join(' · ');
+      const positive = (persona.positiveReactions || []).map(item => `<li>${escHtml(item)}</li>`).join('');
+      const negative = (persona.negativeReactions || []).map(item => `<li>${escHtml(item)}</li>`).join('');
+      const churn = (persona.churnPoints || []).map(item => `<li>${escHtml(item)}</li>`).join('');
 
-  // 2. 최종 출력용 텍스트 생성 (이 변수를 사용해야 합니다)
-  const genderText = ` · ${escHtml(displayGender)}`;
-
-  return `
-  <div class="persona-card" style="animation-delay:${index * 0.1}s">
-    <div class="persona-head">
-      <div class="persona-avatar" style="background:${avatarColors[index % avatarColors.length]}">${escHtml(initial)}</div>
-      <div class="persona-info">
-        <div class="persona-name">${escHtml(persona.name)}</div>
-        <div class="persona-meta">
-          ${escHtml(persona.age)}세 · ${escHtml(persona.job)}${genderText}
-        </div>
-      </div>
-      <span class="persona-score">${Number(persona.purchaseScore || 0)}%</span>
-    </div>
+      return `
+        <div class="persona-card" style="animation-delay:${index * 0.1}s">
+          <div class="persona-head">
+            <div class="persona-avatar" style="background:${avatarColors[index % avatarColors.length]}">${escHtml(initial)}</div>
+            <div class="persona-info">
+              <div class="persona-name">${escHtml(persona.name)}</div>
+              <div class="persona-meta">${escHtml(meta)}</div>
+            </div>
+            <span class="persona-score">${Number(persona.purchaseScore || 0)}%</span>
+          </div>
           <div><span class="consumer-badge">${escHtml(persona.consumerType)}</span></div>
           <div class="reaction-section">
             <div class="reaction-label label-positive">긍정 반응</div>
@@ -258,7 +249,7 @@ element.innerHTML = personas.map((persona, index) => {
   function renderResult(result, params) {
     renderStats(result, params.personaCount);
     renderOverallReaction(result);
-    renderPersonas(result);
+    renderPersonas(result, params);
     renderInsights(result);
     hideLoading();
   }
@@ -292,10 +283,6 @@ element.innerHTML = personas.map((persona, index) => {
     });
     document.getElementById('btnRetry')?.addEventListener('click', runSimulation);
     document.getElementById('btnRetryErr')?.addEventListener('click', runSimulation);
-
-    document.getElementById('btnSave')?.addEventListener('click', () => {
-    // 여기에 저장 로직을 작성하세요 (예: 서버 API 호출 또는 PDF 다운로드 등)
-    alert('결과가 저장되었습니다!');});
   }
 
   function init() {
