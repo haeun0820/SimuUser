@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>시장 &amp; 경쟁 분석 결과 – SimuUser</title>
+  <link rel="stylesheet" th:href="@{/css/market/market_result.css}">
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- 사이드바 -->
+  <div id="sidebar-root" data-active="market"></div>
+
+  <!-- 메인 영역 -->
+  <div class="main-area">
+
+    <!-- 헤더 -->
+    <header class="top-header">
+      <nav class="breadcrumb-nav" id="breadcrumbNav">
+        <!-- JS로 동적 렌더링 -->
+      </nav>
+      <div class="header-icons">
+        <button class="icon-btn" id="notiBtn">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zM18 16v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" fill="#6b7280"/>
+          </svg>
+          <div id="notiDropdown" class="noti-dropdown">
+            <div class="noti-header-row">
+              <span class="noti-title">알림</span>
+              <button class="clear-all">모두 삭제</button>
+            </div>
+            <div class="noti-list">
+              <p style="padding:40px; text-align:center; color:#94a3b8;">새로운 알림이 없습니다.</p>
+            </div>
+          </div>
+        </button>
+        <div class="profile-menu">
+          <button class="icon-btn">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="8" r="4" stroke="#6b7280" stroke-width="1.8"/>
+              <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="#6b7280" stroke-width="1.8"/>
+            </svg>
+          </button>
+          <div class="dropdown">
+            <form th:action="@{/mypage}" method="get">
+              <button class="logout-button" type="submit">마이페이지</button>
+            </form>
+            <form th:action="@{/logout}" method="post">
+              <button class="logout-button" type="submit">로그아웃</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 페이지 콘텐츠 -->
+    <main class="page-content">
+
+      <!-- 페이지 헤더 -->
+      <div class="tool-page-header">
+        <div class="tool-icon-wrap">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <path d="M3 17l4-8 4 4 3-6 4 10" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="tool-title">시장 &amp; 경쟁 분석</h1>
+          <p class="tool-subtitle">시장 포화도, 경쟁 강도, TAM/SAM/SOM을 분석합니다</p>
+        </div>
+      </div>
+
+      <!-- 요약 지표 카드 -->
+      <div class="summary-cards">
+        <div class="summary-card">
+          <div class="summary-label">경쟁 강도</div>
+          <div class="competition-badge" id="competitionBadge">중간</div>
+        </div>
+        <div class="summary-card center-card">
+          <div class="summary-label">시장 포화도</div>
+          <div class="summary-value blue" id="saturationValue">30%</div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar">
+              <div class="progress-fill" id="saturationBar" style="width: 30%"></div>
+            </div>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">주요 경쟁사</div>
+          <div class="summary-value blue" id="competitorCount">4개</div>
+        </div>
+      </div>
+
+      <!-- 시장 규모 분석 -->
+      <div class="result-section">
+        <div class="section-title-row">
+          <span class="section-icon">🌐</span>
+          <h2 class="section-heading">시장 규모 분석</h2>
+        </div>
+        <div class="market-size-cards" id="marketSizeCards">
+          <!-- JS로 렌더링 -->
+        </div>
+      </div>
+
+      <!-- 트렌드 키워드 -->
+      <div class="result-section">
+        <div class="section-title-row">
+          <span class="section-icon">📈</span>
+          <h2 class="section-heading">트렌드 키워드</h2>
+        </div>
+        <div class="keyword-list" id="keywordList">
+          <!-- JS로 렌더링 -->
+        </div>
+      </div>
+
+      <!-- 경쟁사 분석 -->
+      <div class="result-section">
+        <div class="section-title-row">
+          <span class="section-icon">📊</span>
+          <h2 class="section-heading">경쟁사 분석</h2>
+        </div>
+        <div class="competitor-list" id="competitorList">
+          <!-- JS로 렌더링 -->
+        </div>
+      </div>
+
+      <!-- 차별화 포인트 & 리스크 -->
+      <div class="diff-risk-grid">
+        <div class="result-section diff-section">
+          <div class="section-title-row">
+            <span class="section-icon diff-icon">🎯</span>
+            <h2 class="section-heading">차별화 포인트</h2>
+          </div>
+          <ol class="diff-list" id="diffList">
+            <!-- JS로 렌더링 -->
+          </ol>
+        </div>
+        <div class="result-section risk-section">
+          <div class="section-title-row">
+            <span class="section-icon risk-icon">⚠️</span>
+            <h2 class="section-heading">리스크</h2>
+          </div>
+          <ul class="risk-list" id="riskList">
+            <!-- JS로 렌더링 -->
+          </ul>
+        </div>
+      </div>
+
+      <!-- 시장 기회 요약 -->
+      <div class="result-section opportunity-section">
+        <div class="section-title-row">
+          <span class="section-icon">💡</span>
+          <h2 class="section-heading">시장 기회 요약</h2>
+        </div>
+        <p class="opportunity-text" id="opportunityText">
+          <!-- JS로 렌더링 -->
+        </p>
+      </div>
+
+      <!-- 액션 버튼 -->
+      <div class="result-actions">
+        <button class="btn-back" id="btnBack">← 다시 선택</button>
+        <button class="btn-save" id="btnSave">결과 저장</button>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- 저장 완료 토스트 -->
+<div class="toast" id="saveToast">✅ 분석 결과가 프로젝트에 저장되었습니다.</div>
+
+<script th:src="@{/js/sidebar.js}"></script>
+<script th:src="@{/js/header.js}"></script>
+<script th:src="@{/js/market/market_result.js}"></script>
+</body>
+</html>
