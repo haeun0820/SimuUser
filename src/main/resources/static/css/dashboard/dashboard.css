@@ -864,7 +864,7 @@ body {
     border-radius: 12px;
 }
 
-.project-arrow { color: #cbd5e1; font-size: 18px; font-weight: bold; }
+.project-arrow { color: #797b7d; font-size: 18px; font-weight: bold; background: white; border: none; }
 
 /* -------------------------------
    🧰 분석 도구
