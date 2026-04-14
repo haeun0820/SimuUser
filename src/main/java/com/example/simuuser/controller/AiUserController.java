@@ -1,11 +1,15 @@
 package com.example.simuuser.controller;
 
+import com.example.simuuser.dto.ProjectResponse;
+import com.example.simuuser.service.ProjectService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,23 +27,28 @@ import java.util.Map;
 public class AiUserController {
 
     private final ObjectMapper objectMapper;
+    private final ProjectService projectService;
     private final RestTemplate restTemplate;
     private final String geminiApiKey;
     private final String geminiModel;
 
     public AiUserController(
             ObjectMapper objectMapper,
+            ProjectService projectService,
             @Value("${gemini.api.key:}") String geminiApiKey,
             @Value("${gemini.model:gemini-1.5-flash}") String geminiModel
     ) {
         this.objectMapper = objectMapper;
+        this.projectService = projectService;
         this.restTemplate = new RestTemplate();
         this.geminiApiKey = geminiApiKey;
         this.geminiModel = geminiModel;
     }
 
     @GetMapping("/ai_user")
-    public String aiUserPage() {
+    public String aiUserPage(Model model, Authentication authentication) {
+        List<ProjectResponse> projects = projectService.findMine(authentication);
+        model.addAttribute("projects", projects);
         return "aiuser/ai_user";
     }
 
@@ -59,8 +68,7 @@ public class AiUserController {
         }
 
         try {
-            String prompt = buildPrompt(body);
-            Map<String, Object> requestBody = buildGeminiRequest(prompt);
+            Map<String, Object> requestBody = buildGeminiRequest(buildPrompt(body, personaCount));
             Map<String, Object> geminiResponse = callGemini(requestBody);
             String resultText = extractText(geminiResponse);
             Map<String, Object> result = parseJsonResult(resultText);
@@ -85,11 +93,9 @@ public class AiUserController {
 
         @SuppressWarnings("unchecked")
         Map<String, Object> response = restTemplate.postForObject(url, requestBody, Map.class);
-
         if (response == null) {
             throw new IllegalArgumentException("Gemini 응답이 비어 있습니다.");
         }
-
         return response;
     }
 
@@ -105,7 +111,6 @@ public class AiUserController {
         );
     }
 
-    @SuppressWarnings("unchecked")
     private String extractText(Map<String, Object> geminiResponse) {
         Object candidatesObject = geminiResponse.get("candidates");
         if (!(candidatesObject instanceof List<?> candidates) || candidates.isEmpty()) {
@@ -141,13 +146,26 @@ public class AiUserController {
     }
 
     private Map<String, Object> parseJsonResult(String text) throws Exception {
-        String json = stripMarkdownFence(text);
-        return objectMapper.readValue(json, new TypeReference<>() {});
+        return objectMapper.readValue(stripMarkdownFence(text), new TypeReference<>() {});
+    }
+
+    private String stripMarkdownFence(String text) {
+        String trimmed = text.trim();
+        if (!trimmed.startsWith("```")) {
+            return trimmed;
+        }
+
+        int firstLineEnd = trimmed.indexOf('\n');
+        int lastFence = trimmed.lastIndexOf("```");
+        if (firstLineEnd < 0 || lastFence <= firstLineEnd) {
+            return trimmed;
+        }
+
+        return trimmed.substring(firstLineEnd + 1, lastFence).trim();
     }
 
     private Map<String, Object> normalizeResult(Map<String, Object> result, int personaCount) {
         List<Map<String, Object>> personas = asPersonaList(result.get("personas"), personaCount);
-
         return Map.of(
                 "avgPurchaseIntent", clamp(number(result.get("avgPurchaseIntent"), 0), 0, 100),
                 "overallReaction", text(result.get("overallReaction"), "AI가 전반적인 반응을 생성하지 못했습니다."),
@@ -165,8 +183,7 @@ public class AiUserController {
 
         List<Map<String, Object>> personas = rawPersonas.stream()
                 .filter(Map.class::isInstance)
-                .map(item -> (Map<String, Object>) item)
-                .map(this::normalizePersona)
+                .map(item -> normalizePersona((Map<String, Object>) item))
                 .toList();
 
         if (personas.isEmpty()) {
@@ -202,23 +219,7 @@ public class AiUserController {
                 .toList();
     }
 
-    private String stripMarkdownFence(String text) {
-        String trimmed = text.trim();
-        if (!trimmed.startsWith("```")) {
-            return trimmed;
-        }
-
-        int firstLineEnd = trimmed.indexOf('\n');
-        int lastFence = trimmed.lastIndexOf("```");
-        if (firstLineEnd < 0 || lastFence <= firstLineEnd) {
-            return trimmed;
-        }
-
-        return trimmed.substring(firstLineEnd + 1, lastFence).trim();
-    }
-
-    private String buildPrompt(Map<String, Object> body) {
-        int personaCount = clamp(number(body.get("personaCount"), 3), 2, 3);
+    private String buildPrompt(Map<String, Object> body, int personaCount) {
         String serviceIdea = text(body.get("serviceIdea"), "미입력");
         String description = text(body.get("description"), "없음");
         String targetUser = text(body.get("targetUser"), "없음");

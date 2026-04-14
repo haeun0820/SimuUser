@@ -42,10 +42,19 @@
     return `${Math.floor(diffHours / 24)}일 전`;
   }
 
+  function setProjects(projects) {
+    allProjects = Array.isArray(projects) ? projects : [];
+    renderProjects();
+  }
+
   async function loadProjects() {
-    const container = document.getElementById('projectListScroll');
-    if (container) {
-      container.innerHTML = '<div class="no-projects">프로젝트를 불러오는 중입니다.</div>';
+    if (Array.isArray(window.simuInitialProjects) && window.simuInitialProjects.length > 0) {
+      setProjects(window.simuInitialProjects);
+    } else {
+      const container = document.getElementById('projectListScroll');
+      if (container) {
+        container.innerHTML = '<div class="no-projects">프로젝트를 불러오는 중입니다.</div>';
+      }
     }
 
     try {
@@ -57,17 +66,16 @@
         throw new Error(`프로젝트 조회 실패: ${response.status}`);
       }
 
-      allProjects = await response.json();
+      setProjects(await response.json());
     } catch (error) {
       console.error(error);
-      allProjects = [];
-      if (container) {
-        container.innerHTML = '<div class="no-projects">프로젝트를 불러오지 못했습니다.</div>';
+      if (allProjects.length === 0) {
+        const container = document.getElementById('projectListScroll');
+        if (container) {
+          container.innerHTML = '<div class="no-projects">프로젝트를 불러오지 못했습니다.</div>';
+        }
       }
-      return;
     }
-
-    renderProjects();
   }
 
   function renderProjects() {
@@ -173,27 +181,14 @@
 
   function validateForm() {
     let valid = true;
-
-    const validators = [
-      {
-        invalid: selectedProjectId === null,
-        errorId: 'err-project'
-      },
-      {
-        invalid: !document.getElementById('personaCount')?.value,
-        errorId: 'err-persona'
-      },
-      {
-        invalid: !document.getElementById('genderSelect')?.value,
-        errorId: 'err-gender'
-      },
-      {
-        invalid: !document.querySelector('.age-check:checked'),
-        errorId: 'err-age'
-      }
+    const checks = [
+      { invalid: selectedProjectId === null, errorId: 'err-project' },
+      { invalid: !document.getElementById('personaCount')?.value, errorId: 'err-persona' },
+      { invalid: !document.getElementById('genderSelect')?.value, errorId: 'err-gender' },
+      { invalid: !document.querySelector('.age-check:checked'), errorId: 'err-age' }
     ];
 
-    validators.forEach(({ invalid, errorId }) => {
+    checks.forEach(({ invalid, errorId }) => {
       const errorElement = document.getElementById(errorId);
       if (invalid) {
         errorElement?.classList.add('show');
@@ -262,7 +257,6 @@
     initFilterTabs();
     initAgeCheckboxes();
     initNewProjectButton();
-
     document.getElementById('simulationForm')?.addEventListener('submit', handleSubmit);
     loadProjects();
   }

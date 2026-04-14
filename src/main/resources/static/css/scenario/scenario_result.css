@@ -1,0 +1,204 @@
+/* --- 결과 페이지 전용 스타일 --- */
+
+/* --- 기본 레이아웃 구조 (비율 수정 핵심) --- */
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #f4f6f9;
+    font-family: 'Pretendard', sans-serif;
+}
+
+.app-layout {
+    display: flex; /* 사이드바와 메인을 가로로 배치 */
+    min-height: 100vh;
+}
+
+#sidebar-root {
+    width: 260px; /* 사이드바 너비 고정 */
+    flex-shrink: 0;
+    background-color: #1a1f2b; /* 사이드바 배경색 (환경에 맞게 조절) */
+}
+
+.main-area {
+    flex: 1; /* 남은 화면 전체를 차지 */
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* 내부 요소가 넘칠 때 레이아웃 깨짐 방지 */
+}
+
+.page-content {
+    flex: 1;
+    padding: 32px 40px; /* 본문 여백 */
+    overflow-y: auto; /* 본문 내용이 길어지면 스크롤 생성 */
+}
+
+/* --- 상단 헤더 보정 --- */
+header {
+    width: 100%;
+    background: #fff;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+/* --- 페이지 제목 영역 --- */
+.page-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.page-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.page-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.page-subtitle {
+    font-size: 14px;
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+
+/* 흐으으ㅡㅁ */
+/* AI 추천 최적안 카드 */
+.best-recommend-card {
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    border-radius: 16px;
+    padding: 30px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+.recommend-icon { font-size: 32px; margin-bottom: 10px; }
+.recommend-label { color: #6366f1; font-weight: 700; font-size: 14px; }
+.recommend-title { color: #1e1b4b; font-size: 28px; font-weight: 800; margin: 5px 0; }
+.recommend-desc { color: #4b5563; font-size: 14px; }
+
+/* 요약 카드 그리드 */
+.scenario-summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.summary-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.plan-badge {
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 18px;
+}
+.card-a .plan-badge { background: #eff6ff; color: #2563eb; }
+.card-b .plan-badge { background: #fdf2f8; color: #db2777; }
+
+.score-info { text-align: right; }
+.score-num { display: block; font-size: 24px; font-weight: 800; color: #111827; }
+.score-label { font-size: 12px; color: #6b7280; }
+
+.progress-bar {
+    height: 8px;
+    background: #f3f4f6;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 25px;
+}
+.card-a .fill { background: #3b82f6; height: 100%; }
+.card-b .fill { background: #ec4899; height: 100%; }
+
+/* 장단점 목록 */
+.pros-cons-box { border-top: 1px solid #f3f4f6; padding-top: 20px; }
+.point-item { margin-bottom: 15px; }
+.point-title { font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+.pros .point-title { color: #10b981; }
+.cons .point-title { color: #ef4444; }
+.point-item ul { list-style: none; padding: 0; }
+.point-item li {
+    font-size: 13px;
+    color: #4b5563;
+    margin-bottom: 4px;
+    padding-left: 12px;
+    position: relative;
+}
+.point-item li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #9ca3af;
+}
+
+/* 세부 비교 표 */
+.detail-analysis-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 30px;
+}
+.analysis-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+.analysis-table th {
+    text-align: left;
+    padding: 12px;
+    color: #6b7280;
+    font-size: 13px;
+    border-bottom: 1px solid #f3f4f6;
+}
+.analysis-table td {
+    padding: 16px 12px;
+    font-size: 14px;
+    border-bottom: 1px solid #f3f4f6;
+}
+.score-a { color: #2563eb; font-weight: 600; }
+.score-b { color: #db2777; font-weight: 600; }
+.win-badge {
+    background: #fdf2f8;
+    color: #db2777;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid #fbcfe8;
+}
+
+/* 최종 제안 섹션 */
+.final-suggestion-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+.suggestion-box {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 20px;
+}
+.suggestion-box.hybrid { background: #f0fdfa; }
+.suggestion-box h4 { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+.suggestion-box p { font-size: 13px; color: #4b5563; line-height: 1.6; }

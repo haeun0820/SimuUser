@@ -90,7 +90,7 @@
                 <path d="M4 6h16M4 12h10M4 18h13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                 </svg>`,
         label: "시나리오 비교",
-        href: "#",
+        href: "/scenario",
     },
     {
         type: "link",

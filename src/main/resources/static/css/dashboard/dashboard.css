@@ -934,3 +934,101 @@ body {
 
 /* 차트 카드 높이 고정 — 스크롤 방지 */
 .dashboard-chart { overflow: hidden; }
+
+
+/* 이거슨 이사를 하게 될 알림 이당당. */
+/* 알림 메뉴 컨테이너 */
+.notification-menu {
+  position: relative;
+}
+
+/* 알림 드롭다운 본체 */
+.noti-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 320px;
+  background: white;
+  border: 1.5px solid #2563eb; /* 이미지와 같은 파란색 테두리 */
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  display: none; /* 기본은 숨김 */
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.noti-dropdown.active {
+  display: block;
+}
+
+/* 드롭다운 헤더 */
+.noti-header {
+  padding: 12px 16px;
+  display: flex;
+  justify-content: flex-end;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.clear-all {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #64748b;
+  cursor: pointer;
+}
+
+/* 알림 리스트 스크롤 */
+.noti-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* 개별 알림 아이템 */
+.noti-item {
+  padding: 16px;
+  border-bottom: 1px solid #f8fafc;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.noti-item:hover {
+  background: #f8fafc;
+}
+
+.noti-item:last-child {
+  border-bottom: none;
+}
+
+.noti-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+
+.noti-text {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+
+.noti-time {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* 알림 빨간 점 배지 */
+.noti-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  border: 2px solid white;
+}

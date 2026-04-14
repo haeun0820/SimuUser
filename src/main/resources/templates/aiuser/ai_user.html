@@ -195,6 +195,9 @@
 
 <!-- 사이드바 -->
 <script th:src="@{/js/sidebar.js}"></script>
+<script th:inline="javascript">
+  window.simuInitialProjects = /*[[${projects}]]*/ [];
+</script>
 <!-- 페이지 스크립트 -->
 <script th:src="@{/js/aiuser/ai_user.js}"></script>
 </body>

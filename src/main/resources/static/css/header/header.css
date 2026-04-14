@@ -1,0 +1,164 @@
+/* ===== HEADER ===== */
+.top-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.breadcrumb-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--text-sub);
+}
+
+.bc-current {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* 아이콘 */
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+}
+
+.icon-btn:hover {
+  background: var(--bg);
+}
+
+/* 알림 */
+.notification-menu {
+  position: relative;
+}
+
+.noti-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 260px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  display: none;
+}
+
+.noti-dropdown.active {
+  display: block;
+}
+
+/* 프로필 */
+.profile-menu {
+  position: relative;
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  display: none;
+}
+
+.profile-menu:hover .dropdown {
+  display: block;
+}
+
+/* 드롭다운 헤더 */
+.noti-header {
+  padding: 12px 16px;
+  display: flex;
+  justify-content: flex-end;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.clear-all {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #64748b;
+  cursor: pointer;
+}
+
+/* 알림 리스트 스크롤 */
+.noti-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* 개별 알림 아이템 */
+.noti-item {
+  padding: 16px;
+  border-bottom: 1px solid #f8fafc;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.noti-item:hover {
+  background: #f8fafc;
+}
+
+.noti-item:last-child {
+  border-bottom: none;
+}
+
+.noti-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+
+.noti-text {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+
+.noti-time {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* 알림 빨간 점 배지 */
+.noti-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+/* ai_user.css 하단에 추가 */
+.top-header {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 0 32px !important;
+    background-color: #ffffff !important;
+    border-bottom: 1px solid var(--border) !important;
+    height: 56px !important;
+    box-sizing: border-box !important;
+}
+
+/* 헤더 내부 오른쪽 아이콘 그룹 */
+.header-icons {
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important; /* 아이콘 사이 간격 확보 */
+}

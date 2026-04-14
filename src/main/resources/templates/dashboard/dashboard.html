@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SimuUser</title>
   <link rel="stylesheet" th:href="@{/css/dashboard/dashboard.css}">
+  <link rel="stylesheet" th:href="@{/css/header/header.css}">
 </head>
 <body>
 <div class="app-layout">
@@ -16,37 +17,7 @@
   <div class="main-area">
 
     <!-- 상단 헤더 / 브레드크럼 -->
-    <header class="top-header">
-      <nav class="breadcrumb-nav">
-        <span class="bc-current">대시보드</span>
-      </nav>
-      <div class="header-icons auth-actions">
-
-      <!-- 알림 -->
-      <button class="icon-btn">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zM18 16v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
-            fill="#6b7280"/>
-        </svg>
-      </button>
-
-      <!-- 프로필 메뉴 -->
-      <div class="profile-menu">
-        <button class="icon-btn">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="8" r="4" stroke="#6b7280" stroke-width="1.8"/>
-            <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="#6b7280" stroke-width="1.8"/>
-          </svg>
-        </button>
-
-        <div class="dropdown">
-          <button>마이페이지</button>
-          <button class="logout-button" type="submit">로그아웃</button>
-        </div>
-      </div>
-
-    </div>
-    </header>
+    <header th:replace="header/header :: header('대시보드')"></header> 
 
     <!-- 페이지 콘텐츠 -->
     <main class="page-content">
@@ -176,6 +147,7 @@
 
 <!-- 사이드바 컴포넌트 -->
 <script th:src="@{/js/sidebar.js}"></script>
+<script th:src="@{/js/header.js}"></script>
 <!-- 차트 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 
@@ -347,6 +319,8 @@
       lineChart.update();
     });
   });
+
+  
 </script>
 
 </body>
