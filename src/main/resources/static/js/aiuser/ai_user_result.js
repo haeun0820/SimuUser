@@ -146,14 +146,21 @@
     }
   }
 
-  function renderPersonas(result) {
+  function renderPersonas(result, params) {
     const element = document.getElementById('personaGrid');
     const personas = Array.isArray(result.personas) ? result.personas : [];
+    const fallbackGender = genderLabels[params?.gender] || params?.gender || '';
     if (!element) return;
 
     element.className = `persona-grid cols-${Math.max(2, Math.min(personas.length, 4))}`;
     element.innerHTML = personas.map((persona, index) => {
       const initial = persona.name?.charAt(0) || '?';
+      const personaGender = persona.gender || fallbackGender;
+      const meta = [
+        `${persona.age}세`,
+        personaGender,
+        persona.job
+      ].filter(Boolean).join(' · ');
       const positive = (persona.positiveReactions || []).map(item => `<li>${escHtml(item)}</li>`).join('');
       const negative = (persona.negativeReactions || []).map(item => `<li>${escHtml(item)}</li>`).join('');
       const churn = (persona.churnPoints || []).map(item => `<li>${escHtml(item)}</li>`).join('');
@@ -164,7 +171,7 @@
             <div class="persona-avatar" style="background:${avatarColors[index % avatarColors.length]}">${escHtml(initial)}</div>
             <div class="persona-info">
               <div class="persona-name">${escHtml(persona.name)}</div>
-              <div class="persona-meta">${escHtml(persona.age)}세 · ${escHtml(persona.job)}</div>
+              <div class="persona-meta">${escHtml(meta)}</div>
             </div>
             <span class="persona-score">${Number(persona.purchaseScore || 0)}%</span>
           </div>
@@ -239,7 +246,7 @@
   function renderResult(result, params) {
     renderStats(result, params.personaCount);
     renderOverallReaction(result);
-    renderPersonas(result);
+    renderPersonas(result, params);
     renderInsights(result);
     hideLoading();
   }
