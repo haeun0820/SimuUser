@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="_csrf" th:content="${_csrf.token}"/>
+  <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
   <title>SimuUser</title>
   <link rel="stylesheet" th:href="@{/css/project/exact_project.css}">
+  
 </head>
 <body>
 <div class="app-layout">
@@ -254,6 +257,51 @@
 
   let currentProject = null;
   let currentTabId = 'tab-user-simu';
+
+// 1. DB에서 탭 목록 불러오기 (함수 밖으로 이동)
+async function loadSavedTabs(projectId) {
+    try {
+        const response = await fetch(`/api/projects/${projectId}/tabs`);
+        if (response.ok) {
+            const tabs = await response.json();
+            tabs.forEach(tab => {
+                renderTabUI(tab); 
+            });
+        }
+    } catch (e) { 
+        console.error("탭 불러오기 실패", e); 
+    }
+}
+
+// 2. 탭 UI 그리기 (함수 밖으로 이동)
+function renderTabUI(tab) {
+    const tabId = "tab-" + tab.id;
+    const tabContainer = document.querySelector('.analysis-toolbar-tabs');
+    
+    if (document.getElementById(tabId)) return;
+
+    const newBtn = document.createElement('button');
+    newBtn.className = 'tab-btn custom-tab';
+    newBtn.setAttribute('data-target', tabId);
+    newBtn.textContent = tab.name;
+    tabContainer.appendChild(newBtn);
+
+    const analysisSection = document.querySelector('.analysis-section');
+    const footer = document.querySelector('.analysis-footer');
+    const newContent = document.createElement('div');
+    newContent.id = tabId;
+    newContent.className = 'tab-content';
+    newContent.innerHTML = `
+        <div style="padding: 60px 40px; text-align: center; border: 2px dashed #f1f5f9; border-radius: 16px; margin: 20px 0;">
+            <p style="color:#94a3b8; margin-bottom: 16px; font-size: 15px;">
+                "${tab.name}" 관련 문서가 아직 없습니다.
+            </p>
+            <button class="btn-primary" onclick="createDocument('${tabId}')">
+                새로 만들기 +
+            </button>
+        </div>`;
+    analysisSection.insertBefore(newContent, footer);
+}
 
   /* ── [1] 프로젝트 상세 데이터 로드 ── */
   async function loadProjectDetail() {
@@ -614,47 +662,46 @@ function deleteCostAnalysis(analysisId) {
     document.getElementById('addTabModal').classList.add('hidden');
   }
 
-  function createTab() {
+  async function createTab() {
     const input = document.getElementById('newTabName');
     const tabName = input.value.trim();
 
-    if (!tabName) { alert("탭 이름을 입력해주세요."); return false; }
+    if (!tabName) { alert("탭 이름을 입력해주세요."); return; }
 
-    const exists = Array.from(document.querySelectorAll('.tab-btn'))
-      .some(btn => btn.textContent.trim() === tabName);
+    const pathSegments = window.location.pathname.split('/');
+    const projectId = pathSegments[pathSegments.length - 1];
 
-    if (exists) { alert("이미 존재하는 탭 이름입니다."); return false; }
+    // CSRF 토큰 가져오기
+    const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
-    const tabId = "tab-" + Date.now();
-    const tabContainer = document.querySelector('.analysis-toolbar-tabs');
+    try {
+        const response = await fetch(`/api/projects/${projectId}/tabs`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                [header]: token // CSRF 헤더 추가
+            },
+            body: JSON.stringify({
+                name: tabName,
+                orderIndex: document.querySelectorAll('.tab-btn').length
+            })
+        });
 
-    const newBtn = document.createElement('button');
-    newBtn.className = 'tab-btn custom-tab';
-    newBtn.setAttribute('data-target', tabId);
-    newBtn.textContent = tabName;
-    tabContainer.appendChild(newBtn);
+        if (!response.ok) throw new Error("탭 저장에 실패했습니다.");
 
-    const analysisSection = document.querySelector('.analysis-section');
-    const footer = document.querySelector('.analysis-footer');
+        const savedTab = await response.json();
+        renderTabUI(savedTab); // UI 그리기 함수 호출
+        
+        switchTab(document.querySelector(`[data-target="tab-${savedTab.id}"]`));
+        closeTabModal();
+        alert("탭이 DB에 저장되었습니다.");
 
-    const newContent = document.createElement('div');
-    newContent.id = tabId;
-    newContent.className = 'tab-content';
-    newContent.innerHTML = `
-  <div style="padding: 40px; text-align: center;">
-    <p style="color:#94a3b8; margin-bottom: 16px;">
-      "${tabName}" 관련 문서가 없습니다.
-    </p>
-    <button class="btn-primary" onclick="createDocument('${tabId}')">
-      새로 만들기 +
-    </button>
-  </div>`;
-    analysisSection.insertBefore(newContent, footer);
-
-    switchTab(newBtn);
-    document.getElementById('addTabModal').classList.add('hidden');
-    input.value = '';
-  }
+    } catch (error) {
+        console.error(error);
+        alert("권한이 없거나 서버 오류가 발생했습니다. (403 에러 확인 필요)");
+    }
+}
 
   function initTabs() {
     const tabContainer = document.querySelector('.analysis-toolbar-tabs');
@@ -1038,11 +1085,15 @@ window.onclick = (e) => {
     if (e.target === document.getElementById('createDocModal')) closeDocModal(); // 추가
 };
 
-  document.addEventListener('DOMContentLoaded', () => {
-    loadProjectDetail();
+  document.addEventListener('DOMContentLoaded', async () => {
+    const pathSegments = window.location.pathname.split('/');
+    const projectId = pathSegments[pathSegments.length - 1];
+
+    await loadProjectDetail(); // 프로젝트 기본 정보 로드
+    await loadSavedTabs(projectId); // DB에서 탭 불러오기 추가
     initTabs();
     updateAnalyzeButton('tab-user-simu');
-  });
+});
 </script>
 </body>
 </html>
