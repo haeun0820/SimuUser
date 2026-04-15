@@ -171,22 +171,32 @@
 
 <!-- 협업 공유 모달 -->
 <div id="shareModal" class="popup-overlay hidden">
-    <div class="popup share-popup">
+    <div class="popup share-popup" style="max-height: 80vh; display: flex; flex-direction: column;">
         <div class="popup-header">
             <h3 class="share-title">"<span id="modalProjectTitle">프로젝트 제목</span>" 공유</h3>
         </div>
-        <div class="share-section">
+        
+        <div class="share-section" style="flex-shrink: 0;">
             <label class="share-label">사용자 추가</label>
-            <div class="share-input-row">
+            <div class="share-input-row" style="display: flex; gap: 8px;">
                 <input type="text" id="shareEmailInput" placeholder="이메일 입력 후 엔터..." class="form-input"
-                    onkeypress="if(event.keyCode==13) { addMemberByEmail(); }">
+                       style="flex: 1;" onkeypress="if(event.keyCode==13) { addMemberByEmail(); }">
+                <select id="shareRoleSelect" class="role-select-custom">
+                    <option value="편집자">편집자</option>
+                    <option value="뷰어">뷰어</option>
+                    <option value="관리자">관리자</option>
+                </select>
             </div>
         </div>
-        <div class="share-section">
+
+        <div class="share-section" style="flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0;">
             <label class="share-label">사용자</label>
-            <div class="member-scroll-list" id="modalMemberList"></div>
+            <div class="member-scroll-list" id="modalMemberList" 
+                 style="flex: 1; overflow-y: auto; padding-right: 4px; margin-top: 8px;">
+                </div>
         </div>
-        <div class="form-actions" style="margin-top: 24px;">
+
+        <div class="form-actions" style="margin-top: 24px; flex-shrink: 0;">
             <button class="btn-primary" onclick="closeShareModal()" style="min-width: 100px; padding: 10px;">확인</button>
             <button class="btn-cancel" onclick="closeShareModal()" style="min-width: 100px; padding: 10px;">취소</button>
         </div>
@@ -718,61 +728,99 @@ function deleteCostAnalysis(analysisId) {
   }
 
   /* ── [5] 멤버 관리 (협업 공유) ── */
-  function renderModalMembers() {
+  /* ── [수정] 멤버 리스트 렌더링 (권한 표시 포함) ── */
+function renderModalMembers() {
     const listContainer = document.getElementById('modalMemberList');
     if (!listContainer || !currentProject) return;
 
     let html = `
       <div class="share-member-item">
         <div class="member-profile-info">
-          <div class="profile-avatar-small"></div>
-          <div class="member-text"><span class="member-name">나(소유자)</span><span class="member-email">me@simuuser.com</span></div>
+          <div class="profile-avatar-small" style="background: #e2e8f0; border-radius: 50%; width: 32px; height: 32px;"></div>
+          <div class="member-text">
+            <span class="member-name">나(소유자)</span>
+            <span class="member-email">me@simuuser.com</span>
+          </div>
         </div>
-        <span class="member-role">소유자</span>
+        <span class="member-role" style="color: #94a3b8; font-size: 13px;">소유자</span>
       </div>`;
 
     if (currentProject.members) {
-      currentProject.members.forEach((email, idx) => {
-        html += `
-        <div class="share-member-item">
-          <div class="member-profile-info">
-            <div class="profile-avatar-small"></div>
-            <div class="member-text"><span class="member-name">${email.split('@')[0]}</span><span class="member-email">${email}</span></div>
-          </div>
-          <button onclick="removeMember(${idx})" style="color:#ef4444; background:none; border:none; cursor:pointer;">삭제</button>
-        </div>`;
-      });
+        currentProject.members.forEach((member, idx) => {
+            // member가 객체인지 문자열인지 확인 (하위 호환성)
+            const email = typeof member === 'object' ? member.email : member;
+            const role = typeof member === 'object' ? member.role : '편집자';
+
+            html += `
+            <div class="share-member-item" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9;">
+              <div class="member-profile-info" style="display: flex; align-items: center; gap: 10px;">
+                <div class="profile-avatar-small" style="background: #dbeafe; border-radius: 50%; width: 32px; height: 32px;"></div>
+                <div class="member-text" style="display: flex; flex-direction: column;">
+                  <span class="member-name" style="font-weight: 600;">${email.split('@')[0]}</span>
+                  <span class="member-email" style="font-size: 12px; color: #64748b;">${email}</span>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span class="member-role" style="font-size: 13px; color: #3b82f6; font-weight: 500;">${role}</span>
+                <button onclick="removeMember(${idx})" style="color:#ef4444; background:none; border:none; cursor:pointer; font-size: 13px;">삭제</button>
+              </div>
+            </div>`;
+        });
     }
     listContainer.innerHTML = html;
-  }
+}
 
-  function addMemberByEmail() {
-    const input = document.getElementById('shareEmailInput');
-    const email = input.value.trim();
+/* ── [수정] 기존 팀원을 유지하면서 새 팀원을 추가하는 로직 ── */
+function addMemberByEmail() {
+    const emailInput = document.getElementById('shareEmailInput');
+    const roleSelect = document.getElementById('shareRoleSelect');
+    const email = emailInput.value.trim();
+    const role = roleSelect.value;
+
+    if (!email) return; // 빈 값 방지
     if (!email.includes('@')) return alert("이메일 형식이 아닙니다.");
-    if (!currentProject.members) currentProject.members = [];
-    currentProject.members.push(email);
-    updateLocalStorage();
-    input.value = '';
-    renderModalMembers();
-    loadProjectDetail();
-  }
+    
+    // 1. 중요: 기존 멤버 리스트가 없으면 빈 배열로 초기화, 있으면 기존 것 유지
+    if (!currentProject.members || !Array.isArray(currentProject.members)) {
+        currentProject.members = [];
+    }
 
-  function removeMember(idx) {
-    currentProject.members.splice(idx, 1);
+    // 2. 중복 추가 방지 (이미 추가된 이메일인지 확인)
+    const isExisted = currentProject.members.some(m => {
+        const mEmail = typeof m === 'object' ? m.email : m;
+        return mEmail === email;
+    });
+
+    if (isExisted) {
+        alert("이미 추가된 멤버입니다.");
+        return;
+    }
+    
+    // 3. 기존 리스트에 '추가(push)' 하기 (덮어쓰기 아님!)
+    currentProject.members.push({ email: email, role: role });
+    
+    // 4. 저장 및 UI 갱신
     updateLocalStorage();
+    emailInput.value = '';
     renderModalMembers();
-    loadProjectDetail();
-  }
+    
+    // 상단 프로젝트 요약(With. 누구누구) 부분도 같이 업데이트
+    loadProjectDetail(); 
+}
 
   function updateLocalStorage() {
+    if (!currentProject) return;
+    
     const allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
     const pIdx = allProjects.findIndex(p => String(p.id) === String(currentProject.id));
+    
     if (pIdx !== -1) {
-      allProjects[pIdx] = { ...allProjects[pIdx], ...currentProject };
-      localStorage.setItem('simu_projects', JSON.stringify(allProjects));
+        // 현재 메모리에 있는 최신 상태(members 포함)를 저장소에 반영
+        allProjects[pIdx] = { ...currentProject }; 
+        localStorage.setItem('simu_projects', JSON.stringify(allProjects));
+        console.log("저장 완료:", allProjects[pIdx].members);
     }
-  }
+}
 
   /* ── [6] 모달 제어 ── */
   const shareModal = document.getElementById('shareModal');
