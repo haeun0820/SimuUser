@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="_csrf" th:if="${_csrf}" th:content="${_csrf.token}">
+  <meta name="_csrf_header" th:if="${_csrf}" th:content="${_csrf.headerName}">
+  <title>비용 &amp; 수익성 분석 결과 – SimuUser</title>
+  <link rel="stylesheet" th:href="@{/css/cost/cost_result.css}">
+  <link rel="stylesheet" th:href="@{/css/header/header.css}">
+</head>
+<body>
+
+<div class="loading-overlay active" id="loadingOverlay">
+  <div class="spinner"></div>
+  <p class="loading-text">수익성 분석 중...</p>
+</div>
+
+<div class="app-layout">
+
+  <div id="sidebar-root" data-active="cost"></div>
+
+  <div class="main-area">
+    <header th:replace="~{header/header :: header(${ {'분석도구','비용 & 수익성 분석'} })}"></header>
+
+    <main class="page-content">
+
+      <div class="result-page-header">
+        <div class="cost-page-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="white" stroke-width="1.8"/>
+            <path d="M12 7v1.5M12 15.5V17M9.5 10a2.5 2 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="cost-page-title">비용 &amp; 수익성 분석</h1>
+          <p class="cost-page-desc">개발 비용, 운영 비용, BEP를 분석하여 투자 적합도를 평가합니다</p>
+        </div>
+      </div>
+
+      <div class="result-actions-top">
+        <button type="button" class="btn-action-rect btn-back-rect" id="btnBack">
+          <span class="icon">←</span> 설정으로 돌아가기
+        </button>
+        <button type="button" class="btn-action-rect btn-retry-rect" id="btnRetry">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+          다시 시뮬레이션
+        </button>
+        <button type="button" class="btn-action-rect btn-save-rect" id="btnSave">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+          저장하기
+        </button>
+      </div>
+
+      <div class="summary-grid" id="summaryGrid">
+        </div>
+
+      <div class="result-card" id="devCostCard">
+        <div class="card-section-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
+          개발 비용 추정
+        </div>
+        <div class="dev-cost-grid" id="devCostGrid">
+          </div>
+        <div class="total-cost-row">
+          <span class="total-cost-label">총 개발 비용</span>
+          <span class="total-cost-value" id="totalDevCostVal">-</span>
+        </div>
+      </div>
+
+      <div class="result-card" id="monthlyCostCard">
+        <div class="card-section-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+            <line x1="1" y1="10" x2="23" y2="10"></line>
+          </svg>
+          월 운영 비용
+        </div>
+        <div class="monthly-cost-grid" id="monthlyCostGrid">
+          </div>
+        <div class="total-cost-row">
+          <span class="total-cost-label">월 총 운영 비용</span>
+          <span class="total-cost-value" id="totalMonthlyCostVal">-</span>
+        </div>
+      </div>
+
+      <div class="result-card">
+        <div class="card-section-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+            <polyline points="17 6 23 6 23 12"></polyline>
+          </svg>
+          예상 수익 추이
+        </div>
+        <div class="revenue-grid" id="revenueGrid">
+          </div>
+      </div>
+
+      <div class="result-card" id="bepCard">
+        <div class="card-section-title">손익분기점 (BEP) 분석</div>
+        <div class="bep-grid" id="bepGrid">
+          </div>
+        <p class="bep-desc" id="bepDesc">-</p>
+      </div>
+
+      <div class="result-card" id="suggestionCard">
+        <div class="card-section-title">투자 제안</div>
+        <div class="suggestion-list" id="suggestionList">
+          </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="saveToast">✅ 분석 결과가 프로젝트에 저장되었습니다.</div>
+
+<script th:src="@{/js/sidebar.js}"></script>
+<script th:src="@{/js/header.js}"></script> <script th:src="@{/js/cost/cost_result.js}"></script>
+</body>
+</html>

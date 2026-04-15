@@ -71,7 +71,7 @@
                 <path d="M12 7v1.5M12 15.5V17M9.5 10a2.5 2 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                 </svg>`,
         label: "비용 & 수익성 분석",
-        href: "#",
+        href: "/cost/cost",
     },
     {
         type: "link",

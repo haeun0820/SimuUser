@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>비용 & 수익성 분석 - SimuUser</title>
+  <link rel="stylesheet" th:href="@{/css/cost/cost.css}">
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- 사이드바 -->
+  <div id="sidebar-root" data-active="cost"></div>
+
+  <div class="main-area">
+
+    <!-- 상단 헤더 -->
+    <header class="top-header">
+      <nav class="breadcrumb-nav" id="breadcrumbNav">
+        <a href="/dashboard">분석도구</a>
+        <span class="bc-sep">›</span>
+        <span class="bc-current">비용 &amp; 수익성 분석</span>
+      </nav>
+      <div class="auth-actions">
+        <button class="icon-btn" id="notiBtn" aria-label="알림">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zM18 16v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" fill="#6b7280"/>
+          </svg>
+        </button>
+        <div id="notiDropdown" class="noti-dropdown">
+          <div class="noti-header">
+            <span>알림</span>
+            <button class="clear-all">모두 삭제</button>
+          </div>
+          <div class="noti-list">
+            <p style="padding:40px; text-align:center; color:#94a3b8;">새로운 알림이 없습니다.</p>
+          </div>
+        </div>
+        <div class="profile-menu">
+          <button class="icon-btn profile-trigger" aria-label="프로필">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="8" r="4" stroke="#6b7280" stroke-width="1.8"/>
+              <path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="#6b7280" stroke-width="1.8"/>
+            </svg>
+          </button>
+          <div class="dropdown">
+            <form th:action="@{/mypage}" method="get">
+              <button class="logout-button" type="submit">마이페이지</button>
+            </form>
+            <form th:action="@{/logout}" method="post">
+              <button class="logout-button" type="submit">로그아웃</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+
+      <!-- 페이지 헤더 -->
+      <div class="cost-page-header">
+        <div class="cost-page-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="white" stroke-width="1.8"/>
+            <path d="M12 7v1.5M12 15.5V17M9.5 10a2.5 2 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="cost-page-title">비용 &amp; 수익성 분석</h1>
+          <p class="cost-page-desc">개발 비용, 운영 비용, BEP를 분석하여 투자 적합도를 평가합니다</p>
+        </div>
+      </div>
+
+      <!-- 프로젝트 선택 -->
+      <section class="cost-card">
+        <div class="project-select-header">
+          <h2 class="section-title">프로젝트 선택</h2>
+          <div class="type-filter" id="typeFilter">
+            <label class="filter-radio">
+              <input type="radio" name="projectType" value="all" checked>
+              <span class="radio-circle"></span>
+              <span>전체</span>
+            </label>
+            <label class="filter-radio">
+              <input type="radio" name="projectType" value="collab">
+              <span class="radio-circle"></span>
+              <span>협업</span>
+            </label>
+            <label class="filter-radio">
+              <input type="radio" name="projectType" value="personal">
+              <span class="radio-circle"></span>
+              <span>개인</span>
+            </label>
+          </div>
+        </div>
+        <div class="project-scroll-list" id="projectList">
+          <div class="empty-state">프로젝트를 불러오는 중...</div>
+        </div>
+      </section>
+
+      <!-- 수익성 분석 폼 -->
+      <section class="cost-card" id="analysisFormSection">
+        <h2 class="section-title-with-icon">
+          <span class="section-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="#7c3aed" stroke-width="2"/>
+              <circle cx="12" cy="12" r="3" fill="#7c3aed"/>
+            </svg>
+          </span>
+          수익성 분석
+        </h2>
+
+        <div class="form-group">
+          <label class="form-label">수익 모델</label>
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" name="revenueModel" value="구독형" checked>
+              <span class="checkbox-box"></span>
+              구독형
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" name="revenueModel" value="광고 수익">
+              <span class="checkbox-box"></span>
+              광고 수익
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" name="revenueModel" value="거래 수수료">
+              <span class="checkbox-box"></span>
+              거래 수수료
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" name="revenueModel" value="프리미엄">
+              <span class="checkbox-box"></span>
+              프리미엄
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" name="revenueModel" value="일회성 결제">
+              <span class="checkbox-box"></span>
+              일회성 결제
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" name="revenueModel" value="기타">
+              <span class="checkbox-box"></span>
+              기타
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="expectedUsers">예상 사용자 수</label>
+          <input type="number" id="expectedUsers" class="form-input" placeholder="예: 1000" min="1">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="pricePerUser">사용자 당 가격 (원)</label>
+          <input type="number" id="pricePerUser" class="form-input" placeholder="예: 9900" min="0">
+        </div>
+
+        <div class="form-actions-center">
+          <button class="btn-execute" id="btnExecute" disabled>수익성 분석 실행</button>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script th:src="@{/js/sidebar.js}"></script>
+<script th:src="@{/js/cost/cost.js}"></script>
+</body>
+</html>

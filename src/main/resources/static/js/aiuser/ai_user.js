@@ -3,27 +3,22 @@
   'use strict';
 
   const industryMap = {
-    commerce: '커머스/리테일',
-    fintech: '금융/핀테크',
-    health: '의료/헬스케어',
-    edu: '교육/에듀테크',
-    content: '콘텐츠/엔터테인먼트',
-    social: '소셜/커뮤니티',
-    mobility: '모빌리티/여행',
-    productivity: '생산성/비즈니스',
-    '': ''
+    commerce: '커머스/리테일', fintech: '금융/핀테크', health: '의료/헬스케어',
+    edu: '교육/에듀테크', content: '콘텐츠/엔터테인먼트', social: '소셜/커뮤니티',
+    mobility: '모빌리티/여행', productivity: '생산성/비즈니스', '': ''
   };
 
   let allProjects = [];
   let currentFilter = 'all';
   let selectedProjectId = null;
 
+  /* ── [수정] URL 파라미터 파싱 ── */
+  const urlParams = new URLSearchParams(window.location.search);
+  const presetProjectId = urlParams.get('projectId');
+  const fromDetail = urlParams.get('from') === 'detail';
+
   function escHtml(value) {
-    return String(value ?? '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+    return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
   function normalizeProject(project) {
@@ -42,55 +37,47 @@
 
   function timeAgo(isoString) {
     if (!isoString) return '';
-
     const time = new Date(isoString).getTime();
     if (Number.isNaN(time)) return '';
-
     const diffMinutes = Math.floor((Date.now() - time) / 60000);
     if (diffMinutes < 1) return '방금 전';
     if (diffMinutes < 60) return `${diffMinutes}분 전`;
-
     const diffHours = Math.floor(diffMinutes / 60);
     if (diffHours < 24) return `${diffHours}시간 전`;
-
     return `${Math.floor(diffHours / 24)}일 전`;
   }
 
+  /* ── [수정] 데이터 세팅 시 필터링 로직 ── */
   function setProjects(projects) {
-    allProjects = Array.isArray(projects)
-      ? projects.map(normalizeProject).filter(project => Number.isFinite(project.id))
-      : [];
+    let mapped = Array.isArray(projects) ? projects.map(normalizeProject) : [];
+    
+    if (fromDetail && presetProjectId) {
+      const target = mapped.find(p => String(p.id) === String(presetProjectId));
+      allProjects = target ? [target] : [];
+      if (target) selectedProjectId = target.id;
+      
+      // 필터 탭 숨기기
+      const filterArea = document.querySelector('.project-filter-tabs');
+      if (filterArea) filterArea.style.display = 'none';
+    } else {
+      allProjects = mapped.filter(project => Number.isFinite(project.id));
+    }
     renderProjects();
   }
 
   async function loadProjects() {
     if (Array.isArray(window.simuInitialProjects) && window.simuInitialProjects.length > 0) {
       setProjects(window.simuInitialProjects);
-    } else {
-      const container = document.getElementById('projectListScroll');
-      if (container) {
-        container.innerHTML = '<div class="no-projects">프로젝트를 불러오는 중입니다.</div>';
-      }
+      if (fromDetail && presetProjectId && allProjects.length > 0) return;
     }
 
     try {
-      const response = await fetch('/api/projects', {
-        headers: { Accept: 'application/json' }
-      });
-
-      if (!response.ok) {
-        throw new Error(`프로젝트 조회 실패: ${response.status}`);
+      const response = await fetch('/api/projects', { headers: { Accept: 'application/json' } });
+      if (response.ok) {
+        setProjects(await response.json());
       }
-
-      setProjects(await response.json());
     } catch (error) {
       console.error(error);
-      if (allProjects.length === 0) {
-        const container = document.getElementById('projectListScroll');
-        if (container) {
-          container.innerHTML = '<div class="no-projects">프로젝트를 불러오지 못했습니다.</div>';
-        }
-      }
     }
   }
 
@@ -98,36 +85,28 @@
     const container = document.getElementById('projectListScroll');
     if (!container) return;
 
-    const filtered = allProjects.filter(project => {
+    const filtered = (fromDetail && presetProjectId) ? allProjects : allProjects.filter(project => {
       if (currentFilter === 'all') return true;
       return project.type === currentFilter;
     });
 
     if (filtered.length === 0) {
-      container.innerHTML = '<div class="no-projects">조건에 맞는 프로젝트가 없습니다.</div>';
-      selectedProjectId = null;
+      container.innerHTML = '<div class="no-projects">프로젝트가 없습니다.</div>';
       return;
     }
 
-    if (selectedProjectId !== null && !filtered.some(project => project.id === selectedProjectId)) {
-      selectedProjectId = null;
-    }
-
     container.innerHTML = filtered.map(project => {
-      const isCollab = project.type === 'collab';
-      const badge = isCollab
-        ? '<span class="type-badge badge-collab">협업</span>'
-        : '<span class="type-badge badge-personal">개인</span>';
-      const memberHtml = isCollab && project.members.length
-        ? `<span class="members">With. ${project.members.map(escHtml).join(', ')}</span>`
-        : '';
-
+      const isSelected = selectedProjectId === project.id;
       return `
-        <div class="project-item${selectedProjectId === project.id ? ' selected' : ''}"
-             data-id="${project.id}" role="button" tabindex="0">
+        <div class="project-item${isSelected ? ' selected' : ''}" data-id="${project.id}" role="button" tabindex="0">
           <div class="project-item-head">
             <span class="project-item-title">${escHtml(project.title)}</span>
-            ${badge}
+            <span class="type-badge badge-${project.type}">${project.type === 'collab' ? '협업' : '개인'}</span>
+            <div class="check-icon" style="${isSelected ? 'display:flex' : 'display:none'}">
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+               </svg>
+            </div>
           </div>
           ${project.description ? `<p class="project-item-desc">${escHtml(project.description)}</p>` : ''}
           <div class="project-item-footer">
@@ -137,29 +116,23 @@
                 <path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
               </svg>${timeAgo(project.createdAt)}
             </span>
-            ${memberHtml}
           </div>
         </div>`;
     }).join('');
 
     container.querySelectorAll('.project-item').forEach(element => {
-      const select = () => selectProject(Number(element.dataset.id));
-      element.addEventListener('click', select);
-      element.addEventListener('keydown', event => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          select();
-        }
-      });
+      element.addEventListener('click', () => selectProject(Number(element.dataset.id)));
     });
   }
 
   function selectProject(id) {
     selectedProjectId = id;
-    document.querySelectorAll('.project-item').forEach(element => {
-      element.classList.toggle('selected', Number(element.dataset.id) === selectedProjectId);
+    document.querySelectorAll('.project-item').forEach(el => {
+      const isTarget = Number(el.dataset.id) === selectedProjectId;
+      el.classList.toggle('selected', isTarget);
+      const check = el.querySelector('.check-icon');
+      if (check) check.style.display = isTarget ? 'flex' : 'none';
     });
-
     document.getElementById('err-project')?.classList.remove('show');
   }
 
@@ -176,20 +149,15 @@
     const allBox = document.getElementById('age-all');
     const otherBoxes = document.querySelectorAll('.age-check:not(#age-all)');
     if (!allBox) return;
-
     allBox.addEventListener('change', () => {
       otherBoxes.forEach(checkbox => {
         checkbox.checked = false;
         checkbox.disabled = allBox.checked;
       });
     });
-
     otherBoxes.forEach(checkbox => {
       checkbox.addEventListener('change', () => {
-        if (checkbox.checked) {
-          allBox.checked = false;
-          otherBoxes.forEach(box => { box.disabled = false; });
-        }
+        if (checkbox.checked) allBox.checked = false;
       });
     });
   }
@@ -202,17 +170,11 @@
       { invalid: !document.getElementById('genderSelect')?.value, errorId: 'err-gender' },
       { invalid: !document.querySelector('.age-check:checked'), errorId: 'err-age' }
     ];
-
     checks.forEach(({ invalid, errorId }) => {
-      const errorElement = document.getElementById(errorId);
-      if (invalid) {
-        errorElement?.classList.add('show');
-        valid = false;
-      } else {
-        errorElement?.classList.remove('show');
-      }
+      const err = document.getElementById(errorId);
+      if (invalid) { err?.classList.add('show'); valid = false; }
+      else { err?.classList.remove('show'); }
     });
-
     return valid;
   }
 
@@ -221,23 +183,9 @@
     if (!validateForm()) return;
 
     const project = allProjects.find(item => item.id === selectedProjectId);
-    if (!project) {
-      document.getElementById('err-project')?.classList.add('show');
-      return;
-    }
-
-    const selectedAges = [...document.querySelectorAll('.age-check:checked')]
-      .map(checkbox => checkbox.value);
-
+    const selectedAges = [...document.querySelectorAll('.age-check:checked')].map(cb => cb.value);
     const params = {
-      project: {
-        id: project.id,
-        title: project.title,
-        description: project.description,
-        targetUser: project.targetUser,
-        industry: industryMap[project.industry] || project.industry || '',
-        type: project.type
-      },
+      project,
       personaCount: Number(document.getElementById('personaCount').value),
       gender: document.getElementById('genderSelect').value,
       ages: selectedAges,
@@ -245,31 +193,16 @@
     };
 
     localStorage.setItem('simu_params', JSON.stringify(params));
-    localStorage.removeItem('simu_result');
     localStorage.setItem('simu_should_run', '1');
-
-    const resultUrl = document.getElementById('resultPageUrl')?.value || '/aiuser/result';
-    window.location.href = resultUrl;
-  }
-
-  function initNewProjectButton() {
-    const button = document.getElementById('btnNewProject');
-    button?.addEventListener('click', () => {
-      window.location.href = button.dataset.href || '/project/new';
-    });
+    window.location.href = document.getElementById('resultPageUrl')?.value || '/aiuser/result';
   }
 
   function init() {
     initFilterTabs();
     initAgeCheckboxes();
-    initNewProjectButton();
     document.getElementById('simulationForm')?.addEventListener('submit', handleSubmit);
     loadProjects();
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+  init();
 })();

@@ -140,10 +140,9 @@
         </div>
 
         <div id="tab-finance" class="tab-content">
-            <div class="empty-state" style="padding: 40px; text-align: center; color: #94a3b8;">
-                수익성 분석 데이터가 없습니다.
-            </div>
+            <div class="analysis-list" id="financeAnalysisList"></div>
         </div>
+      
         <div id="tab-plan" class="tab-content">
             <div class="empty-state" style="padding: 40px; text-align: center; color: #94a3b8;">
                 기획 피드백 기록이 없습니다.
@@ -295,9 +294,11 @@
       }
 
       await loadMarketAnalyses(projectId);
+      await loadCostAnalyses(projectId);
       await loadAiUserAnalyses(projectId);
       renderAiUserAnalysisList();
       renderMarketAnalysisList();
+      renderCostAnalysisList();
     }
   }
 
@@ -389,6 +390,78 @@
         </div>
       </div>`).join('');
   }
+
+  async function loadCostAnalyses(projectId) {
+  if (!currentProject) return;
+  const allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
+  const project = allProjects.find(p => String(p.id) === projectId);
+  currentProject.costAnalyses = project?.costAnalyses || [];
+}
+
+function renderCostAnalysisList() {
+  const listEl = document.getElementById('financeAnalysisList');
+  if (!listEl || !currentProject) return;
+  const analyses = currentProject.costAnalyses || [];
+  if (analyses.length === 0) {
+    listEl.innerHTML = `<div class="empty-state" style="padding:40px;text-align:center;color:#94a3b8;">수익성 분석 데이터가 없습니다.</div>`;
+    return;
+  }
+  listEl.innerHTML = analyses.map(a => `
+    <div class="analysis-item" data-analysis-id="${a.id}">
+      <div class="item-status success">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </div>
+      <div class="item-info">
+        <span class="item-title">${escHtml(a.title)}</span>
+        <span class="item-date" style="font-size:12px;color:#94a3b8;margin-left:10px;">${timeAgo(a.createdAt)}</span>
+      </div>
+      <div class="item-actions">
+        <button class="btn-edit-small" onclick="viewCostResult('${a.id}')">보기</button>
+        <button class="btn-icon-only btn-star ${a.starred ? 'active' : ''}" onclick="toggleCostStar(this,'${a.id}')">
+          <svg class="star-icon" width="20" height="20" viewBox="0 0 24 24"
+               fill="${a.starred ? '#f59e0b' : 'none'}" stroke="${a.starred ? '#f59e0b' : 'currentColor'}" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+        </button>
+        <button class="btn-icon-only danger" onclick="deleteCostAnalysis('${a.id}')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </button>
+      </div>
+    </div>`).join('');
+}
+
+function viewCostResult(analysisId) {
+  const pathSegments = window.location.pathname.split('/');
+  const projectId = pathSegments[pathSegments.length - 1];
+  // sessionStorage에 결과 데이터를 복원 후 결과 페이지로 이동
+  const allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
+  const project = allProjects.find(p => String(p.id) === projectId);
+  const entry = project?.costAnalyses?.find(a => a.id === analysisId);
+  if (entry) {
+    sessionStorage.setItem('cost_form_data', JSON.stringify(entry.formData));
+    window.location.href = '/cost/result';
+  }
+}
+
+function toggleCostStar(btn, analysisId) {
+  if (!currentProject?.costAnalyses) return;
+  const a = currentProject.costAnalyses.find(x => x.id === analysisId);
+  if (!a) return;
+  a.starred = !a.starred;
+  updateLocalStorage();
+  renderCostAnalysisList();
+}
+
+function deleteCostAnalysis(analysisId) {
+  if (!confirm('이 분석 결과를 삭제하시겠습니까?')) return;
+  if (!currentProject?.costAnalyses) return;
+  currentProject.costAnalyses = currentProject.costAnalyses.filter(x => x.id !== analysisId);
+  updateLocalStorage();
+  renderCostAnalysisList();
+}
 
   function viewAiUserResult(analysisId) {
     const pathSegments = window.location.pathname.split('/');
@@ -581,6 +654,9 @@
     if (targetId === 'tab-market') {
       renderMarketAnalysisList();
     }
+    if (targetId === 'tab-finance') {
+        renderCostAnalysisList();
+    }
   }
 
   /* ── [4] 분석하기 버튼 ── */
@@ -595,7 +671,7 @@
     const analyzeUrlMap = {
       'tab-user-simu': `/aiuser/ai_user?projectId=${projectId}&from=detail`,
       'tab-market':    `/market/market?projectId=${projectId}&from=detail`,
-      'tab-finance':   `#`,
+      'tab-finance':   `/cost/cost?projectId=${projectId}&from=detail`,
       'tab-plan':      `#`,
       'tab-scenario':  `/scenario?projectId=${projectId}&from=detail`,
       'tab-document':  `#`,
