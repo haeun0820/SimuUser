@@ -3,22 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="_csrf" th:if="${_csrf}" th:content="${_csrf.token}">
+  <meta name="_csrf_header" th:if="${_csrf}" th:content="${_csrf.headerName}">
   <title>비용 & 수익성 분석 - SimuUser</title>
   <link rel="stylesheet" th:href="@{/css/cost/cost.css}">
 </head>
 <body>
 <div class="app-layout">
-
-  <!-- 사이드바 -->
   <div id="sidebar-root" data-active="cost"></div>
 
   <div class="main-area">
-
-    <!-- 상단 헤더 -->
     <header class="top-header">
       <nav class="breadcrumb-nav" id="breadcrumbNav">
         <a href="/dashboard">분석도구</a>
-        <span class="bc-sep">›</span>
+        <span class="bc-sep">/</span>
         <span class="bc-current">비용 &amp; 수익성 분석</span>
       </nav>
       <div class="auth-actions">
@@ -56,8 +54,6 @@
     </header>
 
     <main class="page-content">
-
-      <!-- 페이지 헤더 -->
       <div class="cost-page-header">
         <div class="cost-page-icon">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
@@ -71,7 +67,6 @@
         </div>
       </div>
 
-      <!-- 프로젝트 선택 -->
       <section class="cost-card">
         <div class="project-select-header">
           <h2 class="section-title">프로젝트 선택</h2>
@@ -93,15 +88,14 @@
             </label>
           </div>
           <button type="button" class="btn-new-proj" id="btnNewProject" onclick="location.href='/project/new'">
-        새로 만들기 +
-        </button>
+            새로 만들기 +
+          </button>
         </div>
         <div class="project-scroll-list" id="projectList">
           <div class="empty-state">프로젝트를 불러오는 중...</div>
         </div>
       </section>
 
-      <!-- 수익성 분석 폼 -->
       <section class="cost-card" id="analysisFormSection">
         <h2 class="section-title-with-icon">
           <span class="section-icon">
@@ -117,9 +111,9 @@
           <label class="form-label">수익 모델</label>
           <div class="checkbox-group">
             <label class="checkbox-label">
-              <input type="checkbox" name="revenueModel" value="구독형" checked>
+              <input type="checkbox" name="revenueModel" value="구독" checked>
               <span class="checkbox-box"></span>
-              구독형
+              구독
             </label>
             <label class="checkbox-label">
               <input type="checkbox" name="revenueModel" value="광고 수익">
@@ -155,15 +149,14 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="pricePerUser">사용자 당 가격 (원)</label>
+          <label class="form-label" for="pricePerUser">사용자당 가격(원)</label>
           <input type="number" id="pricePerUser" class="form-input" placeholder="예: 9900" min="0">
         </div>
 
         <div class="form-actions-center">
-          <button class="btn-execute" id="btnExecute" disabled>수익성 분석 실행</button>
+          <button type="button" class="btn-execute" id="btnExecute" disabled>수익성 분석 실행</button>
         </div>
       </section>
-
     </main>
   </div>
 </div>

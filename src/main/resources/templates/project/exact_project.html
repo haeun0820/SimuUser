@@ -392,11 +392,28 @@
   }
 
   async function loadCostAnalyses(projectId) {
-  if (!currentProject) return;
-  const allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
-  const project = allProjects.find(p => String(p.id) === projectId);
-  currentProject.costAnalyses = project?.costAnalyses || [];
-}
+    if (!currentProject) return;
+
+    try {
+      const response = await fetch(`/cost/results/project/${projectId}`, {
+        headers: { Accept: 'application/json' }
+      });
+      if (!response.ok) return;
+
+      const analyses = await response.json();
+      currentProject.costAnalyses = analyses.map(item => ({
+        id: String(item.id),
+        type: 'cost',
+        title: '비용 & 수익성 분석',
+        createdAt: item.createdAt,
+        formData: item.formData,
+        result: item.result,
+        starred: false
+      }));
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
 function renderCostAnalysisList() {
   const listEl = document.getElementById('financeAnalysisList');
@@ -434,16 +451,9 @@ function renderCostAnalysisList() {
 }
 
 function viewCostResult(analysisId) {
-  const pathSegments = window.location.pathname.split('/');
-  const projectId = pathSegments[pathSegments.length - 1];
+  const detailProjectId = window.location.pathname.split('/').pop();
+  window.location.href = `/cost/result?projectId=${detailProjectId}&from=detail&analysisId=${analysisId}`;
   // sessionStorage에 결과 데이터를 복원 후 결과 페이지로 이동
-  const allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
-  const project = allProjects.find(p => String(p.id) === projectId);
-  const entry = project?.costAnalyses?.find(a => a.id === analysisId);
-  if (entry) {
-    sessionStorage.setItem('cost_form_data', JSON.stringify(entry.formData));
-    window.location.href = '/cost/result';
-  }
 }
 
 function toggleCostStar(btn, analysisId) {
