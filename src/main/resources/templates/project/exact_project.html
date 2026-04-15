@@ -258,24 +258,27 @@
   let currentProject = null;
   let currentTabId = 'tab-user-simu';
 
-// 1. DB에서 탭 목록 불러오기 (함수 밖으로 이동)
+/* ── 전역 변수 및 토큰 준비 ── */
+const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+// 1. DB에서 저장된 모든 탭 불러오기
 async function loadSavedTabs(projectId) {
     try {
         const response = await fetch(`/api/projects/${projectId}/tabs`);
         if (response.ok) {
             const tabs = await response.json();
-            tabs.forEach(tab => {
-                renderTabUI(tab); 
-            });
+            tabs.forEach(tab => renderTabUI(tab)); 
         }
     } catch (e) { 
         console.error("탭 불러오기 실패", e); 
     }
 }
 
-// 2. 탭 UI 그리기 (함수 밖으로 이동)
+// 2. 탭 UI를 화면에 그리고 이벤트를 연결하는 함수
 function renderTabUI(tab) {
     const tabId = "tab-" + tab.id;
+    const realDbId = tab.id; 
     const tabContainer = document.querySelector('.analysis-toolbar-tabs');
     
     if (document.getElementById(tabId)) return;
@@ -283,9 +286,30 @@ function renderTabUI(tab) {
     const newBtn = document.createElement('button');
     newBtn.className = 'tab-btn custom-tab';
     newBtn.setAttribute('data-target', tabId);
+    newBtn.setAttribute('data-db-id', realDbId); 
     newBtn.textContent = tab.name;
+
+    // [중요] 더블클릭 이벤트: 이름 수정
+    newBtn.ondblclick = (e) => {
+        e.stopPropagation();
+        const oldName = newBtn.textContent;
+        const newName = prompt("수정할 탭 이름을 입력하세요", oldName);
+        if (newName && newName !== oldName) {
+            updateTabInDb(realDbId, newName, newBtn);
+        }
+    };
+
+    // [중요] 우클릭 이벤트: 삭제
+    newBtn.oncontextmenu = (e) => {
+        e.preventDefault(); 
+        if (confirm(`'${newBtn.textContent}' 탭과 내부 문서를 모두 삭제하시겠습니까?`)) {
+            deleteTabFromDb(realDbId, tabId, newBtn);
+        }
+    };
+
     tabContainer.appendChild(newBtn);
 
+    // 탭 컨텐츠(내용 영역) 생성
     const analysisSection = document.querySelector('.analysis-section');
     const footer = document.querySelector('.analysis-footer');
     const newContent = document.createElement('div');
@@ -301,6 +325,71 @@ function renderTabUI(tab) {
             </button>
         </div>`;
     analysisSection.insertBefore(newContent, footer);
+}
+
+// 3. 서버에 탭 이름 수정 요청
+async function updateTabInDb(dbId, newName, btnElement) {
+    try {
+        const response = await fetch(`/api/projects/tabs/${dbId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', [header]: token },
+            body: JSON.stringify({ name: newName })
+        });
+        if (response.ok) {
+            btnElement.textContent = newName;
+            // 내용 영역의 텍스트도 업데이트
+            const contentArea = document.getElementById("tab-" + dbId);
+            if(contentArea) contentArea.querySelector('p').textContent = `"${newName}" 관련 문서가 아직 없습니다.`;
+        }
+    } catch (err) { alert("수정 실패: 서버 오류"); }
+}
+
+// 4. 서버에 탭 삭제 요청
+async function deleteTabFromDb(dbId, htmlId, btnElement) {
+    try {
+        const response = await fetch(`/api/projects/tabs/${dbId}`, {
+            method: 'DELETE',
+            headers: { [header]: token }
+        });
+        if (response.ok) {
+            btnElement.remove(); 
+            const contentArea = document.getElementById(htmlId);
+            if(contentArea) contentArea.remove();
+            
+            // 첫 번째 탭(기본탭)으로 이동
+            const firstTab = document.querySelector('.tab-btn');
+            if (firstTab) switchTab(firstTab);
+        }
+    } catch (err) { alert("삭제 실패: 서버 오류"); }
+}
+
+// 5. 새 탭 생성 버튼 클릭 시 실행
+async function createTab() {
+    const input = document.getElementById('newTabName');
+    const tabName = input.value.trim();
+    if (!tabName) { alert("탭 이름을 입력해주세요."); return; }
+
+    const projectId = window.location.pathname.split('/').pop();
+
+    try {
+        const response = await fetch(`/api/projects/${projectId}/tabs`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', [header]: token },
+            body: JSON.stringify({
+                name: tabName,
+                orderIndex: document.querySelectorAll('.tab-btn').length
+            })
+        });
+
+        if (!response.ok) throw new Error("저장 실패");
+
+        const savedTab = await response.json();
+        renderTabUI(savedTab); 
+        switchTab(document.querySelector(`[data-target="tab-${savedTab.id}"]`));
+        closeTabModal();
+    } catch (error) {
+        alert("탭 저장 중 오류가 발생했습니다.");
+    }
 }
 
   /* ── [1] 프로젝트 상세 데이터 로드 ── */
@@ -684,6 +773,22 @@ function deleteCostAnalysis(analysisId) {
     // CSRF 토큰 가져오기
     const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
     const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+
+// 서버에 삭제 요청
+async function deleteTabFromDb(dbId, htmlId, btnElement) {
+    const response = await fetch(`/api/projects/tabs/${dbId}`, {
+        method: 'DELETE',
+        headers: { [header]: token }
+    });
+    if (response.ok) {
+        btnElement.remove(); // 버튼 삭제
+        document.getElementById(htmlId).remove(); // 컨텐츠 영역 삭제
+        // 첫 번째 탭으로 강제 이동
+        const firstTab = document.querySelector('.tab-btn');
+        if (firstTab) switchTab(firstTab);
+    }
+}
 
     try {
         const response = await fetch(`/api/projects/${projectId}/tabs`, {

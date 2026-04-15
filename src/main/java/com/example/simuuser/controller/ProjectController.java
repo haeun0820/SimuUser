@@ -6,7 +6,9 @@ import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -84,5 +86,21 @@ public class ProjectController {
     @GetMapping("/api/projects/{projectId}/tabs")
     public List<ProjectTab> getProjectTabs(@PathVariable Long projectId) {
         return projectTabService.getTabs(projectId);
+    }
+
+    // 탭 이름 수정: PATCH /api/projects/tabs/5
+    @ResponseBody
+    @PatchMapping("/api/projects/tabs/{tabId}")
+    public ResponseEntity<?> updateTab(@PathVariable Long tabId, @RequestBody Map<String, String> body) {
+        projectTabService.updateTabName(tabId, body.get("name"));
+        return ResponseEntity.ok().build();
+    }
+
+    // 탭 삭제: DELETE /api/projects/tabs/5
+    @ResponseBody
+    @DeleteMapping("/api/projects/tabs/{tabId}")
+    public ResponseEntity<?> deleteTab(@PathVariable Long tabId) {
+        projectTabService.deleteTab(tabId);
+        return ResponseEntity.ok().build();
     }
 }

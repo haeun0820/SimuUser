@@ -31,6 +31,18 @@ public class ProjectTabService {
         return projectTabRepository.save(tab);
     }
 
+    // 이름 수정
+    public void updateTabName(Long tabId, String newName) {
+        ProjectTab tab = projectTabRepository.findById(tabId)
+                .orElseThrow(() -> new IllegalArgumentException("탭이 없습니다."));
+        tab.updateName(newName); // Dirty Checking으로 자동 저장됨
+    }
+
+    // 삭제
+    public void deleteTab(Long tabId) {
+        projectTabRepository.deleteById(tabId);
+    }
+
     @Transactional(readOnly = true)
     public List<ProjectTab> getTabs(Long projectId) {
         return projectTabRepository.findByProjectIdOrderByOrderIndexAsc(projectId);
