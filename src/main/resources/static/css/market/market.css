@@ -4,6 +4,22 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+:root {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-light: rgba(37,99,235,0.08);
+  --danger: #ef4444;
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --border-focus: #93c5fd;
+  --text: #111827;
+  --text-sub: #6b7280;
+  --text-hint: #9ca3af;
+  --radius: 10px;
+  --shadow: 0 1px 4px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
+}
+
 body {
   font-family: 'Pretendard', 'Noto Sans KR', -apple-system, sans-serif;
   background: #f1f5f9;
@@ -196,25 +212,29 @@ body {
 
 /* ── 선택 섹션 ── */
 .selection-section {
-  background: #fff;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
+  background: #ffffff !important; /* 배경색 강제 지정 */
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+  margin-bottom: 24px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  display: block !important;
 }
 
 .selection-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px 16px;
+  padding: 20px 24px;
   border-bottom: 1px solid #f1f5f9;
+  gap: 20px;
 }
 
 .selection-title {
   font-size: 15px;
   font-weight: 700;
   color: #0f172a;
+  white-space: nowrap;
+  margin-right: auto;
 }
 
 /* ── 라디오 필터 ── */
@@ -369,6 +389,56 @@ body {
 }
 
 .project-item.selected .item-check { display: flex; }
+
+/* 필터 라디오 탭 스타일 */
+.type-filter, .project-filter-tabs {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  justify-content: flex-start; 
+}
+
+.type-filter label, .project-filter-tabs label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-sub);
+  cursor: pointer;
+}
+
+/* 새로 만들기 버튼 (+ 버튼) */
+.btn-new-proj {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary); /* #2563eb */
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.12s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-new-proj:hover {
+  background: var(--primary-light);
+  color: var(--primary-hover);
+}
+
+/* 헤더 정렬 맞춤 */
+.project-select-header {
+  display: flex;
+  align-items: center;
+  gap: 20px; /* 제목과 라디오 버튼 사이 간격 */
+  margin-bottom: 16px;
+}
 
 /* 빈 상태 */
 .empty-project {

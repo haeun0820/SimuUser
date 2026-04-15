@@ -28,6 +28,9 @@ function parseUrlParams() {
     // 필터 숨기기
     const typeFilter = document.getElementById('typeFilter');
     if (typeFilter) typeFilter.style.display = 'none';
+
+    const btnNew = document.getElementById('btnNewProject');
+    if (btnNew) btnNew.style.display = 'none';
     
     updateBreadcrumbForDetail(projectId);
   }

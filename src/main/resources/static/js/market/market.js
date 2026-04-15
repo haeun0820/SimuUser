@@ -94,41 +94,57 @@
 
   /* ── 리스트 렌더링 ── */
   function renderProjectList() {
-    const listEl = document.getElementById('projectList');
-    if (!listEl) return;
+  const listEl = document.getElementById('projectList');
+  if (!listEl) return;
 
-    let filtered = allProjects;
+  let filtered = allProjects;
 
-    // 상세 페이지에서 진입 시 해당 프로젝트만 표시
-    if (fromDetail && fromProjectId) {
-      filtered = allProjects.filter(p => String(p.id) === fromProjectId);
-      // 라디오 필터 숨기기
-      const filterRadios = document.getElementById('filterRadios');
-      if (filterRadios) filterRadios.style.display = 'none';
-    } else {
-      // 라디오 필터 적용
-      if (currentFilter !== 'all') {
-        filtered = allProjects.filter(p => p.type === currentFilter);
-      }
+  // 상세 페이지에서 진입 시 해당 프로젝트만 표시
+  if (fromDetail && fromProjectId) {
+    filtered = allProjects.filter(p => String(p.id) === fromProjectId);
+    
+    // [추가] 라디오 필터 및 새로 만들기 버튼 숨기기
+    const filterRadios = document.getElementById('filterRadios');
+    if (filterRadios) filterRadios.style.display = 'none';
+
+    const btnNew = document.getElementById('btnNewProject');
+    if (btnNew) btnNew.style.display = 'none';
+
+  } else {
+    // 라디오 필터 적용
+    if (currentFilter !== 'all') {
+      filtered = allProjects.filter(p => p.type === currentFilter);
     }
+  }
 
-    if (filtered.length === 0) {
-      listEl.innerHTML = `<div class="empty-project">해당하는 프로젝트가 없습니다.</div>`;
-      return;
-    }
+  if (filtered.length === 0) {
+    listEl.innerHTML = `<div class="empty-project">해당하는 프로젝트가 없습니다.</div>`;
+    return;
+  }
 
-    listEl.innerHTML = filtered.map(renderProjectItem).join('');
+  listEl.innerHTML = filtered.map(renderProjectItem).join('');
 
-    // 클릭 이벤트
-    listEl.querySelectorAll('.project-item').forEach(item => {
-      item.addEventListener('click', () => {
-        const id = item.dataset.id;
-        selectedProjectId = id;
-        renderProjectList();
-        updateRunButton();
-      });
+  // 클릭 이벤트 (이하 동일)
+  listEl.querySelectorAll('.project-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const id = item.dataset.id;
+      selectedProjectId = id;
+      renderProjectList();
+      updateRunButton();
+    });
+  });
+}
+
+/* ── 새로 만들기 버튼 이벤트 ── */
+function initNewProjectButton() {
+  const btnNew = document.getElementById('btnNewProject');
+  if (btnNew) {
+    btnNew.addEventListener('click', () => {
+      const targetUrl = btnNew.dataset.href || '/project/new';
+      window.location.href = targetUrl;
     });
   }
+}
 
   /* ── 분석 실행 버튼 활성화 ── */
   function updateRunButton() {
@@ -236,29 +252,28 @@
 
   /* ── 초기화 ── */
   async function init() {
-    try {
-      const response = await fetch('/api/projects');
-      if (response.ok) {
-        allProjects = await response.json();
-      } else {
-        throw new Error('fetch failed');
-      }
-    } catch {
-      // API 연결 전 fallback: localStorage 사용
-      allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
+  try {
+    const response = await fetch('/api/projects');
+    if (response.ok) {
+      allProjects = await response.json();
+    } else {
+      throw new Error('fetch failed');
     }
-
-    // 상세에서 진입 시 해당 프로젝트 미리 선택
-    if (fromDetail && fromProjectId) {
-      selectedProjectId = fromProjectId;
-    }
-
-    renderBreadcrumb();
-    renderProjectList();
-    initFilters();
-    initRunButton();
-    updateRunButton();
+  } catch {
+    allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
   }
+
+  if (fromDetail && fromProjectId) {
+    selectedProjectId = fromProjectId;
+  }
+
+  renderBreadcrumb();
+  renderProjectList();
+  initFilters();
+  initRunButton();
+  initNewProjectButton();
+  updateRunButton();
+}
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

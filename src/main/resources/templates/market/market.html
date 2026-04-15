@@ -32,32 +32,37 @@
           <p class="tool-subtitle">시장 포화도, 경쟁 강도, TAM/SAM/SOM을 분석합니다</p>
         </div>
       </div>
-
-      <div class="selection-section">
-        <div class="selection-header">
-          <h2 class="selection-title">프로젝트 선택</h2>
-          <div class="filter-radios" id="filterRadios">
-            <label class="radio-option">
-              <input type="radio" name="projectFilter" value="all" checked>
-              <span class="radio-circle"></span>
-              <span>전체</span>
-            </label>
-            <label class="radio-option">
-              <input type="radio" name="projectFilter" value="collab">
-              <span class="radio-circle"></span>
-              <span>협업</span>
-            </label>
-            <label class="radio-option">
-              <input type="radio" name="projectFilter" value="personal">
-              <span class="radio-circle"></span>
-              <span>개인</span>
-            </label>
-          </div>
+<div class="selection-section">
+      <div class="selection-header">
+        <h2 class="selection-title">프로젝트 선택</h2>
+        
+        <div class="filter-radios" id="filterRadios">
+          <label class="radio-option">
+            <input type="radio" name="projectFilter" value="all" checked>
+            <span class="radio-circle"></span>
+            <span>전체</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="projectFilter" value="collab">
+            <span class="radio-circle"></span>
+            <span>협업</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="projectFilter" value="personal">
+            <span class="radio-circle"></span>
+            <span>개인</span>
+          </label>
         </div>
+
+        <button type="button" class="btn-new-proj" id="btnNewProject" onclick="location.href='/project/new'">
+          새로 만들기 +
+        </button>
+      </div>
 
         <div class="project-list-container">
           <div class="project-list" id="projectList">
             </div>
+        </div>
         </div>
 
         <div class="action-area">
