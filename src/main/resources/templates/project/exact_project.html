@@ -171,22 +171,32 @@
 
 <!-- 협업 공유 모달 -->
 <div id="shareModal" class="popup-overlay hidden">
-    <div class="popup share-popup">
+    <div class="popup share-popup" style="max-height: 80vh; display: flex; flex-direction: column;">
         <div class="popup-header">
             <h3 class="share-title">"<span id="modalProjectTitle">프로젝트 제목</span>" 공유</h3>
         </div>
-        <div class="share-section">
+        
+        <div class="share-section" style="flex-shrink: 0;">
             <label class="share-label">사용자 추가</label>
-            <div class="share-input-row">
+            <div class="share-input-row" style="display: flex; gap: 8px;">
                 <input type="text" id="shareEmailInput" placeholder="이메일 입력 후 엔터..." class="form-input"
-                    onkeypress="if(event.keyCode==13) { addMemberByEmail(); }">
+                       style="flex: 1;" onkeypress="if(event.keyCode==13) { addMemberByEmail(); }">
+                <select id="shareRoleSelect" class="role-select-custom">
+                    <option value="편집자">편집자</option>
+                    <option value="뷰어">뷰어</option>
+                    <option value="관리자">관리자</option>
+                </select>
             </div>
         </div>
-        <div class="share-section">
+
+        <div class="share-section" style="flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0;">
             <label class="share-label">사용자</label>
-            <div class="member-scroll-list" id="modalMemberList"></div>
+            <div class="member-scroll-list" id="modalMemberList" 
+                 style="flex: 1; overflow-y: auto; padding-right: 4px; margin-top: 8px;">
+                </div>
         </div>
-        <div class="form-actions" style="margin-top: 24px;">
+
+        <div class="form-actions" style="margin-top: 24px; flex-shrink: 0;">
             <button class="btn-primary" onclick="closeShareModal()" style="min-width: 100px; padding: 10px;">확인</button>
             <button class="btn-cancel" onclick="closeShareModal()" style="min-width: 100px; padding: 10px;">취소</button>
         </div>
@@ -209,6 +219,30 @@
         <div class="form-actions" style="margin-top: 30px; gap: 15px;">
             <button class="btn-cancel" onclick="closeTabModal()" style="flex: 1; height: 50px; background: #eee; font-size: 18px;">취소</button>
             <button class="btn-primary" onclick="createTab()" style="flex: 1; height: 50px; background: #dbeafe; color: #2563eb; font-size: 18px;">추가</button>
+        </div>
+    </div>
+</div>
+
+<div id="createDocModal" class="popup-overlay hidden">
+    <div class="popup add-tab-popup">
+        <div class="popup-header">
+            <h2 class="popup-title" style="font-size: 24px; font-weight: 800;">새 문서 만들기</h2>
+        </div>
+        <div class="form-section" style="margin-top: 20px; display: flex; flex-direction: column; gap: 15px;">
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <label style="font-size: 16px; font-weight: 700;">문서 제목</label>
+                <input type="text" id="newDocTitle" placeholder="제목을 입력하세요" class="form-input"
+                       style="background: #f8fafc; border: 1px solid #e2e8f0; height: 45px; width: 100%;">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <label style="font-size: 16px; font-weight: 700;">설명 (선택)</label>
+                <textarea id="newDocDesc" placeholder="문서에 대한 간단한 설명을 입력하세요" class="form-input"
+                          style="background: #f8fafc; border: 1px solid #e2e8f0; height: 100px; width: 100%; padding: 12px; resize: none;"></textarea>
+            </div>
+        </div>
+        <div class="form-actions" style="margin-top: 30px; gap: 15px;">
+            <button class="btn-cancel" onclick="closeDocModal()" style="flex: 1; height: 50px; background: #eee; font-size: 18px; border-radius: 12px;">취소</button>
+            <button class="btn-primary" onclick="submitCreateDocument()" style="flex: 1; height: 50px; background: #dbeafe; color: #2563eb; font-size: 18px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer;">생성하기</button>
         </div>
     </div>
 </div>
@@ -617,9 +651,14 @@ function deleteCostAnalysis(analysisId) {
     newContent.id = tabId;
     newContent.className = 'tab-content';
     newContent.innerHTML = `
-      <div class="empty-state" style="padding: 40px; text-align: center; color: #94a3b8;">
-        "${tabName}" 관련 기록이 없습니다.
-      </div>`;
+  <div style="padding: 40px; text-align: center;">
+    <p style="color:#94a3b8; margin-bottom: 16px;">
+      "${tabName}" 관련 문서가 없습니다.
+    </p>
+    <button class="btn-primary" onclick="createDocument('${tabId}')">
+      새로 만들기 +
+    </button>
+  </div>`;
     analysisSection.insertBefore(newContent, footer);
 
     switchTab(newBtn);
@@ -655,6 +694,11 @@ function deleteCostAnalysis(analysisId) {
     const footer = document.querySelector('.analysis-footer');
     if (footer) {
       footer.style.display = btn.classList.contains('custom-tab') ? 'none' : 'block';
+    }
+    
+    // 아래 내용을 추가 (커스텀 탭일 경우 목록 렌더링 호출)
+    if (btn.classList.contains('custom-tab')) {
+        renderCustomDocuments(targetId);
     }
 
     // 분석하기 버튼 동작: 탭에 따라 이동 경로 결정
@@ -694,61 +738,99 @@ function deleteCostAnalysis(analysisId) {
   }
 
   /* ── [5] 멤버 관리 (협업 공유) ── */
-  function renderModalMembers() {
+  /* ── [수정] 멤버 리스트 렌더링 (권한 표시 포함) ── */
+function renderModalMembers() {
     const listContainer = document.getElementById('modalMemberList');
     if (!listContainer || !currentProject) return;
 
     let html = `
       <div class="share-member-item">
         <div class="member-profile-info">
-          <div class="profile-avatar-small"></div>
-          <div class="member-text"><span class="member-name">나(소유자)</span><span class="member-email">me@simuuser.com</span></div>
+          <div class="profile-avatar-small" style="background: #e2e8f0; border-radius: 50%; width: 32px; height: 32px;"></div>
+          <div class="member-text">
+            <span class="member-name">나(소유자)</span>
+            <span class="member-email">me@simuuser.com</span>
+          </div>
         </div>
-        <span class="member-role">소유자</span>
+        <span class="member-role" style="color: #94a3b8; font-size: 13px;">소유자</span>
       </div>`;
 
     if (currentProject.members) {
-      currentProject.members.forEach((email, idx) => {
-        html += `
-        <div class="share-member-item">
-          <div class="member-profile-info">
-            <div class="profile-avatar-small"></div>
-            <div class="member-text"><span class="member-name">${email.split('@')[0]}</span><span class="member-email">${email}</span></div>
-          </div>
-          <button onclick="removeMember(${idx})" style="color:#ef4444; background:none; border:none; cursor:pointer;">삭제</button>
-        </div>`;
-      });
+        currentProject.members.forEach((member, idx) => {
+            // member가 객체인지 문자열인지 확인 (하위 호환성)
+            const email = typeof member === 'object' ? member.email : member;
+            const role = typeof member === 'object' ? member.role : '편집자';
+
+            html += `
+            <div class="share-member-item" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9;">
+              <div class="member-profile-info" style="display: flex; align-items: center; gap: 10px;">
+                <div class="profile-avatar-small" style="background: #dbeafe; border-radius: 50%; width: 32px; height: 32px;"></div>
+                <div class="member-text" style="display: flex; flex-direction: column;">
+                  <span class="member-name" style="font-weight: 600;">${email.split('@')[0]}</span>
+                  <span class="member-email" style="font-size: 12px; color: #64748b;">${email}</span>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span class="member-role" style="font-size: 13px; color: #3b82f6; font-weight: 500;">${role}</span>
+                <button onclick="removeMember(${idx})" style="color:#ef4444; background:none; border:none; cursor:pointer; font-size: 13px;">삭제</button>
+              </div>
+            </div>`;
+        });
     }
     listContainer.innerHTML = html;
-  }
+}
 
-  function addMemberByEmail() {
-    const input = document.getElementById('shareEmailInput');
-    const email = input.value.trim();
+/* ── [수정] 기존 팀원을 유지하면서 새 팀원을 추가하는 로직 ── */
+function addMemberByEmail() {
+    const emailInput = document.getElementById('shareEmailInput');
+    const roleSelect = document.getElementById('shareRoleSelect');
+    const email = emailInput.value.trim();
+    const role = roleSelect.value;
+
+    if (!email) return; // 빈 값 방지
     if (!email.includes('@')) return alert("이메일 형식이 아닙니다.");
-    if (!currentProject.members) currentProject.members = [];
-    currentProject.members.push(email);
-    updateLocalStorage();
-    input.value = '';
-    renderModalMembers();
-    loadProjectDetail();
-  }
+    
+    // 1. 중요: 기존 멤버 리스트가 없으면 빈 배열로 초기화, 있으면 기존 것 유지
+    if (!currentProject.members || !Array.isArray(currentProject.members)) {
+        currentProject.members = [];
+    }
 
-  function removeMember(idx) {
-    currentProject.members.splice(idx, 1);
+    // 2. 중복 추가 방지 (이미 추가된 이메일인지 확인)
+    const isExisted = currentProject.members.some(m => {
+        const mEmail = typeof m === 'object' ? m.email : m;
+        return mEmail === email;
+    });
+
+    if (isExisted) {
+        alert("이미 추가된 멤버입니다.");
+        return;
+    }
+    
+    // 3. 기존 리스트에 '추가(push)' 하기 (덮어쓰기 아님!)
+    currentProject.members.push({ email: email, role: role });
+    
+    // 4. 저장 및 UI 갱신
     updateLocalStorage();
+    emailInput.value = '';
     renderModalMembers();
-    loadProjectDetail();
-  }
+    
+    // 상단 프로젝트 요약(With. 누구누구) 부분도 같이 업데이트
+    loadProjectDetail(); 
+}
 
   function updateLocalStorage() {
+    if (!currentProject) return;
+    
     const allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
     const pIdx = allProjects.findIndex(p => String(p.id) === String(currentProject.id));
+    
     if (pIdx !== -1) {
-      allProjects[pIdx] = { ...allProjects[pIdx], ...currentProject };
-      localStorage.setItem('simu_projects', JSON.stringify(allProjects));
+        // 현재 메모리에 있는 최신 상태(members 포함)를 저장소에 반영
+        allProjects[pIdx] = { ...currentProject }; 
+        localStorage.setItem('simu_projects', JSON.stringify(allProjects));
+        console.log("저장 완료:", allProjects[pIdx].members);
     }
-  }
+}
 
   /* ── [6] 모달 제어 ── */
   const shareModal = document.getElementById('shareModal');
@@ -803,6 +885,168 @@ function toggleStar(btn) {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
   }
+
+  /* ── [새 문서 생성 모달 제어] ── */
+let targetTabIdForDoc = ''; // 어느 탭에서 문서를 만드는지 저장
+
+function createDocument(tabId) {
+    targetTabIdForDoc = tabId;
+    const modal = document.getElementById('createDocModal');
+    const titleInput = document.getElementById('newDocTitle');
+    const descInput = document.getElementById('newDocDesc');
+    
+    // 초기화
+    titleInput.value = '';
+    descInput.value = '';
+    
+    modal.classList.remove('hidden');
+    setTimeout(() => titleInput.focus(), 100);
+}
+
+function closeDocModal() {
+    document.getElementById('createDocModal').classList.add('hidden');
+}
+
+/* ── [최종 수정: 리스트가 있어도 새로 만들기가 가능한 렌더링 함수] ── */
+function renderCustomDocuments(tabId) {
+    const tabContent = document.getElementById(tabId);
+    if (!tabContent || !currentProject) return;
+
+    const docsInTab = (currentProject.documents || []).filter(d => d.tabId === tabId);
+
+    if (docsInTab.length > 0) {
+        // 문서 리스트 + 하단에 '새 문서 추가' 버튼 배치
+        tabContent.innerHTML = `
+            <div class="analysis-list">
+                ${docsInTab.map(doc => `
+                    <div class="analysis-item">
+                        <div class="item-status success" style="background: #3b82f6;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                        </div>
+                        <div class="item-info">
+                            <span class="item-title">${escHtml(doc.title)}</span>
+                            <span class="item-date" style="font-size:12px; color:#94a3b8; margin-left:10px;">${timeAgo(doc.createdAt)}</span>
+                        </div>
+                        <div class="item-actions">
+                            <button class="btn-edit-small" onclick="openEditor('${doc.id}')">열기</button>
+                            <button class="btn-edit-small" style="background:#f1f5f9; color:#475569; border:1px solid #e2e8f0;" onclick="downloadDocument('${doc.id}')">다운로드</button>
+                            <button class="btn-icon-only danger" onclick="deleteDocument('${doc.id}', '${tabId}')">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn-primary" style="background: #f1f5f9; color: #2563eb; border: 1px dashed #cbd5e1; width: 100%; padding: 12px;" onclick="createDocument('${tabId}')">
+                    + 새 문서 추가하기
+                </button>
+            </div>`;
+    } else {
+        // 문서가 하나도 없는 초기 상태
+        const tabBtn = document.querySelector(`[data-target="${tabId}"]`);
+        const tabName = tabBtn ? tabBtn.textContent : "탭";
+        tabContent.innerHTML = `
+            <div style="padding: 60px 40px; text-align: center; border: 2px dashed #f1f5f9; border-radius: 16px; margin: 20px 0;">
+                <p style="color:#94a3b8; margin-bottom: 16px; font-size: 15px;">
+                    "${tabName}" 관련 문서가 아직 없습니다.
+                </p>
+                <button class="btn-primary" onclick="createDocument('${tabId}')">
+                    새로 만들기 +
+                </button>
+            </div>`;
+    }
+}
+
+// 목록에서 클릭 시 에디터를 새 창으로 여는 헬퍼 함수
+function openEditor(docId) {
+    const doc = currentProject.documents.find(d => d.id === docId);
+    if (doc) {
+        localStorage.setItem('currentEditDoc', JSON.stringify(doc));
+        window.open(`/document/editor?id=${docId}`, '_blank');
+    }
+}
+
+function submitCreateDocument() {
+    const title = document.getElementById('newDocTitle').value.trim();
+    const description = document.getElementById('newDocDesc').value.trim();
+
+    if (!title) {
+        alert("문서 제목을 입력해주세요.");
+        return;
+    }
+
+    const doc = {
+        id: Date.now().toString(),
+        tabId: targetTabIdForDoc, // 현재 열려있는 탭 ID (예: tab-12345)
+        title,
+        description,
+        content: "",
+        createdAt: new Date().toISOString()
+    };
+
+    // 1. 데이터 저장
+    if (!currentProject.documents) currentProject.documents = [];
+    currentProject.documents.push(doc);
+    updateLocalStorage();
+
+    // 2. 에디터 연동용 데이터 세팅
+    localStorage.setItem('currentEditDoc', JSON.stringify(doc));
+
+    // 3. 새 창으로 에디터 열기
+    window.open(`/document/editor?id=${doc.id}`, '_blank');
+
+    // 4. ✅ [핵심 추가] 현재 페이지의 목록 UI 업데이트
+    // 모달을 닫고, 현재 탭의 목록을 다시 그려줍니다.
+    closeDocModal();
+    renderCustomDocuments(targetTabIdForDoc); 
+}
+
+/* ── [추가된 함수: 문서 다운로드 (텍스트 파일 방식)] ── */
+function downloadDocument(docId) {
+    const doc = currentProject.documents.find(d => d.id === docId);
+    if (!doc) return;
+
+    // 문서의 HTML 콘텐츠에서 태그를 제거하고 텍스트만 추출하거나 HTML 그대로 저장
+    const content = doc.content || "내용이 없습니다.";
+    const blob = new Blob([content], { type: 'text/html' });
+    const url = window.URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${doc.title}.html`; // HTML 파일로 다운로드
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+}
+
+/* ── [추가된 함수: 문서 삭제] ── */
+function deleteDocument(docId, tabId) {
+    if (!confirm("이 문서를 정말 삭제하시겠습니까?")) return;
+
+    // 현재 프로젝트의 문서 목록에서 해당 ID 삭제
+    currentProject.documents = currentProject.documents.filter(d => d.id !== docId);
+    
+    // 로컬 스토리지 업데이트
+    updateLocalStorage();
+    
+    // UI 다시 그리기
+    renderCustomDocuments(tabId);
+}
+
+// 바깥 영역 클릭 시 닫기 기능 추가 (window.onclick 부분에 추가)
+window.onclick = (e) => {
+    if (e.target === shareModal) closeShareModal();
+    if (e.target === addTabModal) closeTabModal();
+    if (e.target === document.getElementById('createDocModal')) closeDocModal(); // 추가
+};
 
   document.addEventListener('DOMContentLoaded', () => {
     loadProjectDetail();

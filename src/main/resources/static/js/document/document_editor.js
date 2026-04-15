@@ -46,15 +46,29 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (storedData) {
         const docData = JSON.parse(storedData);
-        if (docData.id == docId) {
-            document.getElementById('headerTitle').innerText = docData.title;
-            document.getElementById('headerDesc').innerText = docData.description;
-            editorPage.innerHTML = docData.content || "<div><br></div>";
+        
+        // ID가 일치하는지 확인 (문자열 타입으로 통일하여 비교)
+        if (String(docData.id) === String(docId)) {
+            // 제목과 설명 연동
+            const headerTitle = document.getElementById('headerTitle');
+            const headerDesc = document.getElementById('headerDesc');
+
+            if (headerTitle) headerTitle.innerText = docData.title;
+            if (headerDesc) headerDesc.innerText = docData.description || '';
+            
+            // 내용 연동
+            if (editorPage) {
+                editorPage.innerHTML = docData.content || "<div><br></div>";
+            }
             
             setTimeout(() => {
                 document.querySelectorAll('.img-resizable-container').forEach(makeResizable);
             }, 100);
+        } else {
+            console.error("문서 ID가 일치하지 않습니다.");
         }
+    } else {
+        console.error("편집할 문서 데이터가 없습니다.");
     }
 
     // --- 2. 댓글 입력 기능 (엔터 처리) ---
