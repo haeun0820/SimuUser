@@ -1,5 +1,6 @@
 package com.example.simuuser.entity;
 
+
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ public class ProjectTab {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
@@ -30,8 +32,8 @@ public class ProjectTab {
     // 만약 문서 엔티티 이름이 Document라면 아래와 같이 작성합니다.
     // orphanRemoval = true는 탭에서 문서가 제거되면 DB에서도 삭제하라는 뜻입니다.
 
-    // @OneToMany(mappedBy = "projectTab", cascade = CascadeType.ALL, orphanRemoval = true)
-    // private List<Document> documents = new ArrayList<>();
+    @OneToMany(mappedBy = "projectTab", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Document> documents = new ArrayList<>();
 
     protected ProjectTab() {
     }
@@ -70,8 +72,7 @@ public class ProjectTab {
         return createdAt;
     }
 
-    // 문서 리스트 Getter (필요 시)
-    // public List<Document> getDocuments() {
-    //     return documents;
-    // }
+    public List<Document> getDocuments() {
+        return documents;
+    }
 }
