@@ -320,7 +320,76 @@
     });
   });
 
-  
+  /** * [SimuUser 전역 함수]
+     * 대시보드 본문에 직접 배치하여 어떤 환경에서도 즉시 호출 가능하게 함
+     */
+
+    // 1. 친구 아이템 클릭 시 '채팅/삭제' 메뉴 토글
+    function toggleFriendAction(element) {
+        const items = document.querySelectorAll('.friend-item');
+        // 클릭한 것 외에 열려있는 메뉴는 모두 닫음
+        items.forEach(item => {
+            if (item !== element) item.classList.remove('active');
+        });
+        // 현재 클릭한 것 토글
+        element.classList.toggle('active');
+    }
+
+    // 2. 채팅 시작 (드로어 닫고 채팅창 로직 실행)
+    function startChat(name) {
+        const drawer = document.getElementById('friendDrawer');
+        const overlay = document.getElementById('drawerOverlay');
+        
+        if(drawer) drawer.classList.remove('active');
+        if(overlay) overlay.classList.remove('active');
+
+        console.log(name + "님과 채팅 연결 시도...");
+        // 추후 구현할 채팅창 오픈 함수 호출
+        if (typeof openChatWindow === 'function') {
+            openChatWindow(name);
+        } else {
+            alert(name + "님과의 채팅창을 우측 하단에 띄웁니다.");
+        }
+    }
+
+    // 3. 친구 삭제
+    function deleteFriend(name) {
+        if (confirm(name + "님을 친구 목록에서 삭제하시겠습니까?")) {
+            // event.stopPropagation() 덕분에 부모 클릭 이벤트가 안 퍼지지만 
+            // 안전하게 요소를 직접 찾아 삭제
+            const item = event.target.closest('.friend-item');
+            if(item) item.remove();
+            alert(name + "님이 목록에서 삭제되었습니다.");
+        }
+    }
+
+    /** * [드로어 열기/닫기 이벤트 리스너]
+     */
+    document.addEventListener('DOMContentLoaded', () => {
+        const friendBtn = document.getElementById('friendBtn');
+        const friendDrawer = document.getElementById('friendDrawer');
+        const closeBtn = document.getElementById('closeFriendDrawer');
+        const overlay = document.getElementById('drawerOverlay');
+
+        // 친구 버튼 클릭 시 드로어 열기
+        if (friendBtn) {
+            friendBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                friendDrawer.classList.add('active');
+                overlay.classList.add('active');
+            });
+        }
+
+        // 닫기 버튼 또는 배경 클릭 시 닫기
+        [closeBtn, overlay].forEach(el => {
+            if(el) {
+                el.addEventListener('click', () => {
+                    friendDrawer.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+        });
+    });
 </script>
 
 </body>

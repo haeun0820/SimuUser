@@ -162,3 +162,127 @@
     align-items: center !important;
     gap: 16px !important; /* 아이콘 사이 간격 확보 */
 }
+
+/* 드로어 기본 스타일 */
+.friend-drawer {
+    position: fixed;
+    top: 0;
+    right: -350px; /* 처음에는 숨김 */
+    width: 320px;
+    height: 100%;
+    background: #ffffff;
+    box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+    z-index: 1000;
+    transition: right 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.friend-drawer.active {
+    right: 0;
+}
+
+.drawer-header {
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.drawer-header h3 { font-size: 18px; color: #1e293b; margin: 0; }
+
+.close-btn { 
+    background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b; 
+}
+
+.drawer-search { padding: 15px; }
+.drawer-search input {
+    width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; outline: none;
+}
+
+.add-friend-section { padding: 0 15px 15px; }
+.add-btn {
+    width: 100%; padding: 10px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;
+}
+
+/* 친구 리스트 아이템 스타일 */
+.friend-list { list-style: none; padding: 0; margin: 0; overflow-y: auto; }
+.friend-item {
+    display: flex; align-items: center; padding: 12px 20px; cursor: pointer; transition: background 0.2s;
+}
+.friend-item:hover { background: #f8fafc; }
+
+.avatar {
+    width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%; 
+    display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 12px;
+}
+
+.info .name { display: block; font-weight: 600; color: #334155; }
+.info .status { font-size: 12px; color: #94a3b8; }
+
+.friend-item.online .status { color: #22c55e; }
+
+/* 오버레이 */
+.drawer-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.3); visibility: hidden; opacity: 0; transition: 0.3s; z-index: 999;
+}
+.drawer-overlay.active { visibility: visible; opacity: 1; }
+
+/* 친구 아이템 내 버튼들 숨기기 */
+.friend-item {
+    position: relative;
+    display: flex;
+    flex-direction: column; /* 세로 배치로 변경 가능성 대비 */
+    transition: all 0.3s ease;
+}
+
+.friend-main-info {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.friend-actions {
+    display: none; /* 기본 숨김 */
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 0;
+    margin-top: 5px;
+    border-top: 1px dashed #e2e8f0;
+    width: 100%;
+}
+
+/* 아이템 클릭 시 활성화 상태 */
+.friend-item.active {
+    background: #f1f5f9;
+}
+
+.friend-item.active .friend-actions {
+    display: flex; /* 활성화 시 버튼 보임 */
+}
+
+/* 액션 버튼 디자인 */
+.action-btn {
+    padding: 6px 15px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    border: none;
+    font-weight: 600;
+}
+
+.chat-start {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.delete-friend {
+    background-color: #ef4444;
+    color: white;
+}
+
+.action-btn:hover {
+    opacity: 0.9;
+}
