@@ -16,6 +16,17 @@
 
   <div class="header-icons auth-actions">
 
+    <div class="friend-menu">
+    <button class="icon-btn" id="friendBtn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+    </button>
+</div>
+
     <!-- 알림 -->
     <div class="notification-menu">
       <button class="icon-btn" id="notiBtn">
@@ -55,39 +66,107 @@
                 </form>
       </div>
     </div>
-
   </div>
+  
+<div id="friendDrawer" class="friend-drawer">
+    <div class="drawer-header">
+        <h3>친구 및 에이전트</h3>
+        <button class="close-btn" id="closeFriendDrawer">&times;</button>
+    </div>
+    <div class="drawer-search">
+        <input type="text" placeholder="친구 또는 에이전트 검색...">
+    </div>
+    <div class="drawer-content">
+        <div class="add-friend-section">
+            <button class="add-btn">+ 친구 추가하기</button>
+        </div>
+        <ul class="friend-list">
+            <li class="friend-item" onclick="toggleFriendAction(this)">
+    <div class="friend-main-info">
+        <div class="avatar">YN</div>
+        <div class="info">
+            <span class="name">윤낭</span>
+            <span class="status">온라인</span>
+        </div>
+    </div>
+    
+    <div class="friend-actions">
+      <button class="action-btn chat-start" onclick="startChat('보원!'); event.stopPropagation();">보기</button>
+        <button class="action-btn chat-start" onclick="startChat('윤낭'); event.stopPropagation();">채팅</button>
+        <button class="action-btn delete-friend" onclick="deleteFriend('윤낭'); event.stopPropagation();">삭제</button>
+    </div>
+</li>
+            <li class="friend-item" onclick="toggleFriendAction(this)">
+    <div class="friend-main-info">
+        <div class="avatar">BW</div>
+        <div class="info">
+            <span class="name">보원!</span>
+            <span class="status">온라인</span>
+        </div>
+    </div>
+    
+    <div class="friend-actions">
+      <button class="action-btn chat-start" onclick="startChat('보원!'); event.stopPropagation();">보기</button>
+        <button class="action-btn chat-start" onclick="startChat('보원!'); event.stopPropagation();">채팅</button>
+        <button class="action-btn delete-friend" onclick="deleteFriend('보원!'); event.stopPropagation();">삭제</button>
+    </div>
+</li>
+        </ul>
+    </div>
+</div>
+<div id="drawerOverlay" class="drawer-overlay"></div>
 </header>
 
 <script th:src="@{/js/header.js}"></script>
 
 <script>
-    // 여기도 알림
-  document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. 알림 관련
     const notiBtn = document.getElementById('notiBtn');
     const notiDropdown = document.getElementById('notiDropdown');
+    
+    // 2. 친구 드로어 관련
+    const friendBtn = document.getElementById('friendBtn');
+    const friendDrawer = document.getElementById('friendDrawer');
+    const closeFriendDrawer = document.getElementById('closeFriendDrawer');
+    const drawerOverlay = document.getElementById('drawerOverlay');
 
-    // 알림 버튼 클릭 시 토글
+    // 알림 토글
     notiBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         notiDropdown.classList.toggle('active');
+        // 친구 드로어가 열려있다면 닫기
+        friendDrawer.classList.remove('active');
+        drawerOverlay.classList.remove('active');
     });
 
-    // 화면 다른 곳 클릭 시 닫기
+    // 친구 드로어 열기
+    friendBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        friendDrawer.classList.add('active');
+        drawerOverlay.classList.add('active');
+        // 알림창이 열려있다면 닫기
+        notiDropdown.classList.remove('active');
+    });
+
+    // 친구 드로어 닫기 (X 버튼 및 오버레이)
+    [closeFriendDrawer, drawerOverlay].forEach(el => {
+        el.addEventListener('click', () => {
+            friendDrawer.classList.remove('active');
+            drawerOverlay.classList.remove('active');
+        });
+    });
+
+    // 화면 외부 클릭 시 모든 팝업 닫기
     document.addEventListener('click', (e) => {
         if (!notiDropdown.contains(e.target) && e.target !== notiBtn) {
             notiDropdown.classList.remove('active');
         }
     });
 
-    // '전체 삭제' 버튼 기능 (예시)
-    const clearBtn = document.querySelector('.clear-all');
-    clearBtn.addEventListener('click', () => {
-        if(confirm('모든 알림을 삭제하시겠습니까?')) {
-            document.querySelector('.noti-list').innerHTML = 
-                '<p style="padding:40px; text-align:center; color:#94a3b8; font-size:13px;">새로운 알림이 없습니다.</p>';
-            document.querySelector('.noti-badge').style.display = 'none';
-        }
+    // 드로어 내부 클릭 시 닫힘 방지
+    friendDrawer.addEventListener('click', (e) => {
+        e.stopPropagation();
     });
 });
 </script>
