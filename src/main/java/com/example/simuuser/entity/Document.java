@@ -1,9 +1,14 @@
 package com.example.simuuser.entity;
 
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
@@ -29,6 +34,13 @@ public class Document {
     @Lob
     @Column(columnDefinition = "LONGTEXT")
     private String content;
+
+    // Document.java 내부 추가/수정
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DocumentVersion> versions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DocumentComment> comments = new ArrayList<>(); // DocumentComment로 변경
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
