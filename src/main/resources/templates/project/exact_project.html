@@ -179,17 +179,18 @@
             <h3 class="share-title">"<span id="modalProjectTitle">프로젝트 제목</span>" 공유</h3>
         </div>
         
-        <div class="share-section" style="flex-shrink: 0;">
+        <div class="share-section" id="shareInviteSection" style="flex-shrink: 0;">
             <label class="share-label">사용자 추가</label>
             <div class="share-input-row" style="display: flex; gap: 8px;">
                 <input type="text" id="shareEmailInput" placeholder="이메일 입력 후 엔터..." class="form-input"
-                       style="flex: 1;" onkeydown="handleShareEmailKeydown(event)">
+                       style="flex: 1;" onkeydown="handleShareEmailKeydown(event)" oninput="searchShareInviteUsers()">
                 <select id="shareRoleSelect" class="role-select-custom">
                     <option value="편집자">편집자</option>
                     <option value="뷰어">뷰어</option>
                     <option value="관리자">관리자</option>
                 </select>
             </div>
+            <div id="shareUserSearchResults" class="share-user-search-results" style="display:none;"></div>
         </div>
 
         <div class="share-section" style="flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0;">
@@ -200,8 +201,8 @@
         </div>
 
         <div class="form-actions" style="margin-top: 24px; flex-shrink: 0;">
-            <button class="btn-primary" onclick="submitShareInvites()" style="min-width: 100px; padding: 10px;">확인</button>
-            <button class="btn-cancel" onclick="closeShareModal()" style="min-width: 100px; padding: 10px;">취소</button>
+            <button class="btn-primary" id="shareConfirmButton" onclick="submitShareInvites()" style="min-width: 100px; padding: 10px;">확인</button>
+            <button class="btn-cancel" id="shareCancelButton" onclick="closeShareModal()" style="min-width: 100px; padding: 10px;">취소</button>
         </div>
     </div>
 </div>
@@ -259,6 +260,7 @@
   let currentTabId = 'tab-user-simu';
   let shareMembers = [];
   let stagedInvites = [];
+  let shareInviteSearchTimer;
 
   function setAnalysisListsLoading() {
     const loadingHtml = '<div class="empty-state" style="padding:40px;text-align:center;color:#94a3b8;">분석 목록을 불러오는 중입니다.</div>';
@@ -982,7 +984,7 @@ function renderModalMembers() {
     const stagedRows = stagedInvites.map((invite, idx) => `
         <div class="share-member-item" style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f1f5f9;background:#fffbeb;">
           <div class="member-profile-info" style="display:flex;align-items:center;gap:8px;">
-            <div class="profile-avatar-small" style="background:#fde68a;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#92400e;">${escHtml((invite.name || invite.email).charAt(0).toUpperCase())}</div>
+            <div class="profile-avatar-small" style="background:#fde68a;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#92400e;overflow:hidden;">${invite.profileImage ? `<img src="${escHtml(invite.profileImage)}" alt="" style="width:26px;height:26px;border-radius:50%;object-fit:cover;">` : escHtml((invite.name || invite.email).charAt(0).toUpperCase())}</div>
             <div class="member-text" style="display:flex;flex-direction:column;">
               <span class="member-name" style="font-size:13px;font-weight:600;">${escHtml(invite.name || '사용자 확인됨')} <span style="font-size:11px;color:#f59e0b;font-weight:600;">요청 예정</span></span>
               <span class="member-email" style="font-size:11px;color:#64748b;">${escHtml(invite.email)}</span>
@@ -1008,7 +1010,87 @@ function handleShareEmailKeydown(event) {
     stageShareInvite();
 }
 
+function searchShareInviteUsers() {
+    if (!currentProject?.owner) return;
+    const emailInput = document.getElementById('shareEmailInput');
+    emailInput.dataset.name = '';
+    clearTimeout(shareInviteSearchTimer);
+    shareInviteSearchTimer = setTimeout(fetchShareInviteUsers, 250);
+}
+
+async function fetchShareInviteUsers() {
+    const emailInput = document.getElementById('shareEmailInput');
+    const results = document.getElementById('shareUserSearchResults');
+    const keyword = emailInput.value.trim();
+
+    if (keyword.length < 2) {
+        hideShareInviteSearchResults();
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/users/search?email=${encodeURIComponent(keyword)}`, {
+            headers: { Accept: 'application/json' }
+        });
+        if (!response.ok) {
+            hideShareInviteSearchResults();
+            return;
+        }
+
+        const users = await response.json();
+        if (!users.length) {
+            hideShareInviteSearchResults();
+            return;
+        }
+
+        results.innerHTML = users.map(user => {
+            const displayName = user.name || user.userId || user.email;
+            const initial = displayName.charAt(0).toUpperCase();
+            const avatar = user.profileImage
+                ? `<img src="${escHtml(user.profileImage)}" alt="" class="share-search-avatar-img">`
+                : escHtml(initial);
+            return `
+              <button type="button" class="share-invite-user-option"
+                      data-email="${escHtml(user.email)}"
+                      data-name="${escHtml(displayName)}"
+                      data-profile-image="${escHtml(user.profileImage || '')}">
+                <span class="share-search-avatar">${avatar}</span>
+                <span class="share-search-text">
+                  <span class="share-search-name">${escHtml(displayName)}</span>
+                  <span class="share-search-email">${escHtml(user.email)}</span>
+                </span>
+                <span class="share-search-action">추가</span>
+              </button>`;
+        }).join('');
+        results.style.display = 'block';
+
+        results.querySelectorAll('.share-invite-user-option').forEach(button => {
+            button.addEventListener('click', async () => {
+                emailInput.value = button.dataset.email;
+                emailInput.dataset.name = button.dataset.name || '';
+                emailInput.dataset.profileImage = button.dataset.profileImage || '';
+                hideShareInviteSearchResults();
+                await stageShareInvite();
+            });
+        });
+    } catch (error) {
+        console.error(error);
+        hideShareInviteSearchResults();
+    }
+}
+
+function hideShareInviteSearchResults() {
+    const results = document.getElementById('shareUserSearchResults');
+    if (!results) return;
+    results.style.display = 'none';
+    results.innerHTML = '';
+}
+
 async function stageShareInvite() {
+    if (!currentProject?.owner) {
+        alert("프로젝트 소유자만 팀원을 초대할 수 있습니다.");
+        return;
+    }
     const emailInput = document.getElementById('shareEmailInput');
     const roleSelect = document.getElementById('shareRoleSelect');
     const email = emailInput.value.trim();
@@ -1017,20 +1099,22 @@ async function stageShareInvite() {
     if (!email) return;
     if (!email.includes('@')) return alert("이메일 형식이 아닙니다.");
 
-    const alreadyMember = shareMembers.some(member => member.email === email && member.status === 'ACCEPTED');
+    const normalizedEmail = email.toLowerCase();
+    const alreadyMember = shareMembers.some(member => member.email?.toLowerCase() === normalizedEmail && member.status === 'ACCEPTED');
     if (alreadyMember) {
         alert("이미 프로젝트 팀원입니다.");
         return;
     }
 
-    const alreadyPending = shareMembers.some(member => member.email === email && member.status === 'PENDING')
-        || stagedInvites.some(invite => invite.email === email);
+    const alreadyPending = shareMembers.some(member => member.email?.toLowerCase() === normalizedEmail && member.status === 'PENDING')
+        || stagedInvites.some(invite => invite.email.toLowerCase() === normalizedEmail);
     if (alreadyPending) {
         alert("이미 보낸 요청입니다.");
         return;
     }
 
-    let name = email.split('@')[0];
+    let name = emailInput.dataset.name || email.split('@')[0];
+    let profileImage = emailInput.dataset.profileImage || '';
     try {
         const response = await fetch(`/api/users/search?email=${encodeURIComponent(email)}`, {
             headers: { Accept: 'application/json' }
@@ -1039,13 +1123,17 @@ async function stageShareInvite() {
             const users = await response.json();
             const matched = users.find(user => user.email === email) || users[0];
             if (matched?.name) name = matched.name;
+            if (matched?.profileImage) profileImage = matched.profileImage;
         }
     } catch (error) {
         console.error(error);
     }
 
-    stagedInvites.push({ email, role, name });
+    stagedInvites.push({ email, role, name, profileImage });
     emailInput.value = '';
+    emailInput.dataset.name = '';
+    emailInput.dataset.profileImage = '';
+    hideShareInviteSearchResults();
     renderModalMembers();
 }
 
@@ -1078,6 +1166,10 @@ async function removeProjectMember(memberId) {
 }
 
 async function submitShareInvites() {
+    if (!currentProject?.owner) {
+        closeShareModal();
+        return;
+    }
     if (!stagedInvites.length) {
         closeShareModal();
         return;
@@ -1141,12 +1233,27 @@ async function submitShareInvites() {
     stagedInvites = [];
     await loadShareMembers();
     renderModalMembers();
+    updateShareModalPermissions();
     shareModal.classList.remove('hidden');
+  }
+
+  function updateShareModalPermissions() {
+    const canInvite = !!currentProject?.owner;
+    const inviteSection = document.getElementById('shareInviteSection');
+    const confirmButton = document.getElementById('shareConfirmButton');
+    const cancelButton = document.getElementById('shareCancelButton');
+
+    if (inviteSection) inviteSection.style.display = canInvite ? '' : 'none';
+    if (confirmButton) confirmButton.style.display = canInvite ? '' : 'none';
+    if (cancelButton) cancelButton.textContent = canInvite ? '취소' : '닫기';
   }
 
   function closeShareModal() {
     stagedInvites = [];
     document.getElementById('shareEmailInput').value = '';
+    document.getElementById('shareEmailInput').dataset.name = '';
+    document.getElementById('shareEmailInput').dataset.profileImage = '';
+    hideShareInviteSearchResults();
     if (shareModal) shareModal.classList.add('hidden');
   }
 

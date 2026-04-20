@@ -8,12 +8,14 @@ public class UserSearchResponse {
     private final String name;
     private final String userId;
     private final String email;
+    private final String profileImage;
 
     public UserSearchResponse(AppUser user) {
         this.id = user.getId();
         this.name = user.getName();
         this.userId = user.getUserId();
         this.email = user.getEmail();
+        this.profileImage = user.getProfileImage();
     }
 
     public Long getId() {
@@ -30,5 +32,9 @@ public class UserSearchResponse {
 
     public String getEmail() {
         return email;
+    }
+
+    public String getProfileImage() {
+        return profileImage;
     }
 }

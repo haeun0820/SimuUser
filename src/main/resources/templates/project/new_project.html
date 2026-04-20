@@ -124,13 +124,7 @@
                 <div class="form-group" id="teamInviteSection" style="display:none;">
                 <label class="form-label">팀원 초대</label>
                 <div class="team-invite-row">
-                    <input
-                    class="form-input"
-                    id="inviteEmail"
-                    type="email"
-                    placeholder="예 : qpdkfj@gmail.com"
-                    >
-                    <button type="button" class="btn-add" id="btnAddMember">추가</button>
+                    <button type="button" class="btn-add" id="btnOpenMemberModal">팀원 추가</button>
                     <!-- 팀원 뱃지 (팀원이 있을 때만 표시) -->
                     <button type="button" class="member-badge" id="memberBadge" style="display:none;">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
@@ -142,8 +136,6 @@
                     팀원 <span id="memberCount">0</span>명
                     </button>
                 </div>
-                <div id="userSearchResults" class="member-list" style="display:none;"></div>
-                <div class="field-error" id="err-email">올바른 이메일을 입력해주세요.</div>
                 </div>
 
             </div>
@@ -160,19 +152,38 @@
     </div>
     </div>
 
-    <!-- 팀원 목록 팝업 -->
+    <!-- 팀원 추가 모달 -->
     <div class="popup-overlay" id="memberPopup" style="display:none;">
-    <div class="popup">
+    <div class="popup new-project-share-popup">
         <div class="popup-header">
-        <span class="popup-title">팀원 목록</span>
+        <span class="popup-title">협업 공유</span>
         <button class="popup-close" id="btnClosePopup" aria-label="닫기">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
             <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
         </button>
         </div>
+        <div class="team-invite-row modal-invite-row">
+        <input
+            class="form-input"
+            id="inviteEmail"
+            type="email"
+            placeholder="이메일 입력 후 엔터..."
+        >
+        <select class="form-select invite-role-select" id="inviteRoleSelect" aria-label="팀원 권한">
+            <option value="편집자">편집자</option>
+            <option value="뷰어">뷰어</option>
+            <option value="관리자">관리자</option>
+        </select>
+        </div>
+        <div id="userSearchResults" class="member-list invite-search-results" style="display:none;"></div>
+        <div class="field-error" id="err-email">올바른 이메일을 입력해주세요.</div>
         <div class="member-list" id="memberList">
         <div class="empty-members">초대된 팀원이 없습니다.</div>
+        </div>
+        <div class="form-actions modal-actions">
+        <button type="button" class="btn-primary" id="btnConfirmMembers">확인</button>
+        <button type="button" class="btn-cancel" id="btnCancelMembers">취소</button>
         </div>
     </div>
     </div>
@@ -187,6 +198,7 @@
         ============================================================ */
 
     const members = [];
+    let memberModalSnapshot = [];
     let inviteSearchTimer;
 
     /* ── 프로젝트 종류 토글 ── */
@@ -194,17 +206,22 @@
         radio.addEventListener('change', () => {
         const isCollab = radio.value === 'collab' && radio.checked;
         document.getElementById('teamInviteSection').style.display = isCollab ? '' : 'none';
+        if (!isCollab) {
+            members.splice(0, members.length);
+            updateMemberBadge();
+            renderMemberList();
+        }
         });
     });
 
     /* ── 팀원 추가 ── */
-    document.getElementById('btnAddMember').addEventListener('click', addMember);
     document.getElementById('inviteEmail').addEventListener('input', searchInviteUsers);
     document.getElementById('inviteEmail').addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); addMember(); }
+        if (e.key === 'Enter') { e.preventDefault(); stageMember(); }
     });
 
     function searchInviteUsers() {
+        document.getElementById('inviteEmail').dataset.name = '';
         clearTimeout(inviteSearchTimer);
         inviteSearchTimer = setTimeout(fetchInviteUsers, 250);
     }
@@ -234,27 +251,44 @@
         return;
         }
 
-        results.innerHTML = users.map(user => `
-        <button type="button" class="member-item invite-user-option" data-email="${escHtml(user.email)}">
-            <span class="member-email">${escHtml(user.email)}</span>
-            <span>${escHtml(user.name || user.userId)}</span>
-        </button>`).join('');
+        results.innerHTML = users.map(user => {
+        const displayName = user.name || user.userId || user.email;
+        const initial = displayName.charAt(0).toUpperCase();
+        const avatar = user.profileImage
+            ? `<img src="${escHtml(user.profileImage)}" alt="" class="search-user-avatar-img">`
+            : escHtml(initial);
+        return `
+        <button type="button" class="invite-user-option"
+                data-email="${escHtml(user.email)}"
+                data-name="${escHtml(displayName)}"
+                data-profile-image="${escHtml(user.profileImage || '')}">
+            <span class="search-user-avatar">${avatar}</span>
+            <span class="search-user-text">
+            <span class="search-user-name">${escHtml(displayName)}</span>
+            <span class="search-user-email">${escHtml(user.email)}</span>
+            </span>
+            <span class="search-user-action">추가</span>
+        </button>`;
+        }).join('');
         results.style.display = 'block';
 
         results.querySelectorAll('.invite-user-option').forEach(button => {
-        button.addEventListener('click', () => {
+        button.addEventListener('click', async () => {
             input.value = button.dataset.email;
+            input.dataset.name = button.dataset.name || '';
+            input.dataset.profileImage = button.dataset.profileImage || '';
             results.style.display = 'none';
             results.innerHTML = '';
-            input.focus();
+            await stageMember();
         });
         });
     }
 
-    function addMember() {
+    async function stageMember() {
         const input = document.getElementById('inviteEmail');
         const errEl = document.getElementById('err-email');
         const email = input.value.trim();
+        const role = document.getElementById('inviteRoleSelect').value;
         const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
         if (!email || !emailRe.test(email)) {
@@ -262,21 +296,39 @@
         errEl.style.display = 'block';
         return;
         }
-        if (members.includes(email)) {
+        if (members.some(member => member.email.toLowerCase() === email.toLowerCase())) {
         input.classList.add('error');
         errEl.textContent = '이미 추가된 이메일입니다.';
         errEl.style.display = 'block';
         return;
         }
 
+        const foundUser = await findInviteUser(email);
+        const name = foundUser?.name || foundUser?.userId || input.dataset.name || email;
+        const profileImage = foundUser?.profileImage || input.dataset.profileImage || '';
+
         input.classList.remove('error');
         errEl.style.display = 'none';
         errEl.textContent = '올바른 이메일을 입력해주세요.';
         document.getElementById('userSearchResults').style.display = 'none';
 
-        members.push(email);
+        members.push({ email, role, name, profileImage });
         input.value = '';
+        input.dataset.name = '';
+        input.dataset.profileImage = '';
         updateMemberBadge();
+        renderMemberList();
+    }
+
+    async function findInviteUser(email) {
+        try {
+        const response = await fetch(`/api/users/search?email=${encodeURIComponent(email)}`);
+        if (!response.ok) return null;
+        const users = await response.json();
+        return users.find(user => user.email && user.email.toLowerCase() === email.toLowerCase()) || null;
+        } catch (e) {
+        return null;
+        }
     }
 
     function updateMemberBadge() {
@@ -291,10 +343,19 @@
         list.innerHTML = '<div class="empty-members">초대된 팀원이 없습니다.</div>';
         return;
         }
-        list.innerHTML = members.map((email, i) => `
-        <div class="member-item">
-            <span class="member-email">${escHtml(email)}</span>
+        list.innerHTML = members.map((member, i) => `
+        <div class="member-item pending-member-item">
+            <div class="pending-member-main">
+            <div class="pending-member-avatar">${member.profileImage ? `<img src="${escHtml(member.profileImage)}" alt="" class="pending-member-avatar-img">` : escHtml((member.name || member.email).charAt(0).toUpperCase())}</div>
+            <div>
+                <div class="pending-member-name">${escHtml(member.name || member.email)} <span class="pending-member-status">요청 예정</span></div>
+                <div class="member-email">${escHtml(member.email)}</div>
+            </div>
+            </div>
+            <div class="pending-member-actions">
+            <span class="pending-member-role">${escHtml(member.role || '편집자')}</span>
             <button class="btn-remove" data-index="${i}">삭제</button>
+            </div>
         </div>`).join('');
 
         list.querySelectorAll('.btn-remove').forEach(btn => {
@@ -307,15 +368,31 @@
     }
 
     /* ── 팝업 열기/닫기 ── */
-    document.getElementById('memberBadge').addEventListener('click', () => {
+    document.getElementById('btnOpenMemberModal').addEventListener('click', openMemberModal);
+    document.getElementById('memberBadge').addEventListener('click', openMemberModal);
+    document.getElementById('btnConfirmMembers').addEventListener('click', () => closeMemberModal(true));
+    document.getElementById('btnCancelMembers').addEventListener('click', () => closeMemberModal(false));
+
+    function openMemberModal() {
+        memberModalSnapshot = members.map(member => ({ ...member }));
         renderMemberList();
         document.getElementById('memberPopup').style.display = 'flex';
-    });
-    document.getElementById('btnClosePopup').addEventListener('click', closePopup);
+        setTimeout(() => document.getElementById('inviteEmail')?.focus(), 0);
+    }
+    document.getElementById('btnClosePopup').addEventListener('click', () => closeMemberModal(false));
     document.getElementById('memberPopup').addEventListener('click', e => {
-        if (e.target === document.getElementById('memberPopup')) closePopup();
+        if (e.target === document.getElementById('memberPopup')) closeMemberModal(false);
     });
-    function closePopup() {
+    function closeMemberModal(confirmed) {
+        if (!confirmed) {
+        members.splice(0, members.length, ...memberModalSnapshot.map(member => ({ ...member })));
+        updateMemberBadge();
+        renderMemberList();
+        }
+        document.getElementById('inviteEmail').value = '';
+        document.getElementById('inviteEmail').dataset.name = '';
+        document.getElementById('inviteEmail').dataset.profileImage = '';
+        document.getElementById('userSearchResults').style.display = 'none';
         document.getElementById('memberPopup').style.display = 'none';
     }
 
@@ -326,13 +403,19 @@
 
         const projectType = document.querySelector('input[name="projectType"]:checked').value;
 
+        const memberInvites = members.map(member => ({
+        email: member.email,
+        role: member.role
+        }));
+
         const project = {
         title: document.getElementById('serviceIdea').value.trim(),
         description: document.getElementById('description').value.trim(),
         targetUser: document.getElementById('targetUser').value.trim(),
         industry: document.getElementById('industry').value,
         type: projectType,
-        members: projectType === 'collab' ? [...members] : []
+        members: projectType === 'collab' ? memberInvites.map(member => member.email) : [],
+        memberInvites: projectType === 'collab' ? memberInvites : []
         };
 
         const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;

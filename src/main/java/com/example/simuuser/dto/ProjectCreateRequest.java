@@ -11,6 +11,7 @@ public class ProjectCreateRequest {
     private String industry;
     private String type;
     private List<String> members = new ArrayList<>();
+    private List<ProjectMemberInviteRequest> memberInvites = new ArrayList<>();
 
     public String getTitle() {
         return title;
@@ -58,5 +59,13 @@ public class ProjectCreateRequest {
 
     public void setMembers(List<String> members) {
         this.members = members == null ? new ArrayList<>() : members;
+    }
+
+    public List<ProjectMemberInviteRequest> getMemberInvites() {
+        return memberInvites;
+    }
+
+    public void setMemberInvites(List<ProjectMemberInviteRequest> memberInvites) {
+        this.memberInvites = memberInvites == null ? new ArrayList<>() : memberInvites;
     }
 }

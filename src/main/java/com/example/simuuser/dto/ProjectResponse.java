@@ -15,6 +15,8 @@ public class ProjectResponse {
     private final String type;
     private final List<String> members;
     private final String createdAt;
+    private final String currentUserRole;
+    private final boolean owner;
 
     public ProjectResponse(Project project, List<ProjectMember> members, Long currentUserId) {
         this.id = project.getId();
@@ -30,6 +32,13 @@ public class ProjectResponse {
                 .filter(email -> email != null && !email.isBlank())
                 .toList();
         this.createdAt = project.getCreatedAt() == null ? null : project.getCreatedAt().toString();
+        ProjectMember currentMember = members.stream()
+                .filter(member -> currentUserId != null && member.getUser().getId().equals(currentUserId))
+                .findFirst()
+                .orElse(null);
+        this.currentUserRole = currentMember == null ? null : currentMember.getRole();
+        this.owner = currentUserId != null
+                && (project.getOwner().getId().equals(currentUserId) || "OWNER".equals(this.currentUserRole));
     }
 
     public Long getId() {
@@ -62,5 +71,13 @@ public class ProjectResponse {
 
     public String getCreatedAt() {
         return createdAt;
+    }
+
+    public String getCurrentUserRole() {
+        return currentUserRole;
+    }
+
+    public boolean isOwner() {
+        return owner;
     }
 }

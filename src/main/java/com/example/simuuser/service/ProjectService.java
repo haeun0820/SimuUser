@@ -2,6 +2,7 @@ package com.example.simuuser.service;
 
 import com.example.simuuser.dto.ProjectCreateRequest;
 import com.example.simuuser.dto.ProjectInviteResponse;
+import com.example.simuuser.dto.ProjectMemberInviteRequest;
 import com.example.simuuser.dto.ProjectMemberResponse;
 import com.example.simuuser.dto.ProjectResponse;
 import com.example.simuuser.dto.UserSearchResponse;
@@ -61,7 +62,7 @@ public class ProjectService {
         Project savedProject = projectRepository.save(project);
         List<ProjectMember> savedMembers = new ArrayList<>();
         savedMembers.add(projectMemberRepository.save(new ProjectMember(savedProject, owner, "OWNER", "ACCEPTED")));
-        savedMembers.addAll(saveMembers(savedProject, owner, request.getMembers()));
+        savedMembers.addAll(saveMembers(savedProject, owner, request.getMembers(), request.getMemberInvites()));
 
         return new ProjectResponse(savedProject, savedMembers, owner.getId());
     }
@@ -271,11 +272,25 @@ public class ProjectService {
         return "personal";
     }
 
-    private List<ProjectMember> saveMembers(Project project, AppUser owner, List<String> members) {
-        return normalizeMembers(members).stream()
-                .map(email -> findMemberByEmail(owner, email))
-                .map(member -> projectMemberRepository.save(new ProjectMember(project, member, "MEMBER", "PENDING")))
-                .toList();
+    private List<ProjectMember> saveMembers(
+            Project project,
+            AppUser owner,
+            List<String> members,
+            List<ProjectMemberInviteRequest> memberInvites
+    ) {
+        List<ProjectMemberInviteRequest> invites = normalizeMemberInvites(members, memberInvites);
+        List<ProjectMember> savedMembers = new ArrayList<>();
+
+        for (ProjectMemberInviteRequest inviteRequest : invites) {
+            AppUser member = findMemberByEmail(owner, inviteRequest.getEmail());
+            ProjectMember savedMember = projectMemberRepository.save(
+                    new ProjectMember(project, member, normalizeRole(inviteRequest.getRole()), "PENDING")
+            );
+            createProjectInviteNotification(savedMember);
+            savedMembers.add(savedMember);
+        }
+
+        return savedMembers;
     }
 
     private AppUser findMemberByEmail(AppUser owner, String email) {
@@ -331,5 +346,36 @@ public class ProjectService {
                 .filter(email -> email != null && email.length() <= 100)
                 .distinct()
                 .toList();
+    }
+
+    private List<ProjectMemberInviteRequest> normalizeMemberInvites(
+            List<String> members,
+            List<ProjectMemberInviteRequest> memberInvites
+    ) {
+        Map<String, ProjectMemberInviteRequest> normalizedInvites = new LinkedHashMap<>();
+
+        normalizeMembers(members).forEach(email -> {
+            ProjectMemberInviteRequest invite = new ProjectMemberInviteRequest();
+            invite.setEmail(email);
+            normalizedInvites.put(email.toLowerCase(), invite);
+        });
+
+        if (memberInvites != null) {
+            memberInvites.stream()
+                    .filter(invite -> invite != null)
+                    .forEach(invite -> {
+                        String email = normalize(invite.getEmail());
+                        if (email == null || email.length() > 100) {
+                            return;
+                        }
+
+                        ProjectMemberInviteRequest normalizedInvite = new ProjectMemberInviteRequest();
+                        normalizedInvite.setEmail(email);
+                        normalizedInvite.setRole(invite.getRole());
+                        normalizedInvites.put(email.toLowerCase(), normalizedInvite);
+                    });
+        }
+
+        return new ArrayList<>(normalizedInvites.values());
     }
 }
