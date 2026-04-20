@@ -2,6 +2,7 @@
   let allProjects = [];
   let selectedProjectId = null;
   let currentFilter = 'all';
+  const initialProjectId = new URLSearchParams(window.location.search).get('projectId');
 
   /* ── 프로젝트 리스트 관련 (기존 로직 유지) ── */
   async function fetchProjects() {
@@ -11,7 +12,11 @@
     } catch {
       allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
     }
+    if (initialProjectId && allProjects.some(p => String(p.id) === String(initialProjectId))) {
+      selectedProjectId = initialProjectId;
+    }
     renderProjectList();
+    updateSubmitButton();
   }
 
   function renderProjectList() {
@@ -65,18 +70,23 @@
 
   function updateSubmitButton() {
     const btn = document.getElementById('btnRunFeedback');
+    const projectIdInput = document.getElementById('selectedProjectIdInput');
+    if (projectIdInput) projectIdInput.value = selectedProjectId || '';
     btn.disabled = !selectedProjectId;
   }
 
   /* ── 피드백 실행 및 결과 이동 ── */
-  function runFeedback() {
+  function runFeedback(event) {
+    if (!selectedProjectId) {
+      event.preventDefault();
+      return;
+    }
+
+    const projectIdInput = document.getElementById('selectedProjectIdInput');
+    if (projectIdInput) projectIdInput.value = selectedProjectId;
+
     const overlay = document.getElementById('loadingOverlay');
     overlay.classList.add('active');
-
-    // 결과 페이지로 이동 (1.5초 시뮬레이션)
-    setTimeout(() => {
-      window.location.href = `/feedback/result?projectId=${selectedProjectId}`;
-    }, 2000);
   }
 
   function init() {
@@ -92,7 +102,8 @@
       });
     });
 
-    document.getElementById('btnRunFeedback').addEventListener('click', runFeedback);
+    updateSubmitButton();
+    document.getElementById('feedbackForm').addEventListener('submit', runFeedback);
   }
 
   document.addEventListener('DOMContentLoaded', init);

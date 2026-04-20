@@ -36,8 +36,4 @@ public class TestController {
         return "scenario/scenario_result";
 }
 
-    @GetMapping("/feedback")
-    public String feedback() {
-        return "feedback/feedback";
-    }
 }

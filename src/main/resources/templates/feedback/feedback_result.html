@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>기획 & 피드백 AI – SimuUser</title>
+  <title>기획 & 피드백 AI - SimuUser</title>
   <link rel="stylesheet" th:href="@{/css/feedback/feedback_result.css}">
   <link rel="stylesheet" th:href="@{/css/header/header.css}">
 </head>
@@ -26,81 +26,76 @@
         </div>
         <div>
           <h1 class="tool-title">기획 & 피드백 AI</h1>
-          <p class="tool-subtitle">기획서를 분석하여 논리 구조, 리스크, 실패 시나리오를 평가합니다</p>
+          <p class="tool-subtitle">기획서를 분석하여 논리 구조, 완성도, 실행 가능성, 리스크를 평가합니다.</p>
         </div>
       </div>
 
       <div class="score-container">
-    <div class="score-card">
-      <span class="score-label">종합 점수</span>
-      <span class="score-value" th:text="${result.totalScore}">10</span>
-      <div class="progress-bar"><div class="progress-fill" th:style="'width: ' + ${result.totalScore} + '%;'"></div></div>
-    </div>
-    <div class="score-card">
-      <span class="score-label">논리 구조</span>
-      <span class="score-value" th:text="${result.logicScore}">90</span>
-      <div class="progress-bar"><div class="progress-fill" th:style="'width: ' + ${result.logicScore} + '%;'"></div></div>
-    </div>
-    <div class="score-card">
-      <span class="score-label">완성도</span>
-      <span class="score-value" th:text="${result.completionScore}">5</span>
-      <div class="progress-bar"><div class="progress-fill" th:style="'width: ' + ${result.completionScore} + '%;'"></div></div>
-    </div>
-    <div class="score-card">
-      <span class="score-label">실현 가능성</span>
-      <span class="score-value" th:text="${result.feasibilityScore}">15</span>
-      <div class="progress-bar"><div class="progress-fill" th:style="'width: ' + ${result.feasibilityScore} + '%;'"></div></div>
-    </div>
-  </div>
-
-  <div class="analysis-grid">
-    <div class="analysis-card strength">
-      <h3><span class="icon">◎</span> 강점</h3>
-      <ul>
-        <li th:each="str : ${result.strengths}" th:text="${str}"></li>
-      </ul>
-    </div>
-    <div class="analysis-card weakness">
-      <h3><span class="icon">ⓧ</span> 약점</h3>
-      <ul>
-        <li th:each="weak : ${result.weaknesses}" th:text="${weak}"></li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="section-card">
-    <h3>⚠ 부족한 요소</h3>
-    <div class="tag-container">
-        <span class="tag" th:each="tag : ${result.missingElements}" th:text="${tag}">태그</span>
-        <span class="tag">서비스 목표 및 비전</span>
-        <span class="tag">문제 정의</span>
+        <div class="score-card">
+          <span class="score-label">종합 점수</span>
+          <span class="score-value" th:text="${result.totalScore}">0</span>
+          <div class="progress-bar"><div class="progress-fill" th:style="'width: ' + ${result.totalScore} + '%;'"></div></div>
         </div>
-  </div>
+        <div class="score-card">
+          <span class="score-label">논리 구조</span>
+          <span class="score-value" th:text="${result.logicScore}">0</span>
+          <div class="progress-bar"><div class="progress-fill" th:style="'width: ' + ${result.logicScore} + '%;'"></div></div>
+        </div>
+        <div class="score-card">
+          <span class="score-label">완성도</span>
+          <span class="score-value" th:text="${result.completionScore}">0</span>
+          <div class="progress-bar"><div class="progress-fill" th:style="'width: ' + ${result.completionScore} + '%;'"></div></div>
+        </div>
+        <div class="score-card">
+          <span class="score-label">실현 가능성</span>
+          <span class="score-value" th:text="${result.feasibilityScore}">0</span>
+          <div class="progress-bar"><div class="progress-fill" th:style="'width: ' + ${result.feasibilityScore} + '%;'"></div></div>
+        </div>
+      </div>
 
-  <div class="section-card">
-    <h3>💡 개선 방향</h3>
-    <ol class="improvement-list">
-      <li>AI 기반 유저 시뮬레이터가 교육 AI 서비스 내에서 어떤 <strong>'고유한 가치'</strong>를 제공하는지 명확히 정의해야 합니다.</li>
-      <li>타겟 고객을 구체화하고, 그들이 겪는 <strong>'페인 포인트(Pain Point)'</strong>를 AI 유저 시뮬레이터가 어떻게 해결해 줄 수 있는지 설명해야 합니다.</li>
-      <li>시뮬레이터의 핵심 기능과 사용자 경험(UX) 흐름을 구체적인 시나리오와 함께 제시해야 합니다.</li>
-      <li>경쟁 서비스와 비교하여 어떤 차별성을 가지는지, 왜 이 서비스가 성공할 수 있는지에 대한 논리를 보강해야 합니다.</li>
-      <li>단순히 '교육 AI 서비스'가 아니라, <strong>'특정 교육 분야'</strong>에 집중할 것인지 명시해야 합니다.</li>
-    </ol>
-  </div>
+      <div class="analysis-grid">
+        <div class="analysis-card strength">
+          <h3><span class="icon">◎</span> 강점</h3>
+          <ul>
+            <li th:each="str : ${result.strengths}" th:text="${str}"></li>
+            <li th:if="${#lists.isEmpty(result.strengths)}">분석된 강점이 없습니다.</li>
+          </ul>
+        </div>
+        <div class="analysis-card weakness">
+          <h3><span class="icon">⊗</span> 약점</h3>
+          <ul>
+            <li th:each="weak : ${result.weaknesses}" th:text="${weak}"></li>
+          </ul>
+        </div>
+      </div>
 
-  <div class="section-card">
-    <h3>○ 리스크 분석</h3>
-    <div class="empty-row"></div>
-    <div class="empty-row"></div>
-    <div class="empty-row"></div>
-  </div>
+      <div class="section-card">
+        <h3>△ 부족한 요소</h3>
+        <div class="tag-container">
+          <span class="tag" th:each="tag : ${result.missingElements}" th:text="${tag}">부족한 요소</span>
+          <span class="tag" th:if="${#lists.isEmpty(result.missingElements)}">추가 분석 필요</span>
+        </div>
+      </div>
 
-  <div class="section-card">
-    <h3>△ 실패 시나리오</h3>
-    <div class="scenario-box"><strong>최상:</strong> <span class="desc">대응 방안:</span></div>
-    <div class="scenario-box"><strong>보통:</strong> <span class="desc">대응 방안:</span></div>
-    <div class="scenario-box"><strong>최악:</strong> <span class="desc">대응 방안:</span></div>
-  </div>
+      <div class="section-card">
+        <h3>💡 개선 방향</h3>
+        <ol class="improvement-list">
+          <li th:each="item : ${result.improvements}" th:text="${item}"></li>
+        </ol>
+      </div>
+
+      <div class="section-card">
+        <h3>○ 리스크 분석</h3>
+        <div class="empty-row" th:each="risk : ${result.risks}" th:text="${risk}"></div>
+        <div class="empty-row" th:if="${#lists.isEmpty(result.risks)}">분석된 리스크가 없습니다.</div>
+      </div>
+
+      <div class="section-card">
+        <h3>△ 실패 시나리오</h3>
+        <div class="scenario-box"><strong>최상:</strong> <span class="desc" th:text="${result.scenarios.best}">대응 방안</span></div>
+        <div class="scenario-box"><strong>보통:</strong> <span class="desc" th:text="${result.scenarios.normal}">대응 방안</span></div>
+        <div class="scenario-box"><strong>최악:</strong> <span class="desc" th:text="${result.scenarios.worst}">대응 방안</span></div>
+      </div>
     </main>
   </div>
 </div>

@@ -63,9 +63,10 @@
         </div>
 
         <form th:action="@{/feedbackresult}" method="POST" enctype="multipart/form-data" id="feedbackForm">
+        <input type="hidden" id="selectedProjectIdInput" name="projectId">
         <div id="fileInputArea" class="method-content active">
           <div class="file-upload-box" id="dropZone" onclick="document.getElementById('filePicker').click()">
-            <input type="file" id="filePicker" hidden>
+            <input type="file" id="filePicker" name="file" hidden>
             <div class="upload-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
@@ -76,12 +77,13 @@
         </div>
 
         <div id="textInputArea" class="method-content">
-          <textarea class="feedback-textarea" placeholder="기획서 내용을 입력해주세요. 서비스 개요, 핵심 기능, 타겟 유저 등을 포함하면 더 정확한 분석이 가능합니다."></textarea>
+          <textarea class="feedback-textarea" name="textContent" placeholder="기획서 내용을 입력해주세요. 서비스 개요, 핵심 기능, 타겟 유저 등을 포함하면 더 정확한 분석이 가능합니다."></textarea>
         </div>
+        </form>
       </div>
 
       <div class="action-area">
-        <button type="submit" class="btn-run-analysis" id="btnRunFeedback">
+        <button type="submit" form="feedbackForm" class="btn-run-analysis" id="btnRunFeedback">
             기획 피드백 실행
         </button>
         </div>
