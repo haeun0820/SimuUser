@@ -162,11 +162,35 @@
     });
   }
 
+  function initPersonaInput() {
+      const input = document.getElementById('personaCount');
+      const notice = document.getElementById('personaNotice');
+      const noticeCount = document.getElementById('noticeCount');
+      if (!input || !notice) return;
+
+      input.addEventListener('input', () => {
+        const val = Number(input.value);
+        if (input.value !== '' && Number.isFinite(val) && val > 3) {
+          noticeCount.textContent = val.toLocaleString();
+          notice.style.display = 'flex';
+        } else {
+          notice.style.display = 'none';
+        }
+      });
+    }
+
   function validateForm() {
     let valid = true;
     const checks = [
       { invalid: selectedProjectId === null, errorId: 'err-project' },
-      { invalid: !document.getElementById('personaCount')?.value, errorId: 'err-persona' },
+            {
+        invalid: (() => {
+          const v = Number(document.getElementById('personaCount')?.value);
+          return !document.getElementById('personaCount')?.value ||
+                !Number.isFinite(v) || v < 1 || v > 100000 || !Number.isInteger(v);
+        })(),
+        errorId: 'err-persona'
+      },
       { invalid: !document.getElementById('genderSelect')?.value, errorId: 'err-gender' },
       { invalid: !document.querySelector('.age-check:checked'), errorId: 'err-age' }
     ];
@@ -200,6 +224,7 @@
   function init() {
     initFilterTabs();
     initAgeCheckboxes();
+    initPersonaInput();
     document.getElementById('simulationForm')?.addEventListener('submit', handleSubmit);
     loadProjects();
   }

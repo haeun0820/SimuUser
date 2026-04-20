@@ -110,12 +110,21 @@
               <label class="form-label" for="personaCount">
                 페르소나 수 <span class="required-star">*</span>
               </label>
-              <select class="form-select" id="personaCount">
-                <option value="">선택하세요</option>
-                <option value="2">2명</option>
-                <option value="3">3명</option>
-              </select>
-              <div class="field-error" id="err-persona">페르소나 수를 선택해주세요.</div>
+              <input type="number" class="form-input" id="personaCount"
+                    min="1" max="100000" placeholder="예: 10"
+                    style="max-width:200px;">
+              <div class="persona-notice" id="personaNotice" style="display:none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px;">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                  <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span>
+                  가상 페르소나 카드는 최대 <strong>3명</strong>까지만 화면에 표시됩니다.
+                  입력하신 수(<strong id="noticeCount"></strong>명)를 기준으로 시뮬레이션을 진행하며,
+                  평균 구매 의사·핵심 인사이트·개선 제안은 전체 인원 분석 결과로 제공됩니다.
+                </span>
+              </div>
+              <div class="field-error" id="err-persona">1~100,000 사이의 인원 수를 입력해주세요.</div>
             </div>
 
             <div class="form-group">

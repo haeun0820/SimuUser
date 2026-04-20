@@ -227,12 +227,13 @@
   function renderPersonas(result, params) {
     const element = document.getElementById('personaGrid');
     const personas = Array.isArray(result.personas) ? result.personas : [];
+    const displayPersonas = personas.slice(0, 3);
     if (!element) return;
 
     const selectedGender = params ? genderLabels[params.gender] : '전체';
 
     element.className = `persona-grid cols-${Math.max(2, Math.min(personas.length, 4))}`;
-element.innerHTML = personas.map((persona, index) => {
+    element.innerHTML = displayPersonas.map((persona, index) => {
   const initial = persona.name?.charAt(0) || '?';
   const positive = (persona.positiveReactions || []).map(item => `<li>${escHtml(item)}</li>`).join('');
   const negative = (persona.negativeReactions || []).map(item => `<li>${escHtml(item)}</li>`).join('');
