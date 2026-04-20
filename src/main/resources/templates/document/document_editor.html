@@ -33,6 +33,7 @@
 
             <div class="toolbar-group">
                 <button class="tool-btn" data-command="insertImage" title="이미지 삽입"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></button>
+                <input type="file" id="imageInput" accept="image/*" style="display:none;">
                 <button class="tool-btn" data-command="addPage" title="페이지 추가"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg></button>
             </div>
             <div class="toolbar-divider"></div>
@@ -115,14 +116,12 @@
     </div>
 </aside>
 
-        <footer class="editor-footer">
-            <button class="add-tab-btn" id="btnAddTab"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
-            <div class="tabs-container" id="tabsContainer">
-                <div class="tab-item active" data-tab="1">탭 1</div>
-                <div class="tab-item" data-tab="2">탭 2</div>
-            </div>
-        </footer>
-    </div>
+        <footer class="editor-footer" style="display: flex; align-items: center; background: #f8fafc; border-top: 1px solid #e2e8f0; height: 40px;">
+    <button type="button" id="btnAddTab" style="padding: 5px 10px; cursor: pointer; background: none; border: none; font-size: 18px;">+</button>
+    
+    <div id="tabsContainer" class="tabs-container" style="display: flex; flex-direction: row; align-items: flex-end; overflow-x: auto;">
+        </div>
+    </footer>
 
     <script th:src="@{/js/document/document_editor.js}"></script>
 </body>

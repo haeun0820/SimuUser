@@ -2,6 +2,9 @@
 let versionHistory = [];
 let currentDocType = '기획서';
 
+let tabs = [{ id: Date.now(), title: '탭 1', content: '<div><br></div>' }];
+let activeTabId = tabs[0].id;
+
 /* ── CSRF 토큰 헬퍼 ── */
 const getCsrfToken = () => document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
 const getCsrfHeader = () => document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
@@ -46,12 +49,253 @@ document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const docId = urlParams.get('id');
 
+    
+    const tabsContainer = document.getElementById('tabsContainer');
+    const btnAddTab = document.getElementById('btnAddTab');
+
+    /* --- [A] 탭 시스템 로직 --- */
+    function renderTabs() {
+        if (!tabsContainer) return;
+        tabsContainer.innerHTML = '';
+        tabs.forEach(tab => {
+            const tabEl = document.createElement('div');
+            tabEl.className = `tab-item ${tab.id === activeTabId ? 'active' : ''}`;
+            tabEl.innerText = tab.title;
+
+            // 클릭: 전환 / 더블클릭: 수정 / 우클릭: 삭제
+            tabEl.onclick = () => switchTab(tab.id);
+            tabEl.ondblclick = (e) => { e.stopPropagation(); renameTab(tab.id); };
+            tabEl.oncontextmenu = (e) => {
+                e.preventDefault();
+                if (confirm(`'${tab.title}' 탭을 삭제하시겠습니까?`)) deleteTab(tab.id);
+            };
+            tabsContainer.appendChild(tabEl);
+        });
+    }
+
+    function switchTab(id) {
+        const currentTab = tabs.find(t => t.id === activeTabId);
+        if (currentTab) currentTab.content = editorPage.innerHTML;
+
+        activeTabId = id;
+        const nextTab = tabs.find(t => t.id === activeTabId);
+        editorPage.innerHTML = nextTab.content;
+        renderTabs();
+    }
+
+    function renameTab(id) {
+        const tab = tabs.find(t => t.id === id);
+        const newTitle = prompt('새 탭 이름을 입력하세요:', tab.title);
+        if (newTitle && newTitle.trim()) {
+            tab.title = newTitle;
+            renderTabs();
+        }
+    }
+
+    function deleteTab(id) {
+        if (tabs.length <= 1) return alert("최소 하나의 탭은 있어야 합니다.");
+        const index = tabs.findIndex(t => t.id === id);
+        tabs = tabs.filter(t => t.id !== id);
+        if (activeTabId === id) {
+            const nextTab = tabs[index] || tabs[tabs.length - 1];
+            activeTabId = nextTab.id;
+            editorPage.innerHTML = nextTab.content;
+        }
+        renderTabs();
+    }
+
+    if (btnAddTab) {
+        btnAddTab.onclick = () => {
+            const newId = Date.now();
+            tabs.push({ id: newId, title: `탭 ${tabs.length + 1}`, content: '<div><br></div>' });
+            switchTab(newId);
+        };
+    }
+
+    // 이미지 삽입 버튼을 위한 별도 로직 (예시)
+    const imgBtn = document.querySelector('[data-command="insertImage"]');
+    imgBtn.addEventListener('click', () => {
+        const imgBtn = document.querySelector('[data-command="insertImage"]');
+        const imageInput = document.getElementById('imageInput');
+
+// 1. 탭 렌더링 함수
+function renderTabs() {
+    tabsContainer.innerHTML = '';
+    tabs.forEach(tab => {
+        const tabEl = document.createElement('div');
+        tabEl.className = `tab-item ${tab.id === activeTabId ? 'active' : ''}`;
+        tabEl.dataset.id = tab.id;
+        tabEl.innerText = tab.title;
+
+        // 클릭: 탭 전환
+        tabEl.onclick = () => switchTab(tab.id);
+
+        // 더블클릭: 이름 수정
+        tabEl.ondblclick = () => renameTab(tab.id);
+
+        // 우클릭: 삭제 팝업
+        tabEl.oncontextmenu = (e) => {
+            e.preventDefault();
+            if (confirm(`'${tab.title}' 탭을 삭제하시겠습니까?`)) {
+                deleteTab(tab.id);
+            }
+        };
+
+        tabsContainer.appendChild(tabEl);
+    });
+}
+
+// 2. 탭 전환 (내용 저장 및 교체)
+function switchTab(id) {
+    // 현재 탭 내용 저장
+    const currentTab = tabs.find(t => t.id === activeTabId);
+    if (currentTab) currentTab.content = editorPage.innerHTML;
+
+    // 새 탭으로 교체
+    activeTabId = id;
+    const nextTab = tabs.find(t => t.id === activeTabId);
+    editorPage.innerHTML = nextTab.content;
+
+    renderTabs();
+}
+
+// 3. 탭 추가 (+)
+btnAddTab.onclick = () => {
+    const newId = tabs.length > 0 ? Math.max(...tabs.map(t => t.id)) + 1 : 1;
+    const newTab = {
+        id: newId,
+        title: `탭 ${newId}`,
+        content: '<div><br></div>'
+    };
+    tabs.push(newTab);
+    switchTab(newId); // 생성 후 바로 이동
+};
+
+// 4. 탭 이름 수정
+function renameTab(id) {
+    const tab = tabs.find(t => t.id === id);
+    const newTitle = prompt('새 탭 이름을 입력하세요:', tab.title);
+    if (newTitle && newTitle.trim() !== '') {
+        tab.title = newTitle;
+        renderTabs();
+    }
+}
+
+// 5. 탭 삭제
+function deleteTab(id) {
+    if (tabs.length <= 1) {
+        alert("최소 하나의 탭은 있어야 합니다.");
+        return;
+    }
+    
+    tabs = tabs.filter(t => t.id !== id);
+    
+    // 삭제한 탭이 활성화된 탭이었다면 첫 번째 탭으로 이동
+    if (activeTabId === id) {
+        activeTabId = tabs[0].id;
+        editorPage.innerHTML = tabs[0].content;
+    }
+    renderTabs();
+}
+
+// 초기 실행
+renderTabs();
+
+        // 1. 이미지 버튼 클릭 시 파일 선택창 띄우기
+        imgBtn.addEventListener('click', () => imageInput.click());
+
+        // 2. 파일이 선택되면 실행
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const imageUrl = event.target.result;
+                    insertResizableImage(imageUrl); // 리사이즈 가능한 이미지 삽입
+                };
+                reader.readAsDataURL(file);
+            }
+            // 같은 파일을 다시 올릴 수 있도록 초기화
+            this.value = ''; 
+        });
+
+        // 3. 에디터에 이미지를 감싸는 컨테이너와 함께 삽입
+        function insertResizableImage(url) {
+            const editorPage = document.getElementById('editorPage');
+            
+            // 한글/워드처럼 리사이즈 핸들이 포함된 구조
+            const container = document.createElement('div');
+            container.className = 'img-resizable-container';
+            container.contentEditable = "false"; // 컨테이너 자체는 수정 불가 (드래그용)
+            container.style.width = '300px'; // 기본 너비
+
+            const img = document.createElement('img');
+            img.src = url;
+            img.style.width = '100%';
+
+            const handle = document.createElement('div');
+            handle.className = 'resize-handle';
+
+            container.appendChild(img);
+            container.appendChild(handle);
+            
+            // 에디터의 현재 커서 위치 혹은 맨 뒤에 삽입
+            editorPage.appendChild(container);
+            
+            // 리사이즈 기능 적용
+            makeResizable(container);
+        }
+    });
+
     // --- 1. 초기 실행 로직 ---
     if (docId) {
-        loadDocumentData();   // 문서 내용 불러오기
+        loadDocumentData().then(() => {
+            renderTabs(); 
+        });
         loadComments();       // 댓글 불러오기
         loadVersionHistory(); // 버전 기록 불러오기
+    } else {
+        // 새 문서라면 즉시 탭 1 생성
+        renderTabs();
     }
+
+    // 툴바 포맷 버튼 이벤트 리스너
+    document.querySelectorAll('.format-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const command = this.getAttribute('data-command');
+            
+            // execCommand는 현재 선택된 영역에 서식을 적용합니다.
+            document.execCommand(command, false, null);
+            
+            // 포커스를 다시 에디터로 돌려줍니다.
+            editorPage.focus();
+        });
+    });
+
+    // 글자 색상 변경 함수 (전역 window 객체에 연결)
+    window.changeColor = function(color) {
+        document.execCommand('foreColor', false, color);
+        // 버튼 아래 색상 표시 바 업데이트
+        const indicator = document.querySelector('.color-indicator');
+        if (indicator) indicator.style.backgroundColor = color;
+    };
+
+    // 글자 크기 변경 함수 (전역 window 객체에 연결)
+    let currentFontSize = 3; // 기본값 (1~7 사이의 값)
+    window.changeFontSize = function(type) {
+        if (type === 'plus' && currentFontSize < 7) currentFontSize++;
+        else if (type === 'minus' && currentFontSize > 1) currentFontSize--;
+        
+        document.execCommand('fontSize', false, currentFontSize);
+        
+        // 화면에 현재 크기 표시 (사용자 편의용)
+        const display = document.getElementById('fontSizeDisplay');
+        if (display) {
+            // 실제 px 단위와 브라우저 fontSize(1-7)는 다르므로 단순 매핑 시각화
+            const pxMap = [10, 13, 16, 18, 24, 32, 48];
+            display.value = pxMap[currentFontSize - 1];
+        }
+    };
 
     // [함수 정의] 문서 데이터 불러오기
     async function loadDocumentData() {
@@ -174,27 +418,44 @@ document.addEventListener('DOMContentLoaded', function() {
     function makeResizable(container) {
         const img = container.querySelector('img');
         const handle = container.querySelector('.resize-handle');
+
+        // 클릭 시 선택 표시
+    container.addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.querySelectorAll('.img-resizable-container').forEach(c => c.classList.remove('selected'));
+        container.classList.add('selected');
+    });
+
+    handle.onmousedown = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const startX = e.clientX;
+        const startWidth = parseInt(document.defaultView.getComputedStyle(container).width, 10);
+
+        function doResize(ev) {
+            const currentWidth = startWidth + (ev.clientX - startX);
+            if (currentWidth > 50) { // 최소 크기 제한
+                container.style.width = currentWidth + 'px';
+            }
+        }
+
+        function stopResize() {
+            window.removeEventListener('mousemove', doResize);
+            window.removeEventListener('mouseup', stopResize);
+        }
+
+        window.addEventListener('mousemove', doResize);
+        window.addEventListener('mouseup', stopResize);
+    };
+
         if(!handle) return;
         container.onclick = (e) => {
             e.stopPropagation();
             document.querySelectorAll('.img-resizable-container').forEach(c => c.classList.remove('selected'));
             container.classList.add('selected');
         };
-        handle.onmousedown = function(e) {
-            e.preventDefault(); e.stopPropagation();
-            const startX = e.clientX;
-            const startWidth = container.offsetWidth;
-            function doResize(ev) {
-                const newWidth = startWidth + (ev.clientX - startX);
-                if (newWidth > 50) container.style.width = newWidth + 'px';
-            }
-            function stopResize() {
-                window.removeEventListener('mousemove', doResize);
-                window.removeEventListener('mouseup', stopResize);
-            }
-            window.addEventListener('mousemove', doResize);
-            window.addEventListener('mouseup', stopResize);
-        };
+        
     }
 
     function renderTimeline() {
