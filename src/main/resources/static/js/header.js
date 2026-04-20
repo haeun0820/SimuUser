@@ -1,38 +1,36 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. 요소 가져오기
   const notiBtn = document.getElementById('notiBtn');
   const notiDropdown = document.getElementById('notiDropdown');
-  const friendBtn = document.getElementById('friendBtn'); // 추가
-  const friendDrawer = document.getElementById('friendDrawer'); // 추가
-  const closeFriendDrawer = document.getElementById('closeFriendDrawer'); // 추가
-  const drawerOverlay = document.getElementById('drawerOverlay'); // 추가
+  const friendBtn = document.getElementById('friendBtn');
+  const friendDrawer = document.getElementById('friendDrawer');
+  const closeFriendDrawer = document.getElementById('closeFriendDrawer');
+  const drawerOverlay = document.getElementById('drawerOverlay');
 
-  // 2. 알림 버튼 클릭 시
   if (notiBtn && notiDropdown) {
     notiBtn.addEventListener('click', (e) => {
       e.stopPropagation();
+      e.stopImmediatePropagation();
       notiDropdown.classList.toggle('active');
-      // 알림 열 때 친구 드로어는 닫기
-      if(friendDrawer) {
-          friendDrawer.classList.remove('active');
-          drawerOverlay.classList.remove('active');
+      loadProjectInvitations();
+
+      if (friendDrawer && drawerOverlay) {
+        friendDrawer.classList.remove('active');
+        drawerOverlay.classList.remove('active');
       }
     });
   }
 
-  // 3. 친구 버튼 클릭 시 (이 부분이 없어서 안 떴을 거예요!)
-  if (friendBtn && friendDrawer) {
+  if (friendBtn && friendDrawer && drawerOverlay) {
     friendBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      friendDrawer.classList.add('active'); // active 클래스 추가
-      drawerOverlay.classList.add('active'); // 배경 어둡게
-      // 친구 열 때 알림창은 닫기
-      if(notiDropdown) notiDropdown.classList.remove('active');
+      e.stopImmediatePropagation();
+      friendDrawer.classList.add('active');
+      drawerOverlay.classList.add('active');
+      if (notiDropdown) notiDropdown.classList.remove('active');
     });
   }
 
-  // 4. 친구 드로어 닫기 (X 버튼 및 배경 클릭 시)
-  if (closeFriendDrawer && drawerOverlay) {
+  if (closeFriendDrawer && drawerOverlay && friendDrawer) {
     [closeFriendDrawer, drawerOverlay].forEach(el => {
       el.addEventListener('click', () => {
         friendDrawer.classList.remove('active');
@@ -41,25 +39,151 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 5. 화면 다른 곳 클릭 시 알림창 닫기
   document.addEventListener('click', (e) => {
-    if (notiDropdown && !notiDropdown.contains(e.target) && e.target !== notiBtn) {
+    if (notiDropdown && !notiDropdown.contains(e.target) && e.target !== notiBtn && !notiBtn?.contains(e.target)) {
       notiDropdown.classList.remove('active');
     }
   });
 
-  // 6. 알림 삭제 로직 (기존 유지)
   const clearBtn = document.querySelector('.clear-all');
   if (clearBtn) {
-    clearBtn.addEventListener('click', () => {
-      if (confirm('모든 알림을 삭제하시겠습니까?')) {
+    clearBtn.addEventListener('click', async (e) => {
+      e.stopImmediatePropagation();
+      if (!confirm('모든 알림을 삭제하시겠습니까?')) return;
+
+      try {
+        const response = await fetch('/api/notifications', {
+          method: 'DELETE',
+          headers: csrfHeaders()
+        });
+        if (!response.ok) throw new Error('알림 삭제에 실패했습니다.');
+
         const notiList = document.querySelector('.noti-list');
-        if(notiList) notiList.innerHTML = '<p style="padding:40px; text-align:center; color:#94a3b8;">새로운 알림이 없습니다.</p>';
-        const badge = document.querySelector('.noti-badge');
-        if(badge) badge.style.display = 'none';
+        if (notiList) notiList.innerHTML = '<p class="noti-empty">새로운 알림이 없습니다.</p>';
+        updateNotificationBadge(0);
+      } catch (error) {
+        alert(error.message);
       }
     });
   }
 
-
+  loadProjectInvitations();
 });
+
+function csrfHeaders() {
+  const token = document.querySelector('meta[name="_csrf"]')?.getAttribute('content')
+    || document.getElementById('csrfToken')?.value;
+  const header = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content')
+    || document.getElementById('csrfHeader')?.value;
+
+  return token && header ? { [header]: token } : {};
+}
+
+async function loadProjectInvitations() {
+  const notiList = document.querySelector('.noti-list');
+  if (!notiList) return;
+
+  try {
+    const response = await fetch('/api/notifications', {
+      headers: { Accept: 'application/json' }
+    });
+
+    if (!response.ok) throw new Error('초대 알림을 불러오지 못했습니다.');
+
+    const notifications = await response.json();
+    renderProjectInvitations(notifications);
+  } catch (error) {
+    notiList.innerHTML = `<p class="noti-empty">${escapeHtml(error.message)}</p>`;
+    updateNotificationBadge(0);
+  }
+}
+
+function renderProjectInvitations(notifications) {
+  const notiList = document.querySelector('.noti-list');
+  if (!notiList) return;
+
+  const inviteNotifications = (notifications || []).filter(notification => notification.type === 'PROJECT_INVITE' && notification.invite);
+
+  if (inviteNotifications.length === 0) {
+    notiList.innerHTML = '<p class="noti-empty">새로운 알림이 없습니다.</p>';
+    updateNotificationBadge(0);
+    return;
+  }
+
+  notiList.innerHTML = inviteNotifications.map(notification => {
+    const invite = notification.invite;
+    return `
+    <article class="noti-item project-invite" data-notification-id="${notification.id}" data-invite-id="${invite.id}">
+      <div class="noti-title-row">
+        <span class="noti-title">${escapeHtml(notification.title || '프로젝트 초대 요청')}</span>
+        <span class="invite-role">${escapeHtml(invite.role || '편집자')}</span>
+      </div>
+      <p class="noti-text">
+        <strong>${escapeHtml(invite.inviterName || invite.inviterEmail || '팀원')}</strong>님이
+        <strong>${escapeHtml(invite.projectTitle || '프로젝트')}</strong> 프로젝트에 초대했습니다.
+      </p>
+      <span class="noti-time">${formatRelativeTime(invite.createdAt)}</span>
+      <div class="invite-actions">
+        <button type="button" class="invite-btn accept" onclick="respondProjectInvite(${invite.id}, 'accept')">수락</button>
+        <button type="button" class="invite-btn decline" onclick="respondProjectInvite(${invite.id}, 'decline')">거절</button>
+      </div>
+    </article>
+  `;
+  }).join('');
+
+  updateNotificationBadge(inviteNotifications.length);
+}
+
+async function respondProjectInvite(inviteId, action) {
+  try {
+    const response = await fetch(`/api/project-invitations/${inviteId}/${action}`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        ...csrfHeaders()
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || '초대 요청 처리에 실패했습니다.');
+    }
+
+    await loadProjectInvitations();
+    if (action === 'accept') {
+      window.dispatchEvent(new CustomEvent('projectInviteAccepted'));
+    }
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+function updateNotificationBadge(count) {
+  const badge = document.querySelector('.noti-badge');
+  if (!badge) return;
+
+  badge.style.display = count > 0 ? 'block' : 'none';
+}
+
+function formatRelativeTime(value) {
+  if (!value) return '방금 전';
+
+  const diffMs = Date.now() - new Date(value).getTime();
+  const minutes = Math.max(0, Math.floor(diffMs / 60000));
+  if (minutes < 1) return '방금 전';
+  if (minutes < 60) return `${minutes}분 전`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}시간 전`;
+
+  return `${Math.floor(hours / 24)}일 전`;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}

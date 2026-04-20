@@ -44,11 +44,14 @@
   position: absolute;
   top: 100%;
   right: 0;
-  width: 260px;
+  width: 420px;
   background: white;
   border-radius: 10px;
   box-shadow: 0 6px 20px rgba(0,0,0,0.15);
   display: none;
+  border: 1px solid #dbeafe;
+  overflow: hidden;
+  z-index: 1200;
 }
 
 .noti-dropdown.active {
@@ -97,10 +100,10 @@
 
 /* 개별 알림 아이템 */
 .noti-item {
-  padding: 16px;
-  border-bottom: 1px solid #f8fafc;
+  padding: 20px 22px;
+  border-bottom: 1px solid #e2e8f0;
   transition: background 0.2s;
-  cursor: pointer;
+  cursor: default;
 }
 
 .noti-item:hover {
@@ -113,22 +116,78 @@
 
 .noti-title {
   display: block;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   color: #1e293b;
   margin-bottom: 4px;
 }
 
 .noti-text {
-  font-size: 13px;
+  font-size: 14px;
   color: #64748b;
-  line-height: 1.5;
-  margin-bottom: 6px;
+  line-height: 1.55;
+  margin: 0 0 8px;
 }
 
 .noti-time {
   font-size: 12px;
   color: #94a3b8;
+}
+
+.noti-empty {
+  padding: 40px;
+  text-align: center;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.noti-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.project-invite {
+  background: #ffffff;
+}
+
+.invite-role {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.invite-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.invite-btn {
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.invite-btn.accept {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+
+.invite-btn.decline {
+  background: #ffffff;
+  color: #475569;
 }
 
 /* 알림 빨간 점 배지 */

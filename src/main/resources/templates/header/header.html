@@ -4,6 +4,8 @@
 <link rel="stylesheet" th:href="@{/css/header/header.css}">
 
 <header class="top-header" th:fragment="header(breadcrumbs)">
+  <input type="hidden" id="csrfToken" th:value="${_csrf.token}">
+  <input type="hidden" id="csrfHeader" th:value="${_csrf.headerName}">
   <nav class="breadcrumb-nav">
   <th:block th:each="item, iterStat : ${breadcrumbs}">
     <span th:if="${!iterStat.last}">
