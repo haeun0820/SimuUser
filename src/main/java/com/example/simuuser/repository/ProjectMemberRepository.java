@@ -6,6 +6,7 @@ import com.example.simuuser.entity.ProjectMember;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Long> {
 
@@ -14,4 +15,8 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Lo
     List<ProjectMember> findByUserAndStatusOrderByCreatedAtDesc(AppUser user, String status);
 
     boolean existsByProjectAndUserAndStatus(Project project, AppUser user, String status);
+
+    Optional<ProjectMember> findByProjectAndUser(Project project, AppUser user);
+
+    Optional<ProjectMember> findByIdAndUser(Long id, AppUser user);
 }

@@ -75,4 +75,18 @@ public class ProjectMember {
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
+
+    public void accept() {
+        this.status = "ACCEPTED";
+    }
+
+    public void decline() {
+        this.status = "DECLINED";
+    }
+
+    public void resend(String role) {
+        this.role = role;
+        this.status = "PENDING";
+        this.createdAt = LocalDateTime.now();
+    }
 }

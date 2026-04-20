@@ -55,7 +55,7 @@
                 <span class="project-type-badge badge-collab">협업</span>
                 <span class="collab-members">With. 최연주, 이하은</span>
             </div>
-            <button class="btn-add" style="padding: 8px 16px;">협업 공유</button>
+            <button type="button" class="btn-add" onclick="openShareModal()" style="padding: 8px 16px;">협업 공유</button>
         </div>
         
         <div class="summary-meta">
@@ -183,7 +183,7 @@
             <label class="share-label">사용자 추가</label>
             <div class="share-input-row" style="display: flex; gap: 8px;">
                 <input type="text" id="shareEmailInput" placeholder="이메일 입력 후 엔터..." class="form-input"
-                       style="flex: 1;" onkeypress="if(event.keyCode==13) { addMemberByEmail(); }">
+                       style="flex: 1;" onkeydown="handleShareEmailKeydown(event)">
                 <select id="shareRoleSelect" class="role-select-custom">
                     <option value="편집자">편집자</option>
                     <option value="뷰어">뷰어</option>
@@ -200,7 +200,7 @@
         </div>
 
         <div class="form-actions" style="margin-top: 24px; flex-shrink: 0;">
-            <button class="btn-primary" onclick="closeShareModal()" style="min-width: 100px; padding: 10px;">확인</button>
+            <button class="btn-primary" onclick="submitShareInvites()" style="min-width: 100px; padding: 10px;">확인</button>
             <button class="btn-cancel" onclick="closeShareModal()" style="min-width: 100px; padding: 10px;">취소</button>
         </div>
     </div>
@@ -257,6 +257,19 @@
 
   let currentProject = null;
   let currentTabId = 'tab-user-simu';
+  let shareMembers = [];
+  let stagedInvites = [];
+
+  function setAnalysisListsLoading() {
+    const loadingHtml = '<div class="empty-state" style="padding:40px;text-align:center;color:#94a3b8;">분석 목록을 불러오는 중입니다.</div>';
+    const simuList = document.getElementById('simuAnalysisList');
+    const marketList = document.getElementById('marketAnalysisList');
+    const costList = document.getElementById('financeAnalysisList');
+
+    if (simuList) simuList.innerHTML = loadingHtml;
+    if (marketList) marketList.innerHTML = loadingHtml;
+    if (costList) costList.innerHTML = loadingHtml;
+  }
 
 /* ── 전역 변수 및 토큰 준비 ── */
 const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
@@ -397,6 +410,8 @@ async function createTab() {
   async function loadProjectDetail() {
     const pathSegments = window.location.pathname.split('/');
     const projectId = pathSegments[pathSegments.length - 1];
+    setAnalysisListsLoading();
+    currentProject = null;
 
     if (!projectId || projectId === 'detail') {
       alert("잘못된 접근입니다.");
@@ -404,21 +419,16 @@ async function createTab() {
       return;
     }
 
-    const allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
-    currentProject = allProjects.find(p => String(p.id) === projectId);
-
-    if (!currentProject) {
-      try {
-        const response = await fetch('/api/projects', {
-          headers: { Accept: 'application/json' }
-        });
-        if (response.ok) {
-          const projects = await response.json();
-          currentProject = projects.find(p => String(p.id) === projectId) || null;
-        }
-      } catch (error) {
-        console.error(error);
+    try {
+      const response = await fetch('/api/projects', {
+        headers: { Accept: 'application/json' }
+      });
+      if (response.ok) {
+        const projects = await response.json();
+        currentProject = projects.find(p => String(p.id) === projectId) || null;
       }
+    } catch (error) {
+      console.error(error);
     }
 
     if (currentProject) {
@@ -457,12 +467,15 @@ async function createTab() {
 
       const collabBadge = document.querySelector('.badge-collab');
       const collabText = document.querySelector('.collab-members');
+      const shareButton = document.querySelector('.btn-add');
       if (currentProject.type === 'collab') {
         if (collabBadge) collabBadge.style.display = 'inline-block';
         if (collabText) collabText.textContent = `With. ${currentProject.members ? currentProject.members.join(', ') : ''}`;
+        if (shareButton) shareButton.style.display = 'inline-block';
       } else {
         if (collabBadge) collabBadge.style.display = 'none';
         if (collabText) collabText.style.display = 'none';
+        if (shareButton) shareButton.style.display = 'none';
       }
 
       await loadMarketAnalyses(projectId);
@@ -476,6 +489,7 @@ async function createTab() {
 
   async function loadAiUserAnalyses(projectId) {
     if (!currentProject) return;
+    currentProject.aiUserAnalyses = [];
 
     try {
       const response = await fetch(`/aiuser/results/project/${projectId}`, {
@@ -499,6 +513,7 @@ async function createTab() {
 
   async function loadMarketAnalyses(projectId) {
     if (!currentProject) return;
+    currentProject.marketAnalyses = [];
 
     try {
       const response = await fetch(`/market/results/project/${projectId}`, {
@@ -565,6 +580,7 @@ async function createTab() {
 
   async function loadCostAnalyses(projectId) {
     if (!currentProject) return;
+    currentProject.costAnalyses = [];
 
     try {
       const response = await fetch(`/cost/results/project/${projectId}`, {
@@ -892,83 +908,204 @@ async function deleteTabFromDb(dbId, htmlId, btnElement) {
 
   /* ── [5] 멤버 관리 (협업 공유) ── */
   /* ── [수정] 멤버 리스트 렌더링 (권한 표시 포함) ── */
+function escHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+}
+
+function memberAvatar(member) {
+    if (member.profileImage) {
+        return `<img src="${escHtml(member.profileImage)}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">`;
+    }
+    const initial = (member.name || member.email || '?').charAt(0).toUpperCase();
+    return `<span>${escHtml(initial)}</span>`;
+}
+
+function roleLabel(role) {
+    if (role === 'OWNER') return '소유자';
+    if (role === 'MEMBER') return '팀원';
+    return role || '편집자';
+}
+
+function statusLabel(status) {
+    if (status === 'ACCEPTED') return '참여중';
+    if (status === 'PENDING') return '요청 대기';
+    if (status === 'DECLINED') return '거절됨';
+    return status || '';
+}
+
+async function loadShareMembers() {
+    if (!currentProject?.id) return;
+    try {
+        const response = await fetch(`/api/projects/${currentProject.id}/members`, {
+            headers: { Accept: 'application/json' }
+        });
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.message || '팀원 목록을 불러오지 못했습니다.');
+        }
+        shareMembers = await response.json();
+    } catch (error) {
+        shareMembers = [];
+        alert(error.message);
+    }
+}
+
 function renderModalMembers() {
     const listContainer = document.getElementById('modalMemberList');
     if (!listContainer || !currentProject) return;
+    const currentUserIsOwner = shareMembers.some(member => member.currentUser && member.role === 'OWNER');
 
-    let html = `
-      <div class="share-member-item">
-        <div class="member-profile-info">
-          <div class="profile-avatar-small" style="background: #e2e8f0; border-radius: 50%; width: 32px; height: 32px;"></div>
-          <div class="member-text">
-            <span class="member-name">나(소유자)</span>
-            <span class="member-email">me@simuuser.com</span>
+    const memberRows = shareMembers.map(member => `
+        <div class="share-member-item" style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9;">
+          <div class="member-profile-info" style="display:flex;align-items:center;gap:10px;">
+            <div class="profile-avatar-small" style="background:#dbeafe;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;overflow:hidden;font-weight:700;color:#2563eb;">
+              ${memberAvatar(member)}
+            </div>
+            <div class="member-text" style="display:flex;flex-direction:column;">
+              <span class="member-name" style="font-weight:600;">${escHtml(member.currentUser ? `${member.name || '나'} (나)` : (member.name || member.email?.split('@')[0] || '팀원'))}</span>
+              <span class="member-email" style="font-size:12px;color:#64748b;">${escHtml(member.email || '')}</span>
+            </div>
           </div>
-        </div>
-        <span class="member-role" style="color: #94a3b8; font-size: 13px;">소유자</span>
-      </div>`;
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="member-role" style="font-size:13px;color:#3b82f6;font-weight:600;">${escHtml(roleLabel(member.role))}</span>
+            ${currentUserIsOwner && !member.currentUser && member.role !== 'OWNER'
+                ? `<button type="button" onclick="removeProjectMember(${member.id})" style="color:#ef4444;background:none;border:none;cursor:pointer;font-size:13px;">삭제</button>`
+                : `<span style="font-size:12px;color:${member.status === 'PENDING' ? '#f59e0b' : '#94a3b8'};">${escHtml(statusLabel(member.status))}</span>`}
+          </div>
+        </div>`).join('');
 
-    if (currentProject.members) {
-        currentProject.members.forEach((member, idx) => {
-            // member가 객체인지 문자열인지 확인 (하위 호환성)
-            const email = typeof member === 'object' ? member.email : member;
-            const role = typeof member === 'object' ? member.role : '편집자';
+    const stagedRows = stagedInvites.map((invite, idx) => `
+        <div class="share-member-item" style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f1f5f9;background:#fffbeb;">
+          <div class="member-profile-info" style="display:flex;align-items:center;gap:8px;">
+            <div class="profile-avatar-small" style="background:#fde68a;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#92400e;">${escHtml((invite.name || invite.email).charAt(0).toUpperCase())}</div>
+            <div class="member-text" style="display:flex;flex-direction:column;">
+              <span class="member-name" style="font-size:13px;font-weight:600;">${escHtml(invite.name || '사용자 확인됨')} <span style="font-size:11px;color:#f59e0b;font-weight:600;">요청 예정</span></span>
+              <span class="member-email" style="font-size:11px;color:#64748b;">${escHtml(invite.email)}</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;">
+            <span class="member-role" style="font-size:12px;color:#3b82f6;font-weight:600;">${escHtml(invite.role)}</span>
+            <button type="button" onclick="removeStagedInvite(${idx})" style="color:#ef4444;background:none;border:none;cursor:pointer;font-size:12px;">삭제</button>
+          </div>
+        </div>`).join('');
 
-            html += `
-            <div class="share-member-item" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9;">
-              <div class="member-profile-info" style="display: flex; align-items: center; gap: 10px;">
-                <div class="profile-avatar-small" style="background: #dbeafe; border-radius: 50%; width: 32px; height: 32px;"></div>
-                <div class="member-text" style="display: flex; flex-direction: column;">
-                  <span class="member-name" style="font-weight: 600;">${email.split('@')[0]}</span>
-                  <span class="member-email" style="font-size: 12px; color: #64748b;">${email}</span>
-                </div>
-              </div>
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <span class="member-role" style="font-size: 13px; color: #3b82f6; font-weight: 500;">${role}</span>
-                <button onclick="removeMember(${idx})" style="color:#ef4444; background:none; border:none; cursor:pointer; font-size: 13px;">삭제</button>
-              </div>
-            </div>`;
-        });
+    const html = memberRows + stagedRows;
+    if (!html) {
+        listContainer.innerHTML = '<div style="padding:24px;text-align:center;color:#94a3b8;">팀원 정보가 없습니다.</div>';
+        return;
     }
     listContainer.innerHTML = html;
 }
 
-/* ── [수정] 기존 팀원을 유지하면서 새 팀원을 추가하는 로직 ── */
-function addMemberByEmail() {
+function handleShareEmailKeydown(event) {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    stageShareInvite();
+}
+
+async function stageShareInvite() {
     const emailInput = document.getElementById('shareEmailInput');
     const roleSelect = document.getElementById('shareRoleSelect');
     const email = emailInput.value.trim();
     const role = roleSelect.value;
 
-    if (!email) return; // 빈 값 방지
+    if (!email) return;
     if (!email.includes('@')) return alert("이메일 형식이 아닙니다.");
-    
-    // 1. 중요: 기존 멤버 리스트가 없으면 빈 배열로 초기화, 있으면 기존 것 유지
-    if (!currentProject.members || !Array.isArray(currentProject.members)) {
-        currentProject.members = [];
-    }
 
-    // 2. 중복 추가 방지 (이미 추가된 이메일인지 확인)
-    const isExisted = currentProject.members.some(m => {
-        const mEmail = typeof m === 'object' ? m.email : m;
-        return mEmail === email;
-    });
-
-    if (isExisted) {
-        alert("이미 추가된 멤버입니다.");
+    const alreadyMember = shareMembers.some(member => member.email === email && member.status === 'ACCEPTED');
+    if (alreadyMember) {
+        alert("이미 프로젝트 팀원입니다.");
         return;
     }
-    
-    // 3. 기존 리스트에 '추가(push)' 하기 (덮어쓰기 아님!)
-    currentProject.members.push({ email: email, role: role });
-    
-    // 4. 저장 및 UI 갱신
-    updateLocalStorage();
+
+    const alreadyPending = shareMembers.some(member => member.email === email && member.status === 'PENDING')
+        || stagedInvites.some(invite => invite.email === email);
+    if (alreadyPending) {
+        alert("이미 보낸 요청입니다.");
+        return;
+    }
+
+    let name = email.split('@')[0];
+    try {
+        const response = await fetch(`/api/users/search?email=${encodeURIComponent(email)}`, {
+            headers: { Accept: 'application/json' }
+        });
+        if (response.ok) {
+            const users = await response.json();
+            const matched = users.find(user => user.email === email) || users[0];
+            if (matched?.name) name = matched.name;
+        }
+    } catch (error) {
+        console.error(error);
+    }
+
+    stagedInvites.push({ email, role, name });
     emailInput.value = '';
     renderModalMembers();
-    
-    // 상단 프로젝트 요약(With. 누구누구) 부분도 같이 업데이트
-    loadProjectDetail(); 
+}
+
+function removeStagedInvite(index) {
+    stagedInvites.splice(index, 1);
+    renderModalMembers();
+}
+
+async function removeProjectMember(memberId) {
+    if (!currentProject?.id) return alert("프로젝트 정보를 불러온 뒤 다시 시도해주세요.");
+    if (!confirm("이 팀원을 프로젝트에서 삭제하시겠습니까?")) return;
+
+    try {
+        const response = await fetch(`/api/projects/${currentProject.id}/members/${memberId}`, {
+            method: 'DELETE',
+            headers: { [header]: token }
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.message || "팀원 삭제에 실패했습니다.");
+        }
+
+        await loadShareMembers();
+        renderModalMembers();
+        await loadProjectDetail();
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+async function submitShareInvites() {
+    if (!stagedInvites.length) {
+        closeShareModal();
+        return;
+    }
+    if (!currentProject?.id) return alert("프로젝트 정보를 불러온 뒤 다시 시도해주세요.");
+
+    for (const invite of stagedInvites) {
+        const response = await fetch(`/api/projects/${currentProject.id}/members/invite`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                [header]: token
+            },
+            body: JSON.stringify(invite)
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            alert(error.message || "초대 요청 전송에 실패했습니다.");
+            return;
+        }
+    }
+
+    stagedInvites = [];
+    await loadShareMembers();
+    renderModalMembers();
+    alert("팀 멤버 초대 요청을 보냈습니다.");
+    closeShareModal();
 }
 
   function updateLocalStorage() {
@@ -989,15 +1126,32 @@ function addMemberByEmail() {
   const shareModal = document.getElementById('shareModal');
   const addTabModal = document.getElementById('addTabModal');
 
-  document.querySelector('.btn-add').onclick = () => {
+  async function openShareModal() {
+    if (!shareModal) return;
+    if (!currentProject) {
+      await loadProjectDetail();
+    }
+    if (currentProject?.type !== 'collab') {
+      alert("협업 프로젝트에서만 팀원을 추가할 수 있습니다.");
+      return;
+    }
     if (currentProject) {
       document.getElementById('modalProjectTitle').textContent = currentProject.title;
     }
+    stagedInvites = [];
+    await loadShareMembers();
     renderModalMembers();
     shareModal.classList.remove('hidden');
-  };
+  }
 
-  function closeShareModal() { shareModal.classList.add('hidden'); }
+  function closeShareModal() {
+    stagedInvites = [];
+    document.getElementById('shareEmailInput').value = '';
+    if (shareModal) shareModal.classList.add('hidden');
+  }
+
+  window.openShareModal = openShareModal;
+  window.closeShareModal = closeShareModal;
 
   window.onclick = (e) => {
     if (e.target === shareModal) closeShareModal();

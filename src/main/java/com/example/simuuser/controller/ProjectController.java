@@ -1,8 +1,13 @@
 package com.example.simuuser.controller;
 
-import java.util.List;
-import java.util.Map;
-
+import com.example.simuuser.dto.ProjectCreateRequest;
+import com.example.simuuser.dto.ProjectResponse;
+import com.example.simuuser.dto.TabRequest;
+import com.example.simuuser.dto.UserSearchResponse;
+import com.example.simuuser.entity.ProjectTab;
+import com.example.simuuser.service.NotificationService;
+import com.example.simuuser.service.ProjectService;
+import com.example.simuuser.service.ProjectTabService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -15,25 +20,25 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.example.simuuser.dto.ProjectCreateRequest;
-import com.example.simuuser.dto.ProjectResponse;
-import com.example.simuuser.dto.TabRequest;
-import com.example.simuuser.dto.UserSearchResponse;
-import com.example.simuuser.entity.ProjectTab;
-import com.example.simuuser.service.ProjectService;
-import com.example.simuuser.service.ProjectTabService;
+import java.util.List;
+import java.util.Map;
 
 @Controller
 public class ProjectController {
 
     private final ProjectService projectService;
-    private final ProjectTabService projectTabService; // [추가]
+    private final ProjectTabService projectTabService;
+    private final NotificationService notificationService;
 
-        // [수정] 생성자 주입
-        public ProjectController(ProjectService projectService, ProjectTabService projectTabService) {
-            this.projectService = projectService;
-            this.projectTabService = projectTabService;
-        }
+    public ProjectController(
+            ProjectService projectService,
+            ProjectTabService projectTabService,
+            NotificationService notificationService
+    ) {
+        this.projectService = projectService;
+        this.projectTabService = projectTabService;
+        this.notificationService = notificationService;
+    }
 
     @GetMapping("/project/new")
     public String newProject() {
@@ -67,9 +72,67 @@ public class ProjectController {
         return projectService.searchInviteCandidates(email, authentication);
     }
 
-    // ─── [여기서부터 탭 관련 API 추가] ───
+    @ResponseBody
+    @PostMapping("/api/projects/{projectId}/members/invite")
+    public ResponseEntity<?> inviteMember(@PathVariable Long projectId, @RequestBody Map<String, String> body, Authentication authentication) {
+        try {
+            return ResponseEntity.ok(projectService.inviteMember(projectId, body.get("email"), body.get("role"), authentication));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
 
-    // 1. 탭 저장 API (POST)
+    @ResponseBody
+    @GetMapping("/api/projects/{projectId}/members")
+    public ResponseEntity<?> projectMembers(@PathVariable Long projectId, Authentication authentication) {
+        try {
+            return ResponseEntity.ok(projectService.findProjectMembers(projectId, authentication));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @ResponseBody
+    @DeleteMapping("/api/projects/{projectId}/members/{memberId}")
+    public ResponseEntity<?> removeMember(@PathVariable Long projectId, @PathVariable Long memberId, Authentication authentication) {
+        try {
+            projectService.removeProjectMember(projectId, memberId, authentication);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @ResponseBody
+    @GetMapping("/api/project-invitations")
+    public ResponseEntity<?> pendingInvitations(Authentication authentication) {
+        return ResponseEntity.ok(projectService.findPendingInvites(authentication));
+    }
+
+    @ResponseBody
+    @PostMapping("/api/project-invitations/{inviteId}/accept")
+    public ResponseEntity<?> acceptInvitation(@PathVariable Long inviteId, Authentication authentication) {
+        try {
+            var response = projectService.acceptInvite(inviteId, authentication);
+            notificationService.markProjectInviteHandled(inviteId, authentication);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @ResponseBody
+    @PostMapping("/api/project-invitations/{inviteId}/decline")
+    public ResponseEntity<?> declineInvitation(@PathVariable Long inviteId, Authentication authentication) {
+        try {
+            var response = projectService.declineInvite(inviteId, authentication);
+            notificationService.markProjectInviteHandled(inviteId, authentication);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @ResponseBody
     @PostMapping("/api/projects/{projectId}/tabs")
     public ResponseEntity<?> addTab(@PathVariable Long projectId, @RequestBody TabRequest request) {
@@ -81,14 +144,12 @@ public class ProjectController {
         }
     }
 
-    // 2. 탭 조회 API (GET)
     @ResponseBody
     @GetMapping("/api/projects/{projectId}/tabs")
     public List<ProjectTab> getProjectTabs(@PathVariable Long projectId) {
         return projectTabService.getTabs(projectId);
     }
 
-    // 탭 이름 수정: PATCH /api/projects/tabs/5
     @ResponseBody
     @PatchMapping("/api/projects/tabs/{tabId}")
     public ResponseEntity<?> updateTab(@PathVariable Long tabId, @RequestBody Map<String, String> body) {
@@ -96,7 +157,6 @@ public class ProjectController {
         return ResponseEntity.ok().build();
     }
 
-    // 탭 삭제: DELETE /api/projects/tabs/5
     @ResponseBody
     @DeleteMapping("/api/projects/tabs/{tabId}")
     public ResponseEntity<?> deleteTab(@PathVariable Long tabId) {
