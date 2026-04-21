@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>SimuUser Chat</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Malgun Gothic', sans-serif; background: #ffffff; height: 100vh; display: flex; flex-direction: column; }
+        
+        /* 헤더 영역 */
+        .header { padding: 15px; display: flex; justify-content: space-between; align-items: center; background: #fff; }
+        .header h2 { font-size: 18px; color: #111; }
+
+        /* 필터 탭 영역 */
+        .filter-tabs { display: flex; gap: 10px; padding: 0 15px 10px; border-bottom: 1px solid #f1f5f9; }
+        .tab-btn { 
+            padding: 6px 12px; border-radius: 20px; border: 1px solid #e2e8f0; 
+            background: #fff; font-size: 13px; cursor: pointer; color: #64748b;
+        }
+        .tab-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+
+        /* 채팅방 목록 영역 */
+        .chat-list { flex: 1; overflow-y: auto; }
+        .chat-item { 
+            display: flex; align-items: center; padding: 12px 15px; 
+            cursor: pointer; transition: background 0.2s; 
+        }
+        .chat-item:hover { background: #f8fafc; }
+        
+        .profile-img { 
+            width: 45px; height: 45px; background: #e2e8f0; border-radius: 15px; 
+            margin-right: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #475569;
+        }
+        
+        .chat-info { flex: 1; border-bottom: 1px solid #f8fafc; padding-bottom: 5px; }
+        .chat-name-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .chat-name { font-size: 14px; font-weight: bold; color: #1e293b; }
+        .chat-time { font-size: 11px; color: #94a3b8; }
+        .chat-last-msg { font-size: 13px; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>채팅</h2>
+    </div>
+
+    <div class="filter-tabs">
+        <button class="tab-btn active" onclick="filterChat('ALL')">전체</button>
+        <button class="tab-btn" onclick="filterChat('PRIVATE')">개인채팅</button>
+        <button class="tab-btn" onclick="filterChat('TEAM')">팀채팅</button>
+    </div>
+
+    <div class="chat-list" id="chatList">
+        </div>
+
+    <script>
+        // 임시 데이터 (나중에 API로 받아올 부분)
+        const chatRooms = [
+            { id: 1, type: 'PRIVATE', name: '윤낭', lastMsg: '오늘 작업 어때요?', time: '오후 9:30', profile: 'YN' },
+            { id: 2, type: 'TEAM', name: 'SimuUser 프로젝트팀', lastMsg: '버그 수정 완료했습니다.', time: '오후 8:45', profile: 'Team' },
+            { id: 3, type: 'PRIVATE', name: '보원!', lastMsg: '넵 확인했습니다.', time: '오후 6:20', profile: 'BW' },
+            { id: 4, type: 'TEAM', name: '기획부 회의실', lastMsg: '회의 시간 공지드립니다.', time: '어제', profile: 'Plan' }
+        ];
+
+        function renderList(filterType = 'ALL') {
+            const listContainer = document.getElementById('chatList');
+            listContainer.innerHTML = '';
+
+            const filtered = filterType === 'ALL' 
+                ? chatRooms 
+                : chatRooms.filter(room => room.type === filterType);
+
+            filtered.forEach(room => {
+                const item = document.createElement('div');
+                item.className = 'chat-item';
+                item.onclick = () => openDetail(room.id, room.name);
+                item.innerHTML = `
+                    <div class="profile-img">${room.profile}</div>
+                    <div class="chat-info">
+                        <div class="chat-name-row">
+                            <span class="chat-name">${room.name}</span>
+                            <span class="chat-time">${room.time}</span>
+                        </div>
+                        <div class="chat-last-msg">${room.lastMsg}</div>
+                    </div>
+                `;
+                listContainer.appendChild(item);
+            });
+        }
+
+        function filterChat(type) {
+            // 버튼 스타일 변경
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.innerText === (type === 'ALL' ? '전체' : type === 'PRIVATE' ? '개인채팅' : '팀채팅')) {
+                    btn.classList.add('active');
+                }
+            });
+            renderList(type);
+        }
+
+        // 목록창 내 스크립트 수정
+        function openDetail(roomId, roomName) {
+            const width = 360;
+            const height = 550;
+            // 화면 중앙 계산
+            const left = (window.screen.width / 2) - (width / 2);
+            const top = (window.screen.height / 2) - (height / 2);
+            
+            const windowFeatures = `width=${width},height=${height},left=${left},top=${top},resizable=yes`;
+            
+            // 새 창(탭)으로 열기. 방마다 고유한 이름을 주면(room_1, room_2) 방별로 창이 따로 뜹니다.
+            window.open(`/chat/room/${roomId}?name=${encodeURIComponent(roomName)}`, `room_${roomId}`, windowFeatures);
+        }
+
+        // 초기 로드
+        renderList();
+    </script>
+</body>
+</html>

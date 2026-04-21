@@ -187,3 +187,26 @@ function escapeHtml(value) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const chatBtn = document.getElementById('chatBtn');
+
+    if (chatBtn) {
+        chatBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            // 새 창의 설정 (너비, 높이, 위치 등)
+            const width = 360;
+            const height = 500;
+            const left = (window.screen.width / 2) - (width / 2);
+            const top = (window.screen.height / 2) - (height / 2);
+            
+            const windowFeatures = `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`;
+            
+            // window.open('경로', '창이름', '설정');
+            // 'chatWindow'라는 이름을 주면 여러번 눌러도 하나의 창에서만 바뀝니다.
+            window.open('/chat/window', 'chatWindow', windowFeatures); 
+        });
+    }
+});
