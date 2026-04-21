@@ -31,7 +31,7 @@ public class SecurityConfig {
         http
                 .userDetailsService(customUserDetailsService)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login", "/signup", "/signup/check-user-id", "/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/", "/login", "/social-onboarding", "/signup", "/signup/check-user-id", "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

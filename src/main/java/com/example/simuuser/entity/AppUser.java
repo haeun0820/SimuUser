@@ -137,12 +137,11 @@ public class AppUser {
         return !Boolean.FALSE.equals(profileCompleted);
     }
 
-    public void updateProfile(String name, String phone, LocalDate birthDate, String gender, String profileImage) {
+    public void updateProfile(String name, String phone, LocalDate birthDate, String gender) {
         this.name = name;
         this.phone = phone;
         this.birthDate = birthDate;
         this.gender = gender;
-        this.profileImage = profileImage;
     }
 
     public void changePassword(String password) {
