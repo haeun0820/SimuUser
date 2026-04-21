@@ -121,7 +121,22 @@
         <div class="project-card-head">
           <span class="project-card-title">${escHtml(p.title)}</span>
           ${badge}
+
+          <div class="project-options-menu">
+          <button class="btn-options" onclick="toggleCardMenu(event, '${p.id}')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="1" fill="currentColor"></circle>
+              <circle cx="12" cy="5" r="1" fill="currentColor"></circle>
+              <circle cx="12" cy="19" r="1" fill="currentColor"></circle>
+            </svg>
+          </button>
+          <div class="card-dropdown" id="dropdown-${p.id}">
+            <button onclick="editProject('${p.id}')">수정하기</button>
+            <button class="delete-opt" onclick="deleteProject('${p.id}')">삭제하기</button>
+          </div>
         </div>
+        </div>
+
         ${p.description
           ? `<p class="project-card-desc">${escHtml(p.description)}</p>`
           : '<p class="project-card-desc" style="color:#d1d5db;">설명이 없습니다.</p>'}
@@ -222,6 +237,46 @@
   function escHtml(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
+
+  // 메뉴 열고 닫기
+function toggleCardMenu(event, id) {
+  event.stopPropagation(); // 카드 클릭 이벤트 전파 방지
+  const dropdown = document.getElementById(`dropdown-${id}`);
+  const allMenus = document.querySelectorAll('.card-dropdown');
+  
+  // 다른 메뉴는 닫고 현재 메뉴만 토글
+  allMenus.forEach(m => { if(m !== dropdown) m.style.display = 'none'; });
+  dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+}
+
+// 수정 페이지 이동
+function editProject(id) {
+  // 생성 페이지(/project/new)와 유사한 수정 페이지(/project/edit/{id})로 이동
+  window.location.href = `/project/edit/${id}`;
+}
+
+// 삭제 처리
+async function deleteProject(id) {
+  if (!confirm("정말 이 프로젝트를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.")) return;
+
+  try {
+    const response = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
+    if (response.ok) {
+      alert("프로젝트가 삭제되었습니다.");
+      init(); // 목록 새로고침
+    } else {
+      alert("삭제에 실패했습니다.");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("오류가 발생했습니다.");
+  }
+}
+
+// 화면 바깥 클릭 시 메뉴 닫기
+window.addEventListener('click', () => {
+  document.querySelectorAll('.card-dropdown').forEach(m => m.style.display = 'none');
+});
 </script>
 </body>
 </html>

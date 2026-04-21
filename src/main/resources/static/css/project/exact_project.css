@@ -1220,3 +1220,89 @@ body {
 .member-scroll-list::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
 }
+
+/* ── [추가] 팀채팅 버튼 스타일 ── */
+.btn-chat-action {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #475569;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-chat-action:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+.btn-chat-action.chat-exists {
+    background: #eff6ff;
+    color: var(--primary);
+    border-color: #bfdbfe;
+}
+
+/* ── [추가] 프로젝트 관리 케밥 메뉴 버튼 ── */
+.btn-options-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #94a3b8;
+    transition: background 0.2s;
+}
+.btn-options-circle:hover {
+    background: #f1f5f9;
+    color: var(--text);
+}
+
+/* ── [추가] 드롭다운 메뉴 위치 및 디자인 ── */
+.project-options-menu {
+    position: relative;
+}
+
+#projectOptionDropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 1000; /* 다른 요소보다 위에 보이도록 */
+    display: none; /* JS로 토글 */
+    width: 120px;
+    overflow: hidden;
+}
+
+#projectOptionDropdown button {
+    width: 100%;
+    padding: 10px 15px;
+    text-align: left;
+    border: none;
+    background: none;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--text);
+}
+
+#projectOptionDropdown button:hover {
+    background: #f8fafc;
+    color: var(--primary);
+}
+
+#projectOptionDropdown .delete-opt {
+    color: var(--danger);
+    border-top: 1px solid #f1f5f9;
+}
