@@ -51,6 +51,9 @@ public class AppUser {
     @Column(length = 100)
     private String providerId;
 
+    @Column
+    private Boolean profileCompleted;
+
     protected AppUser() {
     }
 
@@ -64,6 +67,7 @@ public class AppUser {
         this.gender = gender;
         this.provider = "LOCAL";
         this.providerId = null;
+        this.profileCompleted = true;
         this.createdAt = LocalDateTime.now();
     }
 
@@ -77,6 +81,7 @@ public class AppUser {
         this.gender = gender;
         this.provider = provider;
         this.providerId = providerId;
+        this.profileCompleted = false;
         this.createdAt = LocalDateTime.now();
     }
 
@@ -128,6 +133,10 @@ public class AppUser {
         return providerId;
     }
 
+    public boolean isProfileCompleted() {
+        return !Boolean.FALSE.equals(profileCompleted);
+    }
+
     public void updateProfile(String name, String phone, LocalDate birthDate, String gender, String profileImage) {
         this.name = name;
         this.phone = phone;
@@ -142,5 +151,14 @@ public class AppUser {
 
     public void setProfileImage(String profileImage) {
         this.profileImage = profileImage;
+    }
+
+    public void completeSocialProfile(String name, String email, String phone, LocalDate birthDate, String gender) {
+        this.name = name;
+        this.email = email;
+        this.phone = phone;
+        this.birthDate = birthDate;
+        this.gender = gender;
+        this.profileCompleted = true;
     }
 }

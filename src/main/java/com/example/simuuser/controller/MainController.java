@@ -41,6 +41,11 @@ public class MainController {
         return "login/login";
     }
 
+    @GetMapping("/social-onboarding")
+    public String socialOnboarding() {
+        return "login/login";
+    }
+
     @GetMapping("/signup")
     public String signup() {
         return "signup/signup";
