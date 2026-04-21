@@ -2,73 +2,108 @@
    market.css – 시장 & 경쟁 분석 (프로젝트 선택) 페이지
    ============================================================ */
 
-/* 기본 초기화 */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-body {
-    font-family: 'Pretendard', sans-serif;
-    background: #f8fafc;
-    color: #1e293b;
+:root {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-light: rgba(37,99,235,0.08);
+  --danger: #ef4444;
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --border-focus: #93c5fd;
+  --text: #111827;
+  --text-sub: #6b7280;
+  --text-hint: #9ca3af;
+  --radius: 10px;
+  --shadow: 0 1px 4px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
 }
 
+body {
+  font-family: 'Pretendard', 'Noto Sans KR', -apple-system, sans-serif;
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+/* 스크롤바가 콘텐츠 너비에 갇히지 않도록 하려면 아래 설정 확인 */
 .app-layout {
     display: flex;
+    width: 100%; /* vw 대신 % 권장 (스크롤바 포함 계산 방지) */
     min-height: 100vh;
 }
 
+/* ── 레이아웃 수정 ── */
 .main-area {
     flex: 1;
-    display: flex;
-    flex-direction: column;
+    display: flex !important;
+    flex-direction: column !important;
     min-width: 0;
-    background: #f8fafc;
+    height: 100vh;
+    overflow-y: auto; /* 전체 스크롤바를 브라우저 우측 끝에 고정 */
+    background: #f1f5f9;
 }
 
-/* ── 페이지 내부 콘텐츠 패딩 ── */
+/* ── 헤더 ── */
+.top-header {
+  height: 56px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  flex-shrink: 0;
+}
+
+/* ── 페이지 콘텐츠 수정 (핵심 비율 조정) ── */
 .page-content {
-    padding: 32px 40px;
-    max-width: 1000px; /* 너무 퍼지지 않게 제한 */
-    margin: 0 auto;
+    flex: 1;
+    padding: 32px 40px 80px; /* 상단 패딩을 살짝 줄여 비율 맞춤 */
     width: 100%;
+    max-width: 1400px; /* [중요] 1200px에서 1400px로 확장하여 두 번째 사진 비율로 조정 */
+    margin: 0; /* 왼쪽 밀착 유지 */
+    display: block !important;
 }
 
-/* ── 헤더 스타일 (이미지 상단 부분) ── */
+/* ── 툴 헤더 ── */
 .tool-page-header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
 }
 
 .tool-icon-wrap {
-    width: 48px;
-    height: 48px;
-    background: #4F46E5; /* 기획 피드백 아이콘 배경색 */
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+  width: 54px;
+  height: 54px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .tool-title {
-    font-size: 24px;
-    font-weight: 700;
-    color: #1e293b;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.5px;
 }
 
 .tool-subtitle {
-    font-size: 14px;
-    color: #64748b;
-    margin-top: 4px;
+  font-size: 13.5px;
+  color: #64748b;
+  margin-top: 3px;
 }
 
-/* ── 공통 섹션 카드 스타일 ── */
+/* ── 섹션 카드 디자인 (내부 여백 조정) ── */
 .selection-section, .input-method-section {
     background: #fff;
     border: 1px solid #e2e8f0;
     border-radius: 16px;
-    padding: 24px;
+    padding: 28px 32px; /* [수정] 내부 여백을 더 넓게 주어 꽉 찬 느낌 부여 */
     margin-bottom: 24px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
@@ -104,15 +139,15 @@ body {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    width: 100%; /* 리스트가 가로로 꽉 차도록 */
 }
 
 .project-item {
-    padding: 16px;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
-    cursor: pointer;
-    position: relative;
-    transition: all 0.2s;
+    padding: 20px 24px; /* 프로젝트 카드 내부도 더 시원하게 */
+    background: #fff;
+    width: 100%;
 }
 
 .project-item.selected {
