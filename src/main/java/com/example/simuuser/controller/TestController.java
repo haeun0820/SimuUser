@@ -9,17 +9,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class TestController {
+
     @GetMapping("/dashboard")
     public String dashboard() {
         return "dashboard/dashboard";
     }
 
-            // {projectId} 부분이 URL의 숫자를 받아주는 변수 역할을 합니다.
+    // 프로젝트 상세 페이지
     @GetMapping("/project/detail/{projectId}")
     public String projectDetail(@PathVariable("projectId") String projectId, Model model) {
-        // 받아온 ID를 타임리프 페이지로 넘겨줍니다.
         model.addAttribute("projectId", projectId);
-        return "project/exact_project"; // 실제 html 파일 경로
+        return "project/exact_project";
     }
 
     @GetMapping("/scenario")
@@ -29,11 +29,21 @@ public class TestController {
 
     @PostMapping("/scenario/result")
     public String scenarioResultPost(@RequestParam(value = "compareTitle", required = false) String compareTitle, Model model) {
-    // 필요한 경우 전달받은 데이터를 모델에 담아 결과창에 띄울 수 있습니다.
         model.addAttribute("title", compareTitle);
-        
-        // 결과 페이지 HTML 경로 리턴
         return "scenario/scenario_result";
-}
+    }
 
+    // 채팅 목록 창 (카톡 리스트 같은 화면)
+    @GetMapping("/chat/window")
+    public String openChatWindow() {
+        return "chat/chat_window"; 
+    }
+
+    // 실제 채팅방 내부 (메시지 주고받는 화면)
+    @GetMapping("/chat/room/{roomId}")
+    public String openChatRoom(@PathVariable("roomId") String roomId, @RequestParam("name") String name, Model model) {
+        model.addAttribute("roomId", roomId);
+        model.addAttribute("roomName", name);
+        return "chat/chat_room"; 
+    }
 }

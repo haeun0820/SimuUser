@@ -18,15 +18,40 @@
 
   <div class="header-icons auth-actions">
 
-    <div class="friend-menu">
-    <button class="icon-btn" id="friendBtn">
+    <div class="chat-menu">
+    <button class="icon-btn" id="chatBtn" title="채팅">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-            <circle cx="9" cy="7" r="4"></circle>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
         </svg>
+        <span class="chat-badge" style="display:none;"></span>
     </button>
+</div>
+
+<div id="chatPopup" class="chat-popup">
+    <div class="chat-popup-header">
+        <div class="chat-target-info">
+            <span class="status-dot"></span>
+            <strong id="chatTargetName">전체 채팅</strong>
+        </div>
+        <div class="chat-controls">
+            <button class="chat-min-btn" id="minChatBtn">−</button>
+            <button class="chat-close-btn" id="closeChatBtn">&times;</button>
+        </div>
+    </div>
+    <div class="chat-popup-body" id="chatBody">
+        <div class="chat-messages" id="chatMessages">
+            <p class="chat-notice">대화를 시작해 보세요!</p>
+        </div>
+    </div>
+    <div class="chat-popup-footer">
+        <input type="text" id="chatInput" placeholder="메시지를 입력하세요...">
+        <button id="sendChatBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+        </button>
+    </div>
 </div>
 
     <!-- 알림 -->
@@ -70,53 +95,6 @@
     </div>
   </div>
   
-<div id="friendDrawer" class="friend-drawer">
-    <div class="drawer-header">
-        <h3>친구 및 에이전트</h3>
-        <button class="close-btn" id="closeFriendDrawer">&times;</button>
-    </div>
-    <div class="drawer-search">
-        <input type="text" placeholder="친구 또는 에이전트 검색...">
-    </div>
-    <div class="drawer-content">
-        <div class="add-friend-section">
-            <button class="add-btn">+ 친구 추가하기</button>
-        </div>
-        <ul class="friend-list">
-            <li class="friend-item" onclick="toggleFriendAction(this)">
-    <div class="friend-main-info">
-        <div class="avatar">YN</div>
-        <div class="info">
-            <span class="name">윤낭</span>
-            <span class="status">온라인</span>
-        </div>
-    </div>
-    
-    <div class="friend-actions">
-      <button class="action-btn chat-start" onclick="startChat('보원!'); event.stopPropagation();">보기</button>
-        <button class="action-btn chat-start" onclick="startChat('윤낭'); event.stopPropagation();">채팅</button>
-        <button class="action-btn delete-friend" onclick="deleteFriend('윤낭'); event.stopPropagation();">삭제</button>
-    </div>
-</li>
-            <li class="friend-item" onclick="toggleFriendAction(this)">
-    <div class="friend-main-info">
-        <div class="avatar">BW</div>
-        <div class="info">
-            <span class="name">보원!</span>
-            <span class="status">온라인</span>
-        </div>
-    </div>
-    
-    <div class="friend-actions">
-      <button class="action-btn chat-start" onclick="startChat('보원!'); event.stopPropagation();">보기</button>
-        <button class="action-btn chat-start" onclick="startChat('보원!'); event.stopPropagation();">채팅</button>
-        <button class="action-btn delete-friend" onclick="deleteFriend('보원!'); event.stopPropagation();">삭제</button>
-    </div>
-</li>
-        </ul>
-    </div>
-</div>
-<div id="drawerOverlay" class="drawer-overlay"></div>
 </header>
 
 <script th:src="@{/js/header.js}"></script>
@@ -126,37 +104,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. 알림 관련
     const notiBtn = document.getElementById('notiBtn');
     const notiDropdown = document.getElementById('notiDropdown');
-    
-    // 2. 친구 드로어 관련
-    const friendBtn = document.getElementById('friendBtn');
-    const friendDrawer = document.getElementById('friendDrawer');
-    const closeFriendDrawer = document.getElementById('closeFriendDrawer');
-    const drawerOverlay = document.getElementById('drawerOverlay');
 
     // 알림 토글
     notiBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         notiDropdown.classList.toggle('active');
-        // 친구 드로어가 열려있다면 닫기
-        friendDrawer.classList.remove('active');
-        drawerOverlay.classList.remove('active');
-    });
-
-    // 친구 드로어 열기
-    friendBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        friendDrawer.classList.add('active');
-        drawerOverlay.classList.add('active');
-        // 알림창이 열려있다면 닫기
-        notiDropdown.classList.remove('active');
-    });
-
-    // 친구 드로어 닫기 (X 버튼 및 오버레이)
-    [closeFriendDrawer, drawerOverlay].forEach(el => {
-        el.addEventListener('click', () => {
-            friendDrawer.classList.remove('active');
-            drawerOverlay.classList.remove('active');
-        });
     });
 
     // 화면 외부 클릭 시 모든 팝업 닫기
@@ -165,12 +117,8 @@ document.addEventListener('DOMContentLoaded', () => {
             notiDropdown.classList.remove('active');
         }
     });
-
-    // 드로어 내부 클릭 시 닫힘 방지
-    friendDrawer.addEventListener('click', (e) => {
-        e.stopPropagation();
-    });
 });
+
 </script>
 </body>
 </html>
