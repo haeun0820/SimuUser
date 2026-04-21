@@ -410,6 +410,17 @@ a {
     gap: 14px;
 }
 
+.modal-error {
+    display: none;
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: #b42318;
+    background: #fff0ee;
+    border: 1px solid #f3b3ad;
+    font-size: 12.5px;
+}
+
 .modal-field {
     display: flex;
     flex-direction: column;
