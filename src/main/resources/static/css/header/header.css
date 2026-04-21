@@ -70,6 +70,21 @@
   display: none;
 }
 
+/* 기존 .dropdown 스타일을 아래와 같이 수정하세요 */
+.profile-menu .dropdown {
+    position: absolute;
+    top: calc(100% + 8px); /* 헤더와 약간의 간격을 둠 */
+    right: 0;
+    width: 140px;          /* 너비를 고정하여 글자가 깨지지 않게 함 */
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    border: 1px solid #e2e8f0;
+    padding: 8px 0;
+    display: none;
+    z-index: 1500;         /* 다른 요소보다 최상단에 위치 */
+}
+
 .profile-menu:hover .dropdown {
   display: block;
 }
@@ -383,4 +398,32 @@
 
 .action-btn:hover {
     opacity: 0.9;
+}
+
+/* 로그아웃/마이페이지 버튼 스타일 추가 */
+.logout-button {
+    display: block;
+    width: 100%;
+    padding: 10px 16px;
+    text-align: left;
+    background: none;
+    border: none;
+    font-size: 14px;
+    color: #475569;
+    cursor: pointer;
+    font-family: inherit;
+    /* 핵심: 텍스트가 절대 줄바꿈되지 않도록 설정 */
+    white-space: nowrap; 
+    transition: background 0.2s, color 0.2s;
+}
+
+.logout-button:hover {
+    background-color: #f8fafc;
+    color: #2563eb;
+}
+
+/* 로그아웃 폼 레이아웃 정렬 */
+.logout-form {
+    margin: 0;
+    padding: 0;
 }
