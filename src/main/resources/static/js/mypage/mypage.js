@@ -1,7 +1,31 @@
 document.addEventListener("DOMContentLoaded", function () {
-    
-    // --- 1. 유저 정보 설정 ---
     let currentUser = null;
+
+    const displayProfileImage = document.getElementById("displayProfileImage");
+    const displayProfileFallback = document.getElementById("displayProfileFallback");
+    const editProfileImage = document.getElementById("editProfileImage");
+    const editProfileFallback = document.getElementById("editProfileFallback");
+    const changeImageButton = document.getElementById("changeImageButton");
+    const profileImageInput = document.getElementById("profileImageInput");
+    const profileImageHelp = document.getElementById("profileImageHelp");
+
+    function applyProfileImage(imageUrl) {
+        toggleProfileImage(displayProfileImage, displayProfileFallback, imageUrl);
+        toggleProfileImage(editProfileImage, editProfileFallback, imageUrl);
+    }
+
+    function toggleProfileImage(imageElement, fallbackElement, imageUrl) {
+        if (imageUrl) {
+            imageElement.src = imageUrl;
+            imageElement.style.display = "block";
+            fallbackElement.style.display = "none";
+            return;
+        }
+
+        imageElement.removeAttribute("src");
+        imageElement.style.display = "none";
+        fallbackElement.style.display = "flex";
+    }
 
     function bindUser(user) {
         currentUser = user;
@@ -10,17 +34,20 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("inputName").value = user.name || "";
         document.getElementById("inputUserId").value = user.loginLabel || user.userId || "";
         document.getElementById("inputEmail").value = user.email || "";
-        document.getElementById("inputProfileImage").value = user.profileImage || "";
         document.getElementById("inputPhone").value = user.phone === "SOCIAL" ? "" : (user.phone || "");
         document.getElementById("inputBirthDate").value = user.birthDate === "1900-01-01" ? "" : (user.birthDate || "");
+        applyProfileImage(user.profileImage || "");
 
         document.querySelectorAll('input[name="inputGender"]').forEach(input => input.checked = false);
         if (user.gender && user.gender !== "UNKNOWN") {
             const genderInput = document.querySelector(`input[name="inputGender"][value="${user.gender}"]`);
-            if (genderInput) genderInput.checked = true;
+            if (genderInput) {
+                genderInput.checked = true;
+            }
         }
 
         setPasswordFieldsEnabled(user.localLogin);
+        setProfileImageControls(user.profileImageEditable, user.provider);
     }
 
     function setPasswordFieldsEnabled(enabled) {
@@ -32,6 +59,22 @@ document.addEventListener("DOMContentLoaded", function () {
             document.getElementById("inputCurrentPassword").placeholder = "소셜 로그인 계정은 비밀번호를 변경할 수 없습니다.";
             document.getElementById("inputNewPassword").placeholder = "소셜 로그인 계정";
             document.getElementById("inputNewPasswordConfirm").placeholder = "소셜 로그인 계정";
+        }
+    }
+
+    function setProfileImageControls(editable, provider) {
+        changeImageButton.disabled = !editable;
+        profileImageInput.disabled = !editable;
+
+        if (editable) {
+            profileImageHelp.textContent = "이미지 파일을 업로드하면 프로필 사진이 변경됩니다.";
+            return;
+        }
+
+        if ((provider || "").toUpperCase() === "GOOGLE") {
+            profileImageHelp.textContent = "구글 로그인 계정은 구글 프로필 이미지를 사용하므로 변경할 수 없습니다.";
+        } else {
+            profileImageHelp.textContent = "이 계정은 프로필 이미지를 변경할 수 없습니다.";
         }
     }
 
@@ -47,26 +90,20 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-
-    // --- 2. 탭 전환 로직 ---
     const tabBtns = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
 
     tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            // 모든 탭 버튼과 콘텐츠에서 active 제거
             tabBtns.forEach(t => t.classList.remove('active'));
             tabContents.forEach(c => c.classList.remove('active'));
 
-            // 클릭된 탭 활성화
             btn.classList.add('active');
             const targetId = btn.getAttribute('data-target');
             document.getElementById(targetId).classList.add('active');
         });
     });
 
-
-    // --- 3. 내 프로젝트 렌더링 ---
     let allProjects = [];
 
     function timeAgo(isoStr) {
@@ -81,7 +118,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function escHtml(str) {
-        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
     async function loadProjects() {
@@ -149,8 +186,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     loadProjects();
 
-
-    // --- 4. 분석 기록 렌더링 (더미 데이터 사용 - 필요시 API 연동) ---
     const mockHistory = [
         { title: "AI 시뮬레이션", date: "2026. 4. 2." },
         { title: "AI 시뮬레이션", date: "2026. 4. 1." },
@@ -186,10 +221,56 @@ document.addEventListener("DOMContentLoaded", function () {
 
     renderHistoryList();
 
+    changeImageButton.addEventListener("click", function () {
+        if (changeImageButton.disabled) {
+            return;
+        }
+        profileImageInput.click();
+    });
 
-    // --- 5. 프로필 폼 저장 이벤트 ---
+    profileImageInput.addEventListener("change", async function () {
+        const file = this.files && this.files[0];
+        if (!file || !currentUser || !currentUser.profileImageEditable) {
+            return;
+        }
+
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        const headers = {};
+        if (csrfToken && csrfHeader) {
+            headers[csrfHeader] = csrfToken;
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        changeImageButton.disabled = true;
+        profileImageHelp.textContent = "업로드 중입니다...";
+
+        try {
+            const response = await fetch('/api/me/profile-image', {
+                method: 'POST',
+                headers,
+                body: formData
+            });
+
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(result.message || '프로필 이미지 업로드에 실패했습니다.');
+            }
+
+            bindUser(result);
+        } catch (error) {
+            console.error(error);
+            alert(error.message || '프로필 이미지 업로드에 실패했습니다.');
+            setProfileImageControls(currentUser.profileImageEditable, currentUser.provider);
+        } finally {
+            profileImageInput.value = "";
+        }
+    });
+
     const profileForm = document.getElementById('profileEditForm');
-    profileForm.addEventListener('submit', async function(e) {
+    profileForm.addEventListener('submit', async function (e) {
         e.preventDefault();
         const passwordMessage = document.getElementById('passwordMismatchMessage');
         passwordMessage.style.display = 'none';
@@ -201,7 +282,6 @@ document.addEventListener("DOMContentLoaded", function () {
             phone: document.getElementById('inputPhone').value.trim(),
             birthDate: document.getElementById('inputBirthDate').value,
             gender,
-            profileImage: document.getElementById('inputProfileImage').value.trim(),
             currentPassword: document.getElementById('inputCurrentPassword').value,
             newPassword: document.getElementById('inputNewPassword').value,
             newPasswordConfirm: document.getElementById('inputNewPasswordConfirm').value
@@ -224,7 +304,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const result = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-            const message = result.message || '프로필 저장에 실패했습니다.';
+            const message = result.message || '프로필 수정에 실패했습니다.';
             if (message.includes('현재 비밀번호')) {
                 passwordMessage.textContent = message;
                 passwordMessage.style.display = 'block';

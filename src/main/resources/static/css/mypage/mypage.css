@@ -1,11 +1,9 @@
-/* 기본 배경 설정 (앱 레이아웃용) */
 body {
     background-color: #f8fafc;
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-/* 상단 배너 영역 */
 .profile-banner {
     background-color: #eef2f9;
     border-radius: 12px;
@@ -20,12 +18,13 @@ body {
 .profile-avatar-large {
     width: 100px;
     height: 100px;
-    background-color: #0c4a9e; /* 진한 파란색 */
+    background-color: #0c4a9e;
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
     flex-shrink: 0;
+    overflow: hidden;
 }
 
 .profile-info {
@@ -61,7 +60,6 @@ body {
     gap: 6px;
 }
 
-/* 탭 메뉴 */
 .mypage-tabs {
     display: inline-flex;
     background-color: #eef2f9;
@@ -85,18 +83,17 @@ body {
 .tab-btn.active {
     background-color: #ffffff;
     color: #0f172a;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* 탭 콘텐츠 숨김/표시 */
 .tab-content {
     display: none;
 }
+
 .tab-content.active {
     display: block;
 }
 
-/* 리스트 스타일 (내 프로젝트 & 분석 기록) */
 .list-container {
     display: flex;
     flex-direction: column;
@@ -159,16 +156,37 @@ body {
     border-radius: 12px;
 }
 
-/* 뱃지들 */
-.badge-collab { background: #fef3c7; color: #b45309; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600; }
-.badge-personal { background: #dcfce7; color: #15803d; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600; }
-.badge-done { background: #dcfce7; color: #15803d; font-size: 12px; padding: 4px 10px; border-radius: 6px; font-weight: 600; }
+.badge-collab {
+    background: #fef3c7;
+    color: #b45309;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.badge-personal {
+    background: #dcfce7;
+    color: #15803d;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.badge-done {
+    background: #dcfce7;
+    color: #15803d;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+}
 
 .item-arrow svg {
     color: #94a3b8;
 }
 
-/* 프로필 편집 카드 */
 .profile-edit-card {
     background: #ffffff;
     border: 1px solid #b2c5e5;
@@ -192,6 +210,33 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
+}
+
+.profile-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+}
+
+.profile-fallback-icon {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.profile-fallback-icon-small svg {
+    width: 40px;
+    height: 40px;
+}
+
+.profile-image-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .btn-change-image {
@@ -203,6 +248,17 @@ body {
     font-weight: 600;
     color: #475569;
     cursor: pointer;
+}
+
+.btn-change-image:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.profile-image-help {
+    margin: 0;
+    font-size: 12px;
+    color: #64748b;
 }
 
 .form-group {

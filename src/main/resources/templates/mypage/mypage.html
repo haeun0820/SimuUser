@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="_csrf" th:if="${_csrf}" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:if="${_csrf}" th:content="${_csrf.headerName}">
-    <title>마이페이지 – SimuUser</title>
+    <title>마이페이지 | SimuUser</title>
     <link rel="stylesheet" th:href="@{/css/project/project.css}">
     <link rel="stylesheet" th:href="@{/css/mypage/mypage.css}">
 </head>
@@ -46,17 +46,19 @@
         </header>
 
         <main class="page-content">
-            
             <div class="profile-banner">
                 <div class="profile-avatar-large">
-                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="8" r="4" fill="white"/>
-                        <path d="M4 20c0-4 4-6 8-6s8 2 8 6" fill="white"/>
-                    </svg>
+                    <img id="displayProfileImage" class="profile-image profile-image-large" alt="프로필 이미지">
+                    <div id="displayProfileFallback" class="profile-fallback-icon">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="8" r="4" fill="white"/>
+                            <path d="M4 20c0-4 4-6 8-6s8 2 8 6" fill="white"/>
+                        </svg>
+                    </div>
                 </div>
                 <div class="profile-info">
                     <h2 class="profile-name" id="displayNickname">닉네임</h2>
-                    <p class="profile-email" id="displayEmail">homerun@gmail.com</p>
+                    <p class="profile-email" id="displayEmail"></p>
                     <div class="profile-stats">
                         <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg> <span id="projectCountLabel">0개 프로젝트</span></span>
                         <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"></path></svg> <span id="analysisCountLabel">3개 분석</span></span>
@@ -71,45 +73,46 @@
             </div>
 
             <div id="tab-projects" class="tab-content active">
-                <div class="list-container" id="myProjectsList">
-                    </div>
+                <div class="list-container" id="myProjectsList"></div>
             </div>
 
             <div id="tab-history" class="tab-content">
-                <div class="list-container" id="myHistoryList">
-                    </div>
+                <div class="list-container" id="myHistoryList"></div>
             </div>
 
             <div id="tab-profile" class="tab-content">
                 <div class="profile-edit-card">
                     <div class="edit-avatar-section">
                         <div class="profile-avatar-medium">
-                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-                                <circle cx="12" cy="8" r="4" fill="white"/>
-                                <path d="M4 20c0-4 4-6 8-6s8 2 8 6" fill="white"/>
-                            </svg>
+                            <img id="editProfileImage" class="profile-image profile-image-medium" alt="프로필 이미지">
+                            <div id="editProfileFallback" class="profile-fallback-icon profile-fallback-icon-small">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="8" r="4" fill="white"/>
+                                    <path d="M4 20c0-4 4-6 8-6s8 2 8 6" fill="white"/>
+                                </svg>
+                            </div>
                         </div>
-                        <button class="btn-change-image">이미지 변경</button>
+                        <div class="profile-image-actions">
+                            <input type="file" id="profileImageInput" accept="image/*" hidden>
+                            <button type="button" class="btn-change-image" id="changeImageButton">프로필 이미지 변경</button>
+                            <p class="profile-image-help" id="profileImageHelp">이미지 파일을 업로드하면 프로필 사진이 변경됩니다.</p>
+                        </div>
                     </div>
-                    
+
                     <form id="profileEditForm">
                         <div class="form-group">
                             <label for="inputName">이름</label>
-                            <input type="text" id="inputName" value="닉네임" placeholder="이름을 입력하세요.">
+                            <input type="text" id="inputName" value="" placeholder="이름을 입력해주세요">
                         </div>
                         <div class="form-group">
                             <label for="inputUserId">아이디</label>
-                            <input type="text" id="inputUserId" value="userId" readonly style="background-color: #f8fafc;">
+                            <input type="text" id="inputUserId" value="" readonly style="background-color: #f8fafc;">
                             <small style="color: #94a3b8; font-size: 11px; margin-top: 4px; display: block;">아이디는 변경할 수 없습니다.</small>
                         </div>
                         <div class="form-group">
                             <label for="inputEmail">이메일</label>
-                            <input type="email" id="inputEmail" value="homerun@gmail.com" readonly style="background-color: #f8fafc;">
-                            <small style="color: #94a3b8; font-size: 11px; margin-top: 4px; display: block;">네이버, 애플, 카카오, 구글 연동 이메일은 변경할 수 없습니다.</small>
-                        </div>
-                        <div class="form-group">
-                            <label for="inputProfileImage">프로필 이미지 URL</label>
-                            <input type="url" id="inputProfileImage" placeholder="https://example.com/profile.png">
+                            <input type="email" id="inputEmail" value="" readonly style="background-color: #f8fafc;">
+                            <small style="color: #94a3b8; font-size: 11px; margin-top: 4px; display: block;">소셜 연동 이메일은 변경할 수 없습니다.</small>
                         </div>
                         <div class="form-group">
                             <label for="inputPhone">전화번호</label>
@@ -146,7 +149,6 @@
                     </form>
                 </div>
             </div>
-
         </main>
     </div>
 </div>

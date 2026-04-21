@@ -16,6 +16,7 @@ public class ProfileResponse {
     private final String provider;
     private final String profileImage;
     private final boolean localLogin;
+    private final boolean profileImageEditable;
 
     public ProfileResponse(AppUser user) {
         this.name = user.getName();
@@ -28,6 +29,7 @@ public class ProfileResponse {
         this.gender = user.getGender();
         this.profileImage = user.getProfileImage();
         this.localLogin = user.getProvider() == null || "LOCAL".equalsIgnoreCase(user.getProvider());
+        this.profileImageEditable = !"GOOGLE".equalsIgnoreCase(user.getProvider());
     }
 
     private String loginLabel(String provider, String userId) {
@@ -81,5 +83,9 @@ public class ProfileResponse {
 
     public boolean isLocalLogin() {
         return localLogin;
+    }
+
+    public boolean isProfileImageEditable() {
+        return profileImageEditable;
     }
 }
