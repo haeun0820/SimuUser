@@ -7,12 +7,41 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Malgun Gothic', sans-serif; background: #ffffff; height: 100vh; display: flex; flex-direction: column; }
         
+        /* 헤더 아이콘 및 레이아웃 추가 */
+    .header-top { display: flex; justify-content: space-between; align-items: center; padding: 15px; }
+    .header-actions { display: flex; gap: 12px; align-items: center; }
+    
+    /* 메시지 요청 알림 바 */
+    .request-bar {
+        background: #f8fafc; padding: 12px 15px; display: flex; 
+        justify-content: space-between; align-items: center;
+        cursor: pointer; border-bottom: 1px solid #f1f5f9;
+        display: none; /* 요청이 있을 때만 표시 */
+    }
+    .request-bar.active { display: flex; }
+    .request-text { font-size: 13px; color: #3b82f6; font-weight: bold; }
+    .request-count { background: #ef4444; color: white; border-radius: 10px; padding: 2px 8px; font-size: 11px; }
+
+    /* 새 채팅 모달 스타일 */
+    .modal {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;
+    }
+    .modal-content {
+        background: white; width: 300px; padding: 20px; border-radius: 12px;
+        display: flex; flex-direction: column; gap: 15px;
+    }
+    .modal-content input { padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline: none; }
+    .modal-btns { display: flex; justify-content: flex-end; gap: 10px; }
+    .modal-btns button { padding: 8px 15px; border-radius: 6px; cursor: pointer; border: none; }
+    .btn-cancel { background: #e2e8f0; }
+    .btn-start { background: #3b82f6; color: white; }
         /* 헤더 영역 */
         .header { padding: 15px; display: flex; justify-content: space-between; align-items: center; background: #fff; }
         .header h2 { font-size: 18px; color: #111; }
 
         /* 필터 탭 영역 */
-        .filter-tabs { display: flex; gap: 10px; padding: 0 15px 10px; border-bottom: 1px solid #f1f5f9; }
+        .filter-tabs { display: flex; gap: 10px; padding: 0 15px 10px; border-bottom: 1px solid #f1f5f9; margin-top : 10px; }
         .tab-btn { 
             padding: 6px 12px; border-radius: 20px; border: 1px solid #e2e8f0; 
             background: #fff; font-size: 13px; cursor: pointer; color: #64748b;
@@ -40,8 +69,21 @@
     </style>
 </head>
 <body>
-    <div class="header">
+    <div class="header-top">
         <h2>채팅</h2>
+        <div class="header-actions">
+            <button onclick="openNewChatModal()" style="background:none; border:none; cursor:pointer;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div id="requestBar" class="request-bar" onclick="viewRequests()">
+        <span class="request-text">메시지 요청</span>
+        <span id="requestCount" class="request-count">1</span>
     </div>
 
     <div class="filter-tabs">
@@ -50,8 +92,33 @@
         <button class="tab-btn" onclick="filterChat('TEAM')">팀채팅</button>
     </div>
 
+    <div id="newChatModal" class="modal">
+        <div class="modal-content">
+            <h3 style="font-size: 16px;">새 채팅 시작</h3>
+            <input type="email" id="targetEmail" placeholder="상대방 이메일 주소 입력">
+            <div class="modal-btns">
+                <button class="btn-cancel" onclick="closeModal()">취소</button>
+                <button class="btn-start" onclick="startNewChat()">시작</button>
+            </div>
+        </div>
+    </div>
+
+    
     <div class="chat-list" id="chatList">
         </div>
+
+        <div id="requestModal" class="modal">
+    <div class="modal-content" style="text-align: center;">
+        <div class="profile-img" id="modalProfile" style="margin: 0 auto 15px; width: 60px; height: 60px; font-size: 20px;">?</div>
+        <h3 id="modalName" style="font-size: 16px; margin-bottom: 8px;">모르는 사람</h3>
+        <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">메시지 요청을 수락하시겠습니까?</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+            <button class="btn-start" onclick="acceptRequest()" style="width: 100%; padding: 12px;">수락</button>
+            <button class="btn-cancel" onclick="closeRequestModal()" style="width: 100%; padding: 12px; background: none; color: #ef4444;">거절</button>
+        </div>
+    </div>
+</div>
 
     <script>
         // 임시 데이터 (나중에 API로 받아올 부분)
@@ -115,6 +182,111 @@
 
         // 초기 로드
         renderList();
+
+        // 1. 메시지 요청 데이터 (예시)
+        let messageRequests = [
+            { id: 99, name: '모르는 사람', lastMsg: '안녕하세요, 프로젝트 문의 드립니다.', time: '오후 2:10', profile: '?' }
+        ];
+
+        // 2. 모달 제어 함수
+        function openNewChatModal() {
+            document.getElementById('newChatModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('newChatModal').style.display = 'none';
+            document.getElementById('targetEmail').value = '';
+        }
+
+        // 3. 이메일로 채팅 시작
+        function startNewChat() {
+            const email = document.getElementById('targetEmail').value.trim();
+            if (!email) return alert('이메일을 입력해주세요.');
+
+            closeModal();
+            // 새 창 열기 (ID는 임시로 부여)
+            openDetail(Date.now(), email);
+        }
+
+        let selectedRequest = null; // 현재 선택된 요청 보관용
+
+// 4. 메시지 요청 보기 함수 내의 item.onclick 수정
+function viewRequests() {
+    const listContainer = document.getElementById('chatList');
+    listContainer.innerHTML = '<div style="padding:15px; font-weight:bold; color:#64748b;">메시지 요청</div>';
+    
+    messageRequests.forEach(req => {
+        const item = document.createElement('div');
+        item.className = 'chat-item';
+        
+        // 🔥 기존 confirm 대신 커스텀 모달 열기
+        item.onclick = () => openRequestModal(req);
+        
+        item.innerHTML = `
+            <div class="profile-img" style="background:#f1f5f9;">${req.profile}</div>
+            <div class="chat-info">
+                <div class="chat-name-row">
+                    <span class="chat-name">${req.name}</span>
+                    <span class="chat-time">${req.time}</span>
+                </div>
+                <div class="chat-last-msg">${req.lastMsg}</div>
+            </div>
+        `;
+        listContainer.appendChild(item);
+    });
+}
+
+// 모달 제어 함수들
+function openRequestModal(req) {
+    selectedRequest = req;
+    document.getElementById('modalName').innerText = req.name;
+    document.getElementById('modalProfile').innerText = req.profile;
+    document.getElementById('requestModal').style.display = 'flex';
+}
+
+function closeRequestModal() {
+    document.getElementById('requestModal').style.display = 'none';
+    selectedRequest = null;
+}
+
+// 수락 버튼 클릭 시
+function acceptRequest() {
+    if (selectedRequest) {
+        // 1. 요청 목록에서 제거
+        messageRequests = messageRequests.filter(r => r.id !== selectedRequest.id);
+        
+        // 2. 실제 채팅 목록(chatRooms)에 추가
+        chatRooms.unshift({
+            id: selectedRequest.id,
+            type: 'PRIVATE',
+            name: selectedRequest.name,
+            lastMsg: selectedRequest.lastMsg,
+            time: '방금',
+            profile: selectedRequest.profile
+        });
+
+        alert(`${selectedRequest.name}님의 요청을 수락했습니다.`); //이거 나중에 없애야함 ㅎ
+        closeRequestModal();
+        initRequestBadge(); // 상단 배지 업데이트
+        renderList();       // 전체 목록 다시 그리기
+    }
+}
+
+        // 5. 초기 배지 상태 설정
+        function initRequestBadge() {
+            const bar = document.getElementById('requestBar');
+            const count = document.getElementById('requestCount');
+            
+            if (messageRequests.length > 0) {
+                bar.classList.add('active');
+                count.innerText = messageRequests.length;
+            } else {
+                bar.classList.remove('active');
+            }
+        }
+
+        // 페이지 로드 시 실행
+        initRequestBadge();
     </script>
 </body>
 </html>
