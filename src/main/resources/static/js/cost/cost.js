@@ -3,6 +3,7 @@
 
   let selectedProjectId = null;
   let selectedProjectTitle = null;
+  let selectedProjectDescription = null; // ← 추가: 프로젝트 설명 저장
   let fromDetail = false;
   let presetProjectId = null;
   let projectsCache = [];
@@ -88,6 +89,7 @@
       if (target) {
         selectedProjectId = target.id;
         selectedProjectTitle = target.title;
+        selectedProjectDescription = target.description; // ← 추가
         renderProjects([target]);
         updateBreadcrumbForDetail(target);
         setExecuteEnabled(true);
@@ -164,6 +166,7 @@
   function selectProject(project) {
     selectedProjectId = project.id;
     selectedProjectTitle = project.title;
+    selectedProjectDescription = project.description; // ← 추가
 
     document.querySelectorAll('.project-item').forEach(element => {
       const isTarget = String(element.dataset.id) === String(project.id);
@@ -190,6 +193,7 @@
           : projectsCache.filter(project => project.type === type);
         selectedProjectId = null;
         selectedProjectTitle = null;
+        selectedProjectDescription = null; // ← 추가
         renderProjects(filtered);
         setExecuteEnabled(false);
       });
@@ -294,6 +298,8 @@
     try {
       const result = await postJson('/cost/analyze', {
         projectId: project.id,
+        projectTitle: project.title,              // ← 추가: 프로젝트 제목 전송
+        projectDescription: project.description,  // ← 추가: 프로젝트 설명 전송
         revenueModels,
         expectedUsers,
         pricePerUser

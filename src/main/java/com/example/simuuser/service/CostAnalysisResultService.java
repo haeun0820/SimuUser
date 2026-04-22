@@ -1,15 +1,9 @@
 package com.example.simuuser.service;
 
-import com.example.simuuser.dto.CostAnalysisResultResponse;
-import com.example.simuuser.dto.CostAnalysisResultSaveRequest;
-import com.example.simuuser.entity.AppUser;
-import com.example.simuuser.entity.CostAnalysisResult;
-import com.example.simuuser.entity.Project;
-import com.example.simuuser.repository.CostAnalysisResultRepository;
-import com.example.simuuser.repository.ProjectMemberRepository;
-import com.example.simuuser.repository.ProjectRepository;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -18,9 +12,17 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import com.example.simuuser.dto.CostAnalysisResultResponse;
+import com.example.simuuser.dto.CostAnalysisResultSaveRequest;
+import com.example.simuuser.entity.AppUser;
+import com.example.simuuser.entity.CostAnalysisResult;
+import com.example.simuuser.entity.Project;
+import com.example.simuuser.repository.CostAnalysisResultRepository;
+import com.example.simuuser.repository.ProjectMemberRepository;
+import com.example.simuuser.repository.ProjectRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class CostAnalysisResultService {
@@ -203,25 +205,43 @@ public class CostAnalysisResultService {
     }
 
     private Map<String, Object> normalizeAiResult(Map<String, Object> aiResult, Map<String, Object> baseline) {
-        Map<String, Object> normalized = new LinkedHashMap<>();
-        normalized.put("projectId", baseline.get("projectId"));
-        normalized.put("projectTitle", baseline.get("projectTitle"));
-        normalized.put("grade", normalizeGrade(text(aiResult.get("grade"), text(baseline.get("grade"), "보통"))));
-        normalized.put("score", clamp(number(aiResult.get("score"), number(baseline.get("score"), 50)), 0, 100));
-        normalized.put("bepMonths", Math.max(1, number(aiResult.get("bepMonths"), number(baseline.get("bepMonths"), 12))));
-        normalized.put("bepUsers", Math.max(0, number(aiResult.get("bepUsers"), number(baseline.get("bepUsers"), 0))));
-        normalized.put("devCosts", normalizeCostMap(aiResult.get("devCosts"), mapValue(baseline.get("devCosts"))));
-        normalized.put("monthlyCosts", normalizeMonthlyCostMap(aiResult.get("monthlyCosts"), mapValue(baseline.get("monthlyCosts"))));
-        normalized.put("revenue", normalizeRevenueMap(aiResult.get("revenue"), mapValue(baseline.get("revenue"))));
-        normalized.put("maxMRR", Math.max(0, number(aiResult.get("maxMRR"), number(baseline.get("maxMRR"), 0))));
+    Map<String, Object> normalized = new LinkedHashMap<>();
+    normalized.put("projectId",    baseline.get("projectId"));
+    normalized.put("projectTitle", baseline.get("projectTitle"));
+    normalized.put("grade",     normalizeGrade(text(aiResult.get("grade"), text(baseline.get("grade"), "보통"))));
+    normalized.put("score",     clamp(number(aiResult.get("score"), number(baseline.get("score"), 50)), 0, 100));
+    normalized.put("bepMonths", Math.max(1, number(aiResult.get("bepMonths"), number(baseline.get("bepMonths"), 12))));
+    normalized.put("bepUsers",  Math.max(0, number(aiResult.get("bepUsers"),  number(baseline.get("bepUsers"), 0))));
+    normalized.put("devCosts",      normalizeCostMap(aiResult.get("devCosts"),     mapValue(baseline.get("devCosts"))));
+    normalized.put("monthlyCosts",  normalizeMonthlyCostMap(aiResult.get("monthlyCosts"), mapValue(baseline.get("monthlyCosts"))));
+    normalized.put("revenue",       normalizeRevenueMap(aiResult.get("revenue"),   mapValue(baseline.get("revenue"))));
+    normalized.put("maxMRR",    Math.max(0, number(aiResult.get("maxMRR"), number(baseline.get("maxMRR"), 0))));
+ 
+    // ── 라벨 정규화 (핵심 추가 부분) ──
+    normalized.put("devCostLabels",     normalizeLabels(aiResult.get("devCostLabels"),
+            List.of("프론트엔드", "백엔드", "AI/ML", "디자인")));
+    normalized.put("monthlyCostLabels", normalizeLabels(aiResult.get("monthlyCostLabels"),
+            List.of("서버", "API", "유지보수", "마케팅")));
+ 
+    List<String> suggestions = asStringList(aiResult.get("suggestions")).stream()
+            .filter(value -> !value.isBlank())
+            .limit(4)
+            .toList();
+    normalized.put("suggestions", suggestions.isEmpty() ? baseline.get("suggestions") : suggestions);
+    return normalized;
+}
 
-        List<String> suggestions = asStringList(aiResult.get("suggestions")).stream()
-                .filter(value -> !value.isBlank())
-                .limit(4)
-                .toList();
-        normalized.put("suggestions", suggestions.isEmpty() ? baseline.get("suggestions") : suggestions);
-        return normalized;
+private List<String> normalizeLabels(Object value, List<String> fallback) {
+    if (!(value instanceof List<?> list) || list.size() != 4) {
+        return fallback;
     }
+    List<String> labels = list.stream()
+            .map(item -> item == null ? "" : item.toString().trim())
+            .toList();
+    // 빈 항목이 하나라도 있으면 fallback 사용
+    boolean anyBlank = labels.stream().anyMatch(String::isBlank);
+    return anyBlank ? fallback : labels;
+}
 
     private Map<String, Object> normalizeCostMap(Object value, Map<String, Object> fallback) {
         Map<String, Object> source = mapValue(value);
@@ -357,72 +377,108 @@ public class CostAnalysisResultService {
     }
 
     private String buildPrompt(CostAnalysisResultSaveRequest request, Project project, Map<String, Object> baseline) {
-        return """
-                You are a startup finance analyst.
-
-                Analyze the product and monetization assumptions below. Return only valid JSON. Do not include markdown or code fences.
-
-                [Product]
-                - Name: %s
-                - Description: %s
-                - Target user: %s
-                - Industry: %s
-
-                [Revenue assumptions]
-                - Revenue models: %s
-                - Expected users: %d
-                - Price per user in KRW: %d
-
-                [Formula baseline, unit is 만원 for cost and revenue values]
-                %s
-
-                Return this exact JSON shape:
-                {
-                  "grade": "우수 | 보통 | 주의",
-                  "score": 0,
-                  "bepMonths": 0,
-                  "bepUsers": 0,
-                  "devCosts": {
-                    "frontend": 0,
-                    "backend": 0,
-                    "aiml": 0,
-                    "design": 0,
-                    "total": 0
-                  },
-                  "monthlyCosts": {
-                    "server": 0,
-                    "api": 0,
-                    "maintenance": 0,
-                    "marketing": 0,
-                    "total": 0
-                  },
-                  "revenue": {
-                    "m3": 0,
-                    "m6": 0,
-                    "m12": 0
-                  },
-                  "maxMRR": 0,
-                  "suggestions": ["string"]
-                }
-
-                Rules:
-                - Write suggestions in Korean.
-                - All cost and revenue number fields must be integers in 만원.
-                - score must be an integer from 0 to 100.
-                - grade must be one of "우수", "보통", "주의".
-                - Include exactly 4 concrete suggestions.
-                - Adjust the formula baseline using the product context, revenue model risk, expected user scale, and AI/API operating cost risk.
-                """.formatted(
-                text(project.getTitle(), "Untitled product"),
-                text(project.getDescription(), "No description"),
-                text(project.getTargetUser(), "Not specified"),
-                text(project.getIndustry(), "Not specified"),
-                normalizeRevenueModels(request.getRevenueModels()),
-                normalizedUsers(request.getExpectedUsers()),
-                normalizedPrice(request.getPricePerUser()),
-                toJson(baseline)
-        );
-    }
+    return """
+            You are a startup finance analyst.
+ 
+            Analyze the product and monetization assumptions below. Return only valid JSON. Do not include markdown or code fences.
+ 
+            [Product]
+            - Name: %s
+            - Description: %s
+            - Target user: %s
+            - Industry: %s
+ 
+            [Revenue assumptions]
+            - Revenue models: %s
+            - Expected users: %d
+            - Price per user in KRW: %d
+ 
+            [Formula baseline, unit is 만원 for cost and revenue values]
+            %s
+ 
+            Return this exact JSON shape:
+            {
+              "grade": "우수 | 보통 | 주의",
+              "score": 0,
+              "bepMonths": 0,
+              "bepUsers": 0,
+              "devCosts": {
+                "frontend": 0,
+                "backend": 0,
+                "aiml": 0,
+                "design": 0,
+                "total": 0
+              },
+              "devCostLabels": ["항목명1", "항목명2", "항목명3", "항목명4"],
+              "monthlyCosts": {
+                "server": 0,
+                "api": 0,
+                "maintenance": 0,
+                "marketing": 0,
+                "total": 0
+              },
+              "monthlyCostLabels": ["항목명1", "항목명2", "항목명3", "항목명4"],
+              "revenue": {
+                "m3": 0,
+                "m6": 0,
+                "m12": 0
+              },
+              "maxMRR": 0,
+              "suggestions": ["string"]
+            }
+ 
+            Rules:
+            - Write suggestions in Korean.
+            - All cost and revenue number fields must be integers in 만원.
+            - score must be an integer from 0 to 100.
+            - grade must be one of "우수", "보통", "주의".
+            - Include exactly 4 concrete suggestions written in Korean.
+            - Adjust the formula baseline using the product context, revenue model risk, expected user scale, and AI/API operating cost risk.
+ 
+            [Label rules — 가장 중요]
+            devCostLabels and monthlyCostLabels must be exactly 4 Korean strings.
+            They map in order to: frontend / backend / aiml / design  and  server / api / maintenance / marketing.
+            Replace the labels with industry-appropriate Korean terms based on the product description.
+ 
+            Industry label examples (use similar style, NOT copy-paste):
+            - 커머스/쇼핑:
+                devCostLabels: ["쇼핑몰 UI/UX", "주문·결제 시스템", "추천 AI 엔진", "브랜드 디자인"]
+                monthlyCostLabels: ["클라우드 서버", "PG사 API", "CS·운영 관리", "퍼포먼스 광고"]
+            - 금융/핀테크:
+                devCostLabels: ["앱 인터페이스", "거래·보안 서버", "리스크 분석 AI", "UX 디자인"]
+                monthlyCostLabels: ["금융 인프라", "오픈뱅킹 API", "컴플라이언스 유지", "사용자 획득"]
+            - 의료/헬스케어:
+                devCostLabels: ["환자 앱 UI", "EMR 연동 서버", "진단 AI 모델", "의료 UX 설계"]
+                monthlyCostLabels: ["HIPAA 서버", "의료 데이터 API", "인증·규제 유지", "병원 마케팅"]
+            - 교육/에듀테크:
+                devCostLabels: ["학습 플랫폼 UI", "강의 스트리밍 서버", "AI 튜터 엔진", "커리큘럼 디자인"]
+                monthlyCostLabels: ["CDN·스트리밍", "결제·LMS API", "콘텐츠 업데이트", "학부모 마케팅"]
+            - 콘텐츠/엔터테인먼트:
+                devCostLabels: ["콘텐츠 뷰어 UI", "미디어 스트리밍 서버", "콘텐츠 추천 AI", "크리에이티브 디자인"]
+                monthlyCostLabels: ["스트리밍 서버", "광고·CDN API", "저작권·라이선스", "SNS 마케팅"]
+            - 소셜/커뮤니티:
+                devCostLabels: ["소셜 피드 UI", "실시간 채팅 서버", "콘텐츠 필터 AI", "브랜드 디자인"]
+                monthlyCostLabels: ["실시간 서버", "알림·소셜 API", "커뮤니티 운영", "바이럴 마케팅"]
+            - 모빌리티/여행:
+                devCostLabels: ["예약·지도 UI", "예약·매칭 서버", "경로 최적화 AI", "서비스 디자인"]
+                monthlyCostLabels: ["지도·GPS 서버", "항공·숙박 API", "차량·파트너 관리", "여행 광고"]
+            - 생산성/비즈니스:
+                devCostLabels: ["대시보드 UI", "데이터 처리 서버", "자동화 AI 엔진", "UX/UI 설계"]
+                monthlyCostLabels: ["SaaS 인프라", "연동 API", "고객 지원 유지", "B2B 영업·마케팅"]
+ 
+            If the industry does not clearly match any example, create appropriate labels based on the product description.
+            """.formatted(
+            text(project.getTitle(), "Untitled product"),
+            text(project.getDescription(), "No description"),
+            text(project.getTargetUser(), "Not specified"),
+            text(project.getIndustry(), "Not specified"),
+            normalizeRevenueModels(request.getRevenueModels()),
+            normalizedUsers(request.getExpectedUsers()),
+            normalizedPrice(request.getPricePerUser()),
+            toJson(baseline)
+    );
+}
+ 
 
     private String extractText(Map<String, Object> geminiResponse) {
         Object candidatesObject = geminiResponse.get("candidates");
@@ -584,10 +640,10 @@ public class CostAnalysisResultService {
     }
 
     private String toJson(Object value) {
-        try {
-            return objectMapper.writeValueAsString(value);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Could not serialize cost analysis data.", e);
-        }
+    try {
+        return objectMapper.writeValueAsString(value);
+    } catch (JsonProcessingException e) { 
+        throw new IllegalArgumentException("Could not serialize cost analysis data.", e);
+    }
     }
 }

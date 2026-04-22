@@ -1,10 +1,12 @@
 package com.example.simuuser.dto;
 
 import com.example.simuuser.entity.CostAnalysisResult;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,29 +40,12 @@ public class CostAnalysisResultResponse {
         this.createdAt = entity.getCreatedAt();
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public Long getProjectId() {
-        return projectId;
-    }
-
-    public String getProjectTitle() {
-        return projectTitle;
-    }
-
-    public Map<String, Object> getFormData() {
-        return formData;
-    }
-
-    public Map<String, Object> getResult() {
-        return result;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+    public Long getId() { return id; }
+    public Long getProjectId() { return projectId; }
+    public String getProjectTitle() { return projectTitle; }
+    public Map<String, Object> getFormData() { return formData; }
+    public Map<String, Object> getResult() { return result; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
 
     private Map<String, Object> buildFormData(CostAnalysisResult entity) {
         Map<String, Object> data = new LinkedHashMap<>();
@@ -72,15 +57,13 @@ public class CostAnalysisResultResponse {
         return data;
     }
 
-    @SuppressWarnings("unchecked")
     private Map<String, Object> fromJson(String json) {
         try {
             if (json == null || json.isBlank()) {
                 return Map.of();
             }
-
-            return OBJECT_MAPPER.readValue(json, new TypeReference<>() {});
-        } catch (Exception e) {
+            return OBJECT_MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {});
+        } catch (JsonProcessingException | IllegalArgumentException e) {
             return Map.of();
         }
     }
@@ -90,9 +73,8 @@ public class CostAnalysisResultResponse {
             if (json == null || json.isBlank()) {
                 return List.of();
             }
-
             return OBJECT_MAPPER.readValue(json, new TypeReference<List<String>>() {});
-        } catch (Exception e) {
+        } catch (JsonProcessingException | IllegalArgumentException e) {
             return List.of();
         }
     }

@@ -124,8 +124,8 @@
 
   function renderResults(result) {
     renderSummaryGrid(result);
-    renderDevCosts(result.devCosts || {});
-    renderMonthlyCosts(result.monthlyCosts || {});
+    renderDevCosts(result.devCosts || {}, result.devCostLabels || []);
+    renderMonthlyCosts(result.monthlyCosts || {}, result.monthlyCostLabels || []);
     renderRevenue(result.revenue || {});
     renderBEP(result);
     renderSuggestions(result.suggestions || []);
@@ -166,20 +166,25 @@
     }, 100);
   }
 
-  function renderDevCosts(costs) {
+  // ── 개발 비용: 라벨을 백엔드에서 받아온 devCostLabels로 교체 ──
+  function renderDevCosts(costs, labels) {
     const grid = document.getElementById('devCostGrid');
     if (!grid) return;
 
+    // 기본 라벨 (AI 라벨이 없을 때 fallback)
+    const defaultLabels = ['프론트엔드', '백엔드', 'AI/ML', '디자인'];
+    const l = (Array.isArray(labels) && labels.length === 4) ? labels : defaultLabels;
+
     const items = [
-      { label: '프론트엔드', value: costs.frontend },
-      { label: '백엔드', value: costs.backend },
-      { label: 'AI/ML', value: costs.aiml },
-      { label: '디자인', value: costs.design }
+      { label: l[0], value: costs.frontend },
+      { label: l[1], value: costs.backend },
+      { label: l[2], value: costs.aiml },
+      { label: l[3], value: costs.design }
     ];
 
     grid.innerHTML = items.map(item => `
       <div class="dev-cost-item">
-        <div class="dev-cost-label">${item.label}</div>
+        <div class="dev-cost-label">${escHtml(item.label)}</div>
         <div class="dev-cost-value">${fmtWon(item.value)}</div>
       </div>
     `).join('');
@@ -188,20 +193,24 @@
     if (totalEl) totalEl.textContent = fmtWon(costs.total);
   }
 
-  function renderMonthlyCosts(costs) {
+  // ── 월 운영 비용: 라벨을 백엔드에서 받아온 monthlyCostLabels로 교체 ──
+  function renderMonthlyCosts(costs, labels) {
     const grid = document.getElementById('monthlyCostGrid');
     if (!grid) return;
 
+    const defaultLabels = ['서버', 'API', '유지보수', '마케팅'];
+    const l = (Array.isArray(labels) && labels.length === 4) ? labels : defaultLabels;
+
     const items = [
-      { label: '서버', value: costs.server },
-      { label: 'API', value: costs.api },
-      { label: '유지보수', value: costs.maintenance },
-      { label: '마케팅', value: costs.marketing }
+      { label: l[0], value: costs.server },
+      { label: l[1], value: costs.api },
+      { label: l[2], value: costs.maintenance },
+      { label: l[3], value: costs.marketing }
     ];
 
     grid.innerHTML = items.map(item => `
       <div class="monthly-cost-item">
-        <div class="monthly-cost-label">${item.label}</div>
+        <div class="monthly-cost-label">${escHtml(item.label)}</div>
         <div class="monthly-cost-value">${fmtWon(item.value)}</div>
       </div>
     `).join('');
@@ -372,10 +381,6 @@
     }
   }
 
-  function updateBreadcrumbFromState() {
-    updateBreadcrumb();
-  }
-
   function initButtons() {
     document.getElementById('btnBack')?.addEventListener('click', () => {
       if (formData?.from === 'detail' && formData.projectId) {
@@ -468,7 +473,7 @@
       return;
     }
 
-    updateBreadcrumbFromState();
+    updateBreadcrumb();
     initButtons();
     initNotification();
     initProfileMenu();
