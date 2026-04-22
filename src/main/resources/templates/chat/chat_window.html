@@ -2,77 +2,135 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:if="${_csrf}" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:if="${_csrf}" th:content="${_csrf.headerName}">
     <title>SimuUser Chat</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Malgun Gothic', sans-serif; background: #ffffff; height: 100vh; display: flex; flex-direction: column; }
-        
-        /* 헤더 아이콘 및 레이아웃 추가 */
-    .header-top { display: flex; justify-content: space-between; align-items: center; padding: 15px; }
-    .header-actions { display: flex; gap: 12px; align-items: center; }
-    
-    /* 메시지 요청 알림 바 */
-    .request-bar {
-        background: #f8fafc; padding: 12px 15px; display: flex; 
-        justify-content: space-between; align-items: center;
-        cursor: pointer; border-bottom: 1px solid #f1f5f9;
-        display: none; /* 요청이 있을 때만 표시 */
-    }
-    .request-bar.active { display: flex; }
-    .request-text { font-size: 13px; color: #3b82f6; font-weight: bold; }
-    .request-count { background: #ef4444; color: white; border-radius: 10px; padding: 2px 8px; font-size: 11px; }
 
-    /* 새 채팅 모달 스타일 */
-    .modal {
-        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;
-    }
-    .modal-content {
-        background: white; width: 300px; padding: 20px; border-radius: 12px;
-        display: flex; flex-direction: column; gap: 15px;
-    }
-    .modal-content input { padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline: none; }
-    .modal-btns { display: flex; justify-content: flex-end; gap: 10px; }
-    .modal-btns button { padding: 8px 15px; border-radius: 6px; cursor: pointer; border: none; }
-    .btn-cancel { background: #e2e8f0; }
-    .btn-start { background: #3b82f6; color: white; }
-        /* 헤더 영역 */
-        .header { padding: 15px; display: flex; justify-content: space-between; align-items: center; background: #fff; }
-        .header h2 { font-size: 18px; color: #111; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; padding: 15px; }
+        .header-actions { display: flex; gap: 12px; align-items: center; }
 
-        /* 필터 탭 영역 */
-        .filter-tabs { display: flex; gap: 10px; padding: 0 15px 10px; border-bottom: 1px solid #f1f5f9; margin-top : 10px; }
-        .tab-btn { 
-            padding: 6px 12px; border-radius: 20px; border: 1px solid #e2e8f0; 
-            background: #fff; font-size: 13px; cursor: pointer; color: #64748b;
+        .request-bar {
+            background: #f8fafc;
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+            display: none;
         }
+
+        .request-bar.active { display: flex; }
+        .request-text { font-size: 13px; color: #3b82f6; font-weight: bold; }
+        .request-count { background: #ef4444; color: white; border-radius: 10px; padding: 2px 8px; font-size: 11px; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active { display: flex; }
+
+        .modal-content {
+            background: white;
+            width: 300px;
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .modal-content input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        .modal-btns { display: flex; justify-content: flex-end; gap: 10px; }
+        .modal-btns button { padding: 8px 15px; border-radius: 6px; cursor: pointer; border: none; }
+        .btn-cancel { background: #e2e8f0; }
+        .btn-start { background: #3b82f6; color: white; }
+
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+            padding: 0 15px 10px;
+            border-bottom: 1px solid #f1f5f9;
+            margin-top: 10px;
+        }
+
+        .tab-btn {
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            color: #64748b;
+        }
+
         .tab-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
 
-        /* 채팅방 목록 영역 */
         .chat-list { flex: 1; overflow-y: auto; }
-        .chat-item { 
-            display: flex; align-items: center; padding: 12px 15px; 
-            cursor: pointer; transition: background 0.2s; 
+
+        .chat-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: background 0.2s;
         }
+
         .chat-item:hover { background: #f8fafc; }
-        
-        .profile-img { 
-            width: 45px; height: 45px; background: #e2e8f0; border-radius: 15px; 
-            margin-right: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #475569;
+
+        .profile-img {
+            width: 45px;
+            height: 45px;
+            background: #e2e8f0;
+            border-radius: 15px;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #475569;
+            overflow: hidden;
+            flex-shrink: 0;
         }
-        
-        .chat-info { flex: 1; border-bottom: 1px solid #f8fafc; padding-bottom: 5px; }
-        .chat-name-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+
+        .profile-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .chat-info { flex: 1; border-bottom: 1px solid #f8fafc; padding-bottom: 5px; min-width: 0; }
+        .chat-name-row { display: flex; justify-content: space-between; margin-bottom: 4px; gap: 8px; }
         .chat-name { font-size: 14px; font-weight: bold; color: #1e293b; }
-        .chat-time { font-size: 11px; color: #94a3b8; }
+        .chat-time { font-size: 11px; color: #94a3b8; white-space: nowrap; }
         .chat-last-msg { font-size: 13px; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
+        .empty-state { padding: 40px; text-align: center; color: #94a3b8; }
     </style>
 </head>
 <body>
     <div class="header-top">
         <h2>채팅</h2>
         <div class="header-actions">
-            <button onclick="openNewChatModal()" style="background:none; border:none; cursor:pointer;">
+            <button id="newChatButton" type="button" style="background:none; border:none; cursor:pointer;">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="2">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
                     <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -81,15 +139,15 @@
         </div>
     </div>
 
-    <div id="requestBar" class="request-bar" onclick="viewRequests()">
+    <div id="requestBar" class="request-bar">
         <span class="request-text">메시지 요청</span>
-        <span id="requestCount" class="request-count">1</span>
+        <span id="requestCount" class="request-count">0</span>
     </div>
 
     <div class="filter-tabs">
-        <button class="tab-btn active" onclick="filterChat('ALL')">전체</button>
-        <button class="tab-btn" onclick="filterChat('PRIVATE')">개인채팅</button>
-        <button class="tab-btn" onclick="filterChat('TEAM')">팀채팅</button>
+        <button class="tab-btn active" data-filter="ALL">전체</button>
+        <button class="tab-btn" data-filter="PRIVATE">개인채팅</button>
+        <button class="tab-btn" data-filter="TEAM">팀채팅</button>
     </div>
 
     <div id="newChatModal" class="modal">
@@ -97,196 +155,239 @@
             <h3 style="font-size: 16px;">새 채팅 시작</h3>
             <input type="email" id="targetEmail" placeholder="상대방 이메일 주소 입력">
             <div class="modal-btns">
-                <button class="btn-cancel" onclick="closeModal()">취소</button>
-                <button class="btn-start" onclick="startNewChat()">시작</button>
+                <button class="btn-cancel" id="cancelNewChat" type="button">취소</button>
+                <button class="btn-start" id="submitNewChat" type="button">시작</button>
             </div>
         </div>
     </div>
 
-    
-    <div class="chat-list" id="chatList">
-        </div>
+    <div id="chatList" class="chat-list"></div>
 
-        <div id="requestModal" class="modal">
-    <div class="modal-content" style="text-align: center;">
-        <div class="profile-img" id="modalProfile" style="margin: 0 auto 15px; width: 60px; height: 60px; font-size: 20px;">?</div>
-        <h3 id="modalName" style="font-size: 16px; margin-bottom: 8px;">모르는 사람</h3>
-        <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">메시지 요청을 수락하시겠습니까?</p>
-        
-        <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
-            <button class="btn-start" onclick="acceptRequest()" style="width: 100%; padding: 12px;">수락</button>
-            <button class="btn-cancel" onclick="closeRequestModal()" style="width: 100%; padding: 12px; background: none; color: #ef4444;">거절</button>
+    <div id="requestModal" class="modal">
+        <div class="modal-content" style="text-align: center;">
+            <div class="profile-img" id="modalProfile" style="margin: 0 auto 15px; width: 60px; height: 60px; font-size: 20px;">?</div>
+            <h3 id="modalName" style="font-size: 16px; margin-bottom: 8px;">메시지 요청</h3>
+            <p id="modalRequestMessage" style="font-size: 13px; color: #64748b; margin-bottom: 20px;">메시지 요청을 수락하시겠습니까?</p>
+
+            <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                <button class="btn-start" id="acceptRequestButton" type="button" style="width: 100%; padding: 12px;">수락</button>
+                <button class="btn-cancel" id="declineRequestButton" type="button" style="width: 100%; padding: 12px; background: none; color: #ef4444;">거절</button>
+            </div>
         </div>
     </div>
-</div>
 
     <script>
-        // 임시 데이터 (나중에 API로 받아올 부분)
-        const chatRooms = [
-            { id: 1, type: 'PRIVATE', name: '윤낭', lastMsg: '오늘 작업 어때요?', time: '오후 9:30', profile: 'YN' },
-            { id: 2, type: 'TEAM', name: 'SimuUser 프로젝트팀', lastMsg: '버그 수정 완료했습니다.', time: '오후 8:45', profile: 'Team' },
-            { id: 3, type: 'PRIVATE', name: '보원!', lastMsg: '넵 확인했습니다.', time: '오후 6:20', profile: 'BW' },
-            { id: 4, type: 'TEAM', name: '기획부 회의실', lastMsg: '회의 시간 공지드립니다.', time: '어제', profile: 'Plan' }
-        ];
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        let chatRooms = [];
+        let messageRequests = [];
+        let currentFilter = 'ALL';
+        let selectedRequest = null;
+
+        function csrfHeaders() {
+            return csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {};
+        }
+
+        function formatRelativeTime(value) {
+            if (!value) return '방금 전';
+            const diffMs = Date.now() - new Date(value).getTime();
+            const minutes = Math.max(0, Math.floor(diffMs / 60000));
+            if (minutes < 1) return '방금 전';
+            if (minutes < 60) return `${minutes}분 전`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours}시간 전`;
+            return `${Math.floor(hours / 24)}일 전`;
+        }
+
+        function profileHtml(profileImage, name) {
+            if (profileImage) {
+                return `<div class="profile-img"><img src="${profileImage}" alt=""></div>`;
+            }
+            return `<div class="profile-img">${(name || '?').trim().slice(0, 2).toUpperCase()}</div>`;
+        }
 
         function renderList(filterType = 'ALL') {
             const listContainer = document.getElementById('chatList');
-            listContainer.innerHTML = '';
-
-            const filtered = filterType === 'ALL' 
-                ? chatRooms 
+            const filtered = filterType === 'ALL'
+                ? chatRooms
                 : chatRooms.filter(room => room.type === filterType);
 
-            filtered.forEach(room => {
-                const item = document.createElement('div');
-                item.className = 'chat-item';
-                item.onclick = () => openDetail(room.id, room.name);
-                item.innerHTML = `
-                    <div class="profile-img">${room.profile}</div>
+            if (!filtered.length) {
+                listContainer.innerHTML = '<p class="empty-state">채팅방이 없습니다.</p>';
+                return;
+            }
+
+            listContainer.innerHTML = filtered.map(room => `
+                <div class="chat-item" data-room-id="${room.id}">
+                    ${profileHtml(room.profileImage, room.name)}
                     <div class="chat-info">
                         <div class="chat-name-row">
                             <span class="chat-name">${room.name}</span>
-                            <span class="chat-time">${room.time}</span>
+                            <span class="chat-time">${formatRelativeTime(room.lastMessageAt)}</span>
                         </div>
-                        <div class="chat-last-msg">${room.lastMsg}</div>
+                        <div class="chat-last-msg">${room.lastMessage || '대화를 시작해보세요.'}</div>
                     </div>
-                `;
-                listContainer.appendChild(item);
-            });
-        }
-
-        function filterChat(type) {
-            // 버튼 스타일 변경
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if(btn.innerText === (type === 'ALL' ? '전체' : type === 'PRIVATE' ? '개인채팅' : '팀채팅')) {
-                    btn.classList.add('active');
-                }
-            });
-            renderList(type);
-        }
-
-        // 목록창 내 스크립트 수정
-        function openDetail(roomId, roomName) {
-            const width = 360;
-            const height = 550;
-            // 화면 중앙 계산
-            const left = (window.screen.width / 2) - (width / 2);
-            const top = (window.screen.height / 2) - (height / 2);
-            
-            const windowFeatures = `width=${width},height=${height},left=${left},top=${top},resizable=yes`;
-            
-            // 새 창(탭)으로 열기. 방마다 고유한 이름을 주면(room_1, room_2) 방별로 창이 따로 뜹니다.
-            window.open(`/chat/room/${roomId}?name=${encodeURIComponent(roomName)}`, `room_${roomId}`, windowFeatures);
-        }
-
-        // 초기 로드
-        renderList();
-
-        // 1. 메시지 요청 데이터 (예시)
-        let messageRequests = [
-            { id: 99, name: '모르는 사람', lastMsg: '안녕하세요, 프로젝트 문의 드립니다.', time: '오후 2:10', profile: '?' }
-        ];
-
-        // 2. 모달 제어 함수
-        function openNewChatModal() {
-            document.getElementById('newChatModal').style.display = 'flex';
-        }
-
-        function closeModal() {
-            document.getElementById('newChatModal').style.display = 'none';
-            document.getElementById('targetEmail').value = '';
-        }
-
-        // 3. 이메일로 채팅 시작
-        function startNewChat() {
-            const email = document.getElementById('targetEmail').value.trim();
-            if (!email) return alert('이메일을 입력해주세요.');
-
-            closeModal();
-            // 새 창 열기 (ID는 임시로 부여)
-            openDetail(Date.now(), email);
-        }
-
-        let selectedRequest = null; // 현재 선택된 요청 보관용
-
-// 4. 메시지 요청 보기 함수 내의 item.onclick 수정
-function viewRequests() {
-    const listContainer = document.getElementById('chatList');
-    listContainer.innerHTML = '<div style="padding:15px; font-weight:bold; color:#64748b;">메시지 요청</div>';
-    
-    messageRequests.forEach(req => {
-        const item = document.createElement('div');
-        item.className = 'chat-item';
-        
-        // 🔥 기존 confirm 대신 커스텀 모달 열기
-        item.onclick = () => openRequestModal(req);
-        
-        item.innerHTML = `
-            <div class="profile-img" style="background:#f1f5f9;">${req.profile}</div>
-            <div class="chat-info">
-                <div class="chat-name-row">
-                    <span class="chat-name">${req.name}</span>
-                    <span class="chat-time">${req.time}</span>
                 </div>
-                <div class="chat-last-msg">${req.lastMsg}</div>
-            </div>
-        `;
-        listContainer.appendChild(item);
-    });
-}
+            `).join('');
 
-// 모달 제어 함수들
-function openRequestModal(req) {
-    selectedRequest = req;
-    document.getElementById('modalName').innerText = req.name;
-    document.getElementById('modalProfile').innerText = req.profile;
-    document.getElementById('requestModal').style.display = 'flex';
-}
+            listContainer.querySelectorAll('[data-room-id]').forEach(item => {
+                item.addEventListener('click', () => openDetail(item.dataset.roomId));
+            });
+        }
 
-function closeRequestModal() {
-    document.getElementById('requestModal').style.display = 'none';
-    selectedRequest = null;
-}
-
-// 수락 버튼 클릭 시
-function acceptRequest() {
-    if (selectedRequest) {
-        // 1. 요청 목록에서 제거
-        messageRequests = messageRequests.filter(r => r.id !== selectedRequest.id);
-        
-        // 2. 실제 채팅 목록(chatRooms)에 추가
-        chatRooms.unshift({
-            id: selectedRequest.id,
-            type: 'PRIVATE',
-            name: selectedRequest.name,
-            lastMsg: selectedRequest.lastMsg,
-            time: '방금',
-            profile: selectedRequest.profile
-        });
-
-        alert(`${selectedRequest.name}님의 요청을 수락했습니다.`); //이거 나중에 없애야함 ㅎ
-        closeRequestModal();
-        initRequestBadge(); // 상단 배지 업데이트
-        renderList();       // 전체 목록 다시 그리기
-    }
-}
-
-        // 5. 초기 배지 상태 설정
-        function initRequestBadge() {
+        function updateRequestBadge() {
             const bar = document.getElementById('requestBar');
             const count = document.getElementById('requestCount');
-            
+
             if (messageRequests.length > 0) {
                 bar.classList.add('active');
-                count.innerText = messageRequests.length;
+                count.textContent = messageRequests.length;
             } else {
                 bar.classList.remove('active');
             }
         }
 
-        // 페이지 로드 시 실행
-        initRequestBadge();
+        function openDetail(roomId) {
+            const width = 360;
+            const height = 550;
+            const left = (window.screen.width / 2) - (width / 2);
+            const top = (window.screen.height / 2) - (height / 2);
+            const windowFeatures = `width=${width},height=${height},left=${left},top=${top},resizable=yes`;
+            window.open(`/chat/room/${roomId}`, `room_${roomId}`, windowFeatures);
+        }
+
+        async function loadRooms() {
+            const response = await fetch('/api/chat/rooms');
+            chatRooms = response.ok ? await response.json() : [];
+            renderList(currentFilter);
+        }
+
+        async function loadRequests() {
+            const response = await fetch('/api/chat/requests');
+            messageRequests = response.ok ? await response.json() : [];
+            updateRequestBadge();
+        }
+
+        async function refreshData() {
+            await Promise.all([loadRooms(), loadRequests()]);
+        }
+
+        function openNewChatModal() {
+            document.getElementById('newChatModal').classList.add('active');
+        }
+
+        function closeNewChatModal() {
+            document.getElementById('newChatModal').classList.remove('active');
+            document.getElementById('targetEmail').value = '';
+        }
+
+        async function startNewChat() {
+            const email = document.getElementById('targetEmail').value.trim();
+            if (!email) {
+                alert('이메일을 입력해주세요.');
+                return;
+            }
+
+            const response = await fetch('/api/chat/private-requests', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...csrfHeaders()
+                },
+                body: JSON.stringify({ email })
+            });
+
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                alert(result.message || '채팅 요청에 실패했습니다.');
+                return;
+            }
+
+            closeNewChatModal();
+            await refreshData();
+        }
+
+        function openRequestModal(req) {
+            selectedRequest = req;
+            document.getElementById('modalName').innerText = req.requesterName;
+            document.getElementById('modalProfile').innerHTML = req.requesterProfileImage
+                ? `<img src="${req.requesterProfileImage}" alt="" style="width:100%; height:100%; object-fit:cover;">`
+                : (req.requesterName || '?').trim().slice(0, 2).toUpperCase();
+            document.getElementById('modalRequestMessage').innerText = req.message || '메시지 요청을 수락하시겠습니까?';
+            document.getElementById('requestModal').classList.add('active');
+        }
+
+        function closeRequestModal() {
+            document.getElementById('requestModal').classList.remove('active');
+            selectedRequest = null;
+        }
+
+        async function acceptRequest() {
+            if (!selectedRequest) return;
+
+            const response = await fetch(`/api/chat/requests/${selectedRequest.roomId}/accept`, {
+                method: 'POST',
+                headers: csrfHeaders()
+            });
+
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                alert(result.message || '요청 수락에 실패했습니다.');
+                return;
+            }
+
+            closeRequestModal();
+            await refreshData();
+            openDetail(result.id);
+        }
+
+        async function declineRequest() {
+            if (!selectedRequest) return;
+
+            const response = await fetch(`/api/chat/requests/${selectedRequest.roomId}/decline`, {
+                method: 'POST',
+                headers: csrfHeaders()
+            });
+
+            if (!response.ok) {
+                const result = await response.json().catch(() => ({}));
+                alert(result.message || '요청 거절에 실패했습니다.');
+                return;
+            }
+
+            closeRequestModal();
+            await refreshData();
+        }
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(button => button.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                renderList(currentFilter);
+            });
+        });
+
+        document.getElementById('newChatButton').addEventListener('click', openNewChatModal);
+        document.getElementById('cancelNewChat').addEventListener('click', closeNewChatModal);
+        document.getElementById('submitNewChat').addEventListener('click', startNewChat);
+        document.getElementById('requestBar').addEventListener('click', () => {
+            if (messageRequests.length > 0) {
+                openRequestModal(messageRequests[0]);
+            }
+        });
+        document.getElementById('acceptRequestButton').addEventListener('click', acceptRequest);
+        document.getElementById('declineRequestButton').addEventListener('click', declineRequest);
+
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', event => {
+                if (event.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+
+        refreshData();
     </script>
 </body>
 </html>

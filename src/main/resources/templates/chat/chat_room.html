@@ -1,110 +1,139 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:if="${_csrf}" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:if="${_csrf}" th:content="${_csrf.headerName}">
     <title>SimuUser Chat</title>
-
     <link rel="stylesheet" th:href="@{/css/chat/chat_room.css}">
 </head>
 <body>
-    <div class="chat-header">채팅창 - 윤낭</div>
+    <div class="chat-header" id="chatTitle">채팅</div>
     <div class="chat-messages" id="chatMsgs">
-        <div class="msg">안녕하세요!</div>
-        <div class="msg my-msg">사진처럼 팝업으로 띄웠어요!</div>
+        <div class="msg">메시지를 불러오는 중입니다.</div>
     </div>
     <div class="chat-input-area">
-    <div class="plus-menu-container">
-        <button id="plusBtn" class="plus-btn">+</button>
-        <div id="plusMenu" class="plus-menu">
-            <button onclick="document.getElementById('imageInput').click()">📷 사진 전송</button>
-            <button onclick="document.getElementById('fileInput').click()">📁 파일 업로드</button>
+        <div class="plus-menu-container">
+            <button id="plusBtn" class="plus-btn" type="button">+</button>
+            <div id="plusMenu" class="plus-menu">
+                <button type="button" disabled>사진 전송</button>
+                <button type="button" disabled>파일 업로드</button>
+            </div>
         </div>
-    </div> <input type="text" id="msgInput" placeholder="메시지를 입력하세요..." onkeypress="if(event.keyCode==13) send()">
-    <button id="sendBtn" onclick="send()">전송</button>
-</div>
-    
-        <input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="handleImageUpload(this)">
-        <input type="file" id="fileInput" style="display:none;" onchange="handleFileUpload(this)">
+        <input type="text" id="msgInput" placeholder="메시지를 입력해주세요.." onkeypress="if(event.keyCode==13) send()">
+        <button id="sendBtn" onclick="send()" type="button">전송</button>
+    </div>
 
     <script>
-        // + 버튼 메뉴 토글
-const plusBtn = document.getElementById('plusBtn');
-const plusMenu = document.getElementById('plusMenu');
+        const roomId = window.location.pathname.split('/').pop();
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        let pollHandle = null;
 
-plusBtn.onclick = (e) => {
-    e.stopPropagation();
-    plusMenu.classList.toggle('active');
-};
-
-// 외부 클릭 시 메뉴 닫기
-document.addEventListener('click', () => {
-    plusMenu.classList.remove('active');
-});
-
-// 공통 메시지 추가 함수
-function appendMessage(content, isMyMsg = true, isElement = false) {
-    const chatMsgs = document.getElementById('chatMsgs');
-    const div = document.createElement('div');
-    div.className = isMyMsg ? 'msg my-msg' : 'msg';
-    
-    if (isElement) {
-        div.appendChild(content);
-    } else {
-        div.textContent = content;
-    }
-    
-    chatMsgs.appendChild(div);
-    chatMsgs.scrollTop = chatMsgs.scrollHeight;
-    plusMenu.classList.remove('active');
-}
-
-// 텍스트 전송
-function send() {
-    const input = document.getElementById('msgInput');
-    if(!input.value.trim()) return;
-    appendMessage(input.value);
-    input.value = '';
-}
-
-// 사진 업로드 처리
-function handleImageUpload(input) {
-    const file = input.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const img = document.createElement('img');
-            img.src = e.target.result;
-            img.className = 'chat-img';
-            appendMessage(img, true, true);
-        };
-        reader.readAsDataURL(file);
-    }
-    input.value = ''; // 같은 파일 다시 선택 가능하도록 초기화
-}
-
-// 파일 업로드 처리
-function handleFileUpload(input) {
-    const file = input.files[0];
-    if (file) {
-        const fileLink = document.createElement('a');
-        fileLink.className = 'file-msg';
-        fileLink.href = "#"; // 실제 서버 연동 시 파일 다운로드 경로
-        fileLink.innerHTML = `📁 <span>${file.name}</span>`;
-        appendMessage(fileLink, true, true);
-    }
-    input.value = '';
-}
-
-        function send() {
-            const input = document.getElementById('msgInput');
-            if(!input.value) return;
-            const div = document.createElement('div');
-            div.className = 'msg my-msg';
-            div.textContent = input.value;
-            document.getElementById('chatMsgs').appendChild(div);
-            input.value = '';
-            window.scrollTo(0, document.body.scrollHeight);
+        function csrfHeaders() {
+            return csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {};
         }
+
+        const plusBtn = document.getElementById('plusBtn');
+        const plusMenu = document.getElementById('plusMenu');
+
+        plusBtn.onclick = (e) => {
+            e.stopPropagation();
+            plusMenu.classList.toggle('active');
+        };
+
+        document.addEventListener('click', () => {
+            plusMenu.classList.remove('active');
+        });
+
+        function formatTime(value) {
+            if (!value) return '';
+            return new Date(value).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function appendMessage(message) {
+            const chatMsgs = document.getElementById('chatMsgs');
+            const div = document.createElement('div');
+            div.className = message.mine ? 'msg my-msg' : 'msg';
+            div.textContent = message.content;
+            div.title = formatTime(message.createdAt);
+            chatMsgs.appendChild(div);
+            chatMsgs.scrollTop = chatMsgs.scrollHeight;
+        }
+
+        async function loadRoom() {
+            const response = await fetch(`/api/chat/rooms/${roomId}`);
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                document.getElementById('chatTitle').textContent = '채팅';
+                document.getElementById('chatMsgs').innerHTML = `<div class="msg">${result.message || '채팅방을 불러올 수 없습니다.'}</div>`;
+                document.getElementById('msgInput').disabled = true;
+                document.getElementById('sendBtn').disabled = true;
+                return false;
+            }
+
+            document.getElementById('chatTitle').textContent = result.name;
+            return true;
+        }
+
+        async function loadMessages() {
+            const response = await fetch(`/api/chat/rooms/${roomId}/messages`);
+            const result = await response.json().catch(() => []);
+
+            if (!response.ok) {
+                document.getElementById('chatMsgs').innerHTML = `<div class="msg">${result.message || '메시지를 불러올 수 없습니다.'}</div>`;
+                return;
+            }
+
+            const chatMsgs = document.getElementById('chatMsgs');
+            chatMsgs.innerHTML = '';
+
+            if (!result.length) {
+                chatMsgs.innerHTML = '<div class="msg">대화를 시작해보세요.</div>';
+                return;
+            }
+
+            result.forEach(appendMessage);
+            chatMsgs.scrollTop = chatMsgs.scrollHeight;
+        }
+
+        async function send() {
+            const input = document.getElementById('msgInput');
+            const content = input.value.trim();
+            if (!content) return;
+
+            const response = await fetch(`/api/chat/rooms/${roomId}/messages`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...csrfHeaders()
+                },
+                body: JSON.stringify({ content })
+            });
+
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                alert(result.message || '메시지 전송에 실패했습니다.');
+                return;
+            }
+
+            input.value = '';
+            await loadMessages();
+        }
+
+        (async function init() {
+            const canOpen = await loadRoom();
+            if (!canOpen) return;
+
+            await loadMessages();
+            pollHandle = window.setInterval(loadMessages, 5000);
+            window.addEventListener('beforeunload', () => {
+                if (pollHandle) {
+                    window.clearInterval(pollHandle);
+                }
+            });
+        })();
     </script>
 </body>
 </html>

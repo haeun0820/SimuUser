@@ -17,6 +17,7 @@ public class ProjectResponse {
     private final String createdAt;
     private final String currentUserRole;
     private final boolean owner;
+    private final boolean hasChatRoom;
 
     public ProjectResponse(Project project, List<ProjectMember> members, Long currentUserId) {
         this.id = project.getId();
@@ -39,6 +40,7 @@ public class ProjectResponse {
         this.currentUserRole = currentMember == null ? null : currentMember.getRole();
         this.owner = currentUserId != null
                 && (project.getOwner().getId().equals(currentUserId) || "OWNER".equals(this.currentUserRole));
+        this.hasChatRoom = "collab".equalsIgnoreCase(project.getType());
     }
 
     public Long getId() {
@@ -79,5 +81,9 @@ public class ProjectResponse {
 
     public boolean isOwner() {
         return owner;
+    }
+
+    public boolean isHasChatRoom() {
+        return hasChatRoom;
     }
 }
