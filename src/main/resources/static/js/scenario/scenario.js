@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 4. 시나리오 카드 생성 로직
-    /* ── 수정된 시나리오 카드 생성 로직 ── */
+/* ── 수정된 시나리오 카드 생성 로직 ── */
 function renderScenarioInputs() {
     const count = parseInt(scenarioCountSelect.value);
     scenarioContainer.innerHTML = '';
@@ -137,53 +137,48 @@ function renderScenarioInputs() {
         const card = document.createElement('div');
         card.className = 'scenario-card';
         card.innerHTML = `
-            <div class="form-group">
-                <label class="form-label">시나리오 ${i} 이름</label>
-                <input type="text" class="form-input" placeholder="예: A안 - 사용자 중심 UI">
+            <div class="scenario-card-header">
+                <span class="scenario-num">시나리오 ${i}</span>
+                <input type="text" class="form-input-title" placeholder="시나리오 제목 입력">
             </div>
 
-            <div class="form-group">
-                <label class="form-label">기획안 파일 업로드</label>
-                <div class="file-upload-wrapper">
-                    <input type="file" id="file-scenario-${i}" class="file-input" style="display:none;" 
-                           onchange="handleFileSelect(this, ${i})">
-                    <button type="button" class="btn-file-trigger" onclick="document.getElementById('file-scenario-${i}').click()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
-                        </svg>
-                        파일 선택 (PDF, DOCX)
-                    </button>
-                    <div id="file-name-${i}" class="file-name-display">선택된 파일 없음</div>
-                </div>
+            <div class="input-mode-selector">
+                <label class="mode-radio">
+                    <input type="radio" name="mode-${i}" value="upload" onchange="toggleInputMode(${i}, 'upload')" checked>
+                    <span class="radio-btn">내 PC 업로드</span>
+                </label>
+                <label class="mode-radio">
+                    <input type="radio" name="mode-${i}" value="project" onchange="toggleInputMode(${i}, 'project')">
+                    <span class="radio-btn">프로젝트 문서</span>
+                </label>
+                <label class="mode-radio">
+                    <input type="radio" name="mode-${i}" value="direct" onchange="toggleInputMode(${i}, 'direct')">
+                    <span class="radio-btn">직접 입력</span>
+                </label>
             </div>
 
-            <div class="divider"><span>또는 직접 입력</span></div>
-
-            <div class="form-group">
-                <label class="form-label">시나리오 설명</label>
-                <textarea class="form-input" rows="3" placeholder="파일이 없거나 추가 설명이 필요하면 입력하세요.."></textarea>
+            <div id="mode-content-${i}" class="mode-content-area">
+                ${getUploadUI(i)}
             </div>
-            <div class="form-group feature-list">
-                <label class="form-label">주요 기능</label>
-                <div class="feature-item">
-                    <input type="text" class="form-input" placeholder="기능 입력">
-                </div>
-            </div>
-            <div class="add-feature-btn" onclick="addFeatureInput(this)">기능 추가 +</div>
         `;
         scenarioContainer.appendChild(card);
     }
 }
 
-/* ── 파일 선택 시 이름 표시 함수 ── */
-window.handleFileSelect = function(input, index) {
+/* ── 파일 선택 시 이름 표시 함수 (이름 통일) ── */
+window.updateFileName = function(index) {
+    const fileInput = document.getElementById(`file-${index}`);
     const fileNameDisplay = document.getElementById(`file-name-${index}`);
-    if (input.files && input.files[0]) {
-        fileNameDisplay.textContent = input.files[0].name;
-        fileNameDisplay.style.color = "#2563eb"; // 선택 시 강조
+    
+    if (fileInput.files && fileInput.files[0]) {
+        const fileName = fileInput.files[0].name;
+        fileNameDisplay.textContent = fileName;
+        fileNameDisplay.style.color = "#2563eb"; // 파란색으로 포인트
+        fileNameDisplay.style.fontWeight = "600";
     } else {
-        fileNameDisplay.textContent = "선택된 파일 없음";
-        fileNameDisplay.style.color = "#9ca3af";
+        fileNameDisplay.textContent = "파일을 드래그하거나 클릭하여 업로드하세요";
+        fileNameDisplay.style.color = "#6b7280";
+        fileNameDisplay.style.fontWeight = "400";
     }
 };
 
@@ -216,3 +211,130 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+/* ── 모드 전환 함수 ── */
+window.toggleInputMode = function(index, mode) {
+    const container = document.getElementById(`mode-content-${index}`);
+    if (mode === 'upload') {
+        container.innerHTML = getUploadUI(index);
+    } else if (mode === 'project') {
+        container.innerHTML = getProjectTreeUI(index);
+    } else if (mode === 'direct') {
+        container.innerHTML = getDirectInputUI(index);
+    }
+};
+
+/* ── 다중 파일 상태 관리를 위한 전역 객체 ── */
+window.scenarioFiles = {}; // 예: { 1: [File, File], 2: [File] }
+
+/* ── 모드 전환 1. 내 PC 다중 업로드 UI ── */
+function getUploadUI(i) {
+    // 해당 시나리오의 파일 배열 초기화
+    if (!window.scenarioFiles[i]) window.scenarioFiles[i] = [];
+
+    return `
+        <div class="upload-limit-warning">* 파일은 최대 5개까지 업로드 가능합니다.</div>
+
+        <div class="file-drop-zone" id="drop-zone-${i}">
+            <input type="file" id="file-${i}" multiple style="display:none" onchange="handleMultiFiles(event, ${i})">
+            
+            <div class="file-drop-content" onclick="document.getElementById('file-${i}').click()">
+                <p style="margin: 0 0 4px 0; color: #4b5563; font-weight: 500;">파일을 드래그하거나 클릭하여 업로드하세요</p>
+                <span class="file-info" style="color: #9ca3af; font-size: 12px;">PDF, DOCX (각 20MB 제한)</span>
+            </div>
+        </div>
+
+        <div class="file-list-container" id="file-list-${i}"></div>
+    `;
+}
+
+/* ── 다중 파일 추가 로직 ── */
+window.handleMultiFiles = function(event, index) {
+    const newFiles = Array.from(event.target.files);
+    let currentFiles = window.scenarioFiles[index] || [];
+    
+    // 최대 5개 개수 제한 체크
+    if (currentFiles.length + newFiles.length > 5) {
+        alert("하나의 시나리오당 파일은 최대 5개까지만 업로드할 수 있습니다.");
+        // 5개가 넘어가면 들어갈 수 있는 만큼만 자르기
+        const allowedCount = 5 - currentFiles.length;
+        currentFiles = currentFiles.concat(newFiles.slice(0, allowedCount));
+    } else {
+        currentFiles = currentFiles.concat(newFiles);
+    }
+    
+    window.scenarioFiles[index] = currentFiles;
+    event.target.value = ""; // 입력창 초기화 (같은 파일 반복 선택 가능하도록)
+    
+    renderFileList(index);
+};
+
+/* ── 특정 파일 삭제 로직 ── */
+window.removeMultiFile = function(scenarioIndex, fileIndex) {
+    window.scenarioFiles[scenarioIndex].splice(fileIndex, 1);
+    renderFileList(scenarioIndex);
+};
+
+/* ── 파일 리스트 UI 그리기 ── */
+window.renderFileList = function(index) {
+    const listContainer = document.getElementById(`file-list-${index}`);
+    const dropZone = document.getElementById(`drop-zone-${index}`);
+    const files = window.scenarioFiles[index] || [];
+    
+    // 파일이 하나라도 있으면 드롭존 테두리 파란색 유지
+    if (files.length > 0) {
+        dropZone.classList.add("has-file");
+    } else {
+        dropZone.classList.remove("has-file");
+    }
+    
+    // 파일 목록 HTML 생성 (파란색 문서 아이콘 + 파일명 + X 버튼)
+    listContainer.innerHTML = files.map((file, fIndex) => `
+        <div class="file-list-item">
+            <div class="file-item-info">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
+                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                    <polyline points="13 2 13 9 20 9"></polyline>
+                </svg>
+                <span class="file-item-name">${file.name}</span>
+            </div>
+            <button type="button" class="btn-item-remove" onclick="removeMultiFile(${index}, ${fIndex})" title="삭제">✕</button>
+        </div>
+    `).join('');
+};
+
+/* 2. 프로젝트 문서 트리뷰 UI */
+function getProjectTreeUI(i) {
+    // 실제 데이터는 allProjects 등에서 가져와서 매핑 가능
+    return `
+        <div class="project-tree-view">
+            <p class="tree-guide">분석할 문서를 선택하세요</p>
+            <details open>
+                <summary>📁 기획안 탭</summary>
+                <ul>
+                    <li><label><input type="checkbox"> 📄 기능명세서_v1.pdf</label></li>
+                    <li><label><input type="checkbox"> 📄 와이어프레임_최종.docx</label></li>
+                </ul>
+            </details>
+            <details>
+                <summary>📁 리서치 탭</summary>
+                <ul>
+                    <li><label><input type="checkbox"> 📄 경쟁사분석.pdf</label></li>
+                </ul>
+            </details>
+        </div>`;
+}
+
+/* ── 모드 전환 3. 직접 입력 UI (소제목 추가) ── */
+function getDirectInputUI(i) {
+    return `
+        <div class="form-group">
+            <label class="form-label">기획 설명</label>
+            <textarea class="form-input" rows="4" placeholder="기획 내용을 상세히 입력해주세요.."></textarea>
+        </div>
+        <div class="form-group feature-list" id="feature-list-${i}">
+            <label class="form-label">기획 기능</label>
+            <div class="feature-item"><input type="text" class="form-input" placeholder="주요 기능 입력"></div>
+        </div>
+        <div class="add-feature-btn" onclick="addFeatureInput(this)">+ 기능 추가</div>`;
+}
