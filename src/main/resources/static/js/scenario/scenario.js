@@ -127,34 +127,65 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 4. 시나리오 카드 생성 로직
-    function renderScenarioInputs() {
-        const count = parseInt(scenarioCountSelect.value);
-        scenarioContainer.innerHTML = '';
-        scenarioContainer.className = `scenario-grid grid-${count}`;
+    /* ── 수정된 시나리오 카드 생성 로직 ── */
+function renderScenarioInputs() {
+    const count = parseInt(scenarioCountSelect.value);
+    scenarioContainer.innerHTML = '';
+    scenarioContainer.className = `scenario-grid grid-${count}`;
 
-        for (let i = 1; i <= count; i++) {
-            const card = document.createElement('div');
-            card.className = 'scenario-card';
-            card.innerHTML = `
-                <div class="form-group">
-                    <label class="form-label">시나리오 이름</label>
-                    <input type="text" class="form-input" placeholder="시나리오 이름을 적어주세요..">
+    for (let i = 1; i <= count; i++) {
+        const card = document.createElement('div');
+        card.className = 'scenario-card';
+        card.innerHTML = `
+            <div class="form-group">
+                <label class="form-label">시나리오 ${i} 이름</label>
+                <input type="text" class="form-input" placeholder="예: A안 - 사용자 중심 UI">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">기획안 파일 업로드</label>
+                <div class="file-upload-wrapper">
+                    <input type="file" id="file-scenario-${i}" class="file-input" style="display:none;" 
+                           onchange="handleFileSelect(this, ${i})">
+                    <button type="button" class="btn-file-trigger" onclick="document.getElementById('file-scenario-${i}').click()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                        </svg>
+                        파일 선택 (PDF, DOCX)
+                    </button>
+                    <div id="file-name-${i}" class="file-name-display">선택된 파일 없음</div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">시나리오 설명</label>
-                    <textarea class="form-input" rows="4" placeholder="핵심 접근 방식을 설명 해주세요.."></textarea>
+            </div>
+
+            <div class="divider"><span>또는 직접 입력</span></div>
+
+            <div class="form-group">
+                <label class="form-label">시나리오 설명</label>
+                <textarea class="form-input" rows="3" placeholder="파일이 없거나 추가 설명이 필요하면 입력하세요.."></textarea>
+            </div>
+            <div class="form-group feature-list">
+                <label class="form-label">주요 기능</label>
+                <div class="feature-item">
+                    <input type="text" class="form-input" placeholder="기능 입력">
                 </div>
-                <div class="form-group feature-list">
-                    <label class="form-label">주요 기능</label>
-                    <div class="feature-item">
-                        <input type="text" class="form-input" placeholder="기능을 입력하세요">
-                    </div>
-                </div>
-                <div class="add-feature-btn" onclick="addFeatureInput(this)" style="cursor:pointer; color:#2563eb;">기능 추가 +</div>
-            `;
-            scenarioContainer.appendChild(card);
-        }
+            </div>
+            <div class="add-feature-btn" onclick="addFeatureInput(this)">기능 추가 +</div>
+        `;
+        scenarioContainer.appendChild(card);
     }
+}
+
+/* ── 파일 선택 시 이름 표시 함수 ── */
+window.handleFileSelect = function(input, index) {
+    const fileNameDisplay = document.getElementById(`file-name-${index}`);
+    if (input.files && input.files[0]) {
+        fileNameDisplay.textContent = input.files[0].name;
+        fileNameDisplay.style.color = "#2563eb"; // 선택 시 강조
+    } else {
+        fileNameDisplay.textContent = "선택된 파일 없음";
+        fileNameDisplay.style.color = "#9ca3af";
+    }
+};
 
     scenarioCountSelect.addEventListener('change', renderScenarioInputs);
     renderScenarioInputs();
