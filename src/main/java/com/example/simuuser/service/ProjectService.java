@@ -70,14 +70,19 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public List<ProjectResponse> findMine(Authentication authentication) {
         AppUser owner = getCurrentUser(authentication);
-        Map<Long, Project> visibleProjects = new LinkedHashMap<>();
-
-        projectMemberRepository.findByUserAndStatusOrderByCreatedAtDesc(owner, "ACCEPTED")
-                .forEach(member -> visibleProjects.putIfAbsent(member.getProject().getId(), member.getProject()));
+        Map<Long, Project> visibleProjects = getVisibleProjectsMap(owner);
 
         return new ArrayList<>(visibleProjects.values()).stream()
                 .sorted(Comparator.comparing(Project::getCreatedAt).reversed())
                 .map(project -> new ProjectResponse(project, projectMemberRepository.findByProjectOrderByCreatedAtAsc(project), owner.getId()))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Project> findVisibleProjects(Authentication authentication) {
+        AppUser owner = getCurrentUser(authentication);
+        return new ArrayList<>(getVisibleProjectsMap(owner).values()).stream()
+                .sorted(Comparator.comparing(Project::getCreatedAt).reversed())
                 .toList();
     }
 
@@ -377,5 +382,12 @@ public class ProjectService {
         }
 
         return new ArrayList<>(normalizedInvites.values());
+    }
+
+    private Map<Long, Project> getVisibleProjectsMap(AppUser owner) {
+        Map<Long, Project> visibleProjects = new LinkedHashMap<>();
+        projectMemberRepository.findByUserAndStatusOrderByCreatedAtDesc(owner, "ACCEPTED")
+                .forEach(member -> visibleProjects.putIfAbsent(member.getProject().getId(), member.getProject()));
+        return visibleProjects;
     }
 }

@@ -9,4 +9,6 @@ import java.util.List;
 public interface CostAnalysisResultRepository extends JpaRepository<CostAnalysisResult, Long> {
 
     List<CostAnalysisResult> findByProjectOrderByCreatedAtDesc(Project project);
+
+    List<CostAnalysisResult> findByProjectIn(List<Project> projects);
 }

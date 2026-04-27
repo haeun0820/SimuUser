@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,158 +9,144 @@
 </head>
 <body>
 <div class="app-layout">
-
-  <!-- ① 사이드바 -->
   <div id="sidebar-root" data-active="dashboard"></div>
 
-  <!-- ② 메인 영역 -->
   <div class="main-area">
+    <header th:replace="header/header :: header('대시보드')"></header>
 
-    <!-- 상단 헤더 / 브레드크럼 -->
-    <header th:replace="header/header :: header('대시보드')"></header> 
-
-    <!-- 페이지 콘텐츠 -->
     <main class="page-content">
-        <div class="dashboard-header">
-            <div class="dashboard-title">대시보드</div>
-            <div class="dashboard-sub">아이디어 검증 현황을 한눈에 확인하세요</div>
-        </div>
+      <div class="dashboard-header">
+        <div class="dashboard-title">대시보드</div>
+        <div class="dashboard-sub">아이디어 검증 현황을 한눈에 확인하세요</div>
+      </div>
 
-        <!-- 상단 -->
-        <div class="dashboard-top">
-        <!-- 도넛: 좌측 레전드 + 우측 차트 -->
-          <div class="dashboard-card dashboard-chart">
-            <p class="chart-title">분석 도구 사용 비율</p>
-            <div class="donut-layout">
-              <div class="donut-legend">
-                <span><i style="background:#2563eb"></i>AI 시뮬레이션</span>
-                <span><i style="background:#f59e0b"></i>자동 문서화</span>
-                <span><i style="background:#f97316"></i>기획 피드백 AI</span>
-                <span><i style="background:#ec4899"></i>비용&수익성 분석</span>
-                <span><i style="background:#8b5cf6"></i>시장&경쟁 분석</span>
-                <span><i style="background:#ef4444"></i>시나리오 비교</span>
-              </div>
-              <div class="donut-canvas-wrap">
-                <canvas id="donutChart"></canvas>
-              </div>
+      <div class="dashboard-top">
+        <div class="dashboard-card dashboard-chart">
+          <p class="chart-title">분석 도구 사용 비율</p>
+          <div class="donut-layout">
+            <div class="donut-legend">
+              <span><i style="background:#2563eb"></i>AI 시뮬레이션</span>
+              <span><i style="background:#f59e0b"></i>자동 문서화</span>
+              <span><i style="background:#f97316"></i>기획 피드백 AI</span>
+              <span><i style="background:#ec4899"></i>비용&수익성 분석</span>
+              <span><i style="background:#8b5cf6"></i>시장&경쟁 분석</span>
+              <span><i style="background:#ef4444"></i>시나리오 비교</span>
             </div>
-          </div>
-
-          <!-- 라인 차트 -->
-          <div class="dashboard-card dashboard-chart">
-            <div class="chart-header">
-              <p class="chart-title">분석 횟수</p>
-              <div class="period-btns">
-                <button class="period-btn active" data-p="year">년</button>
-                <button class="period-btn" data-p="month">월</button>
-                <button class="period-btn" data-p="week">주</button>
-              </div>
-            </div>
-            <div class="line-canvas-wrap">
-              <canvas id="lineChart"></canvas>
+            <div class="donut-canvas-wrap">
+              <canvas id="donutChart"></canvas>
             </div>
           </div>
         </div>
 
-        <!-- 중단 -->
-<div class="dashboard-middle">
-    <div class="activity-section">
-        <div class="section-header">
+        <div class="dashboard-card dashboard-chart">
+          <div class="chart-header">
+            <p class="chart-title">분석 횟수</p>
+            <div class="period-btns">
+              <button class="period-btn active" data-p="year">년</button>
+              <button class="period-btn" data-p="month">월</button>
+              <button class="period-btn" data-p="week">주</button>
+            </div>
+          </div>
+          <div class="line-canvas-wrap">
+            <canvas id="lineChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard-middle">
+        <div class="activity-section">
+          <div class="section-header">
             <h3 class="section-main-title">활동</h3>
-            <span class="section-sub-title">나의 총 활동</span>
-        </div>
-        
-        <div class="dashboard-stats">
+            <span class="section-sub-title">현재 총 활동</span>
+          </div>
+
+          <div class="dashboard-stats">
             <div class="stat-card">
-                <div class="stat-header">
-                    <span class="stat-title">전체 프로젝트</span>
-                    <span class="stat-icon-bg blue"><i class="icon-folder">📁</i></span>
-                </div>
-                <div class="stat-value"><p class="page-subtitle" id="projectCountLabel">0</p></div>
+              <div class="stat-header">
+                <span class="stat-title">전체 프로젝트</span>
+                <span class="stat-icon-bg blue"><i class="icon-folder">📂</i></span>
+              </div>
+              <div class="stat-value"><p class="page-subtitle" id="projectCountLabel">0</p></div>
             </div>
 
             <div class="stat-card">
-                <div class="stat-header">
-                    <span class="stat-title">총 분석 수</span>
-                    <span class="stat-icon-bg purple"><i class="icon-chart">📈</i></span>
-                </div>
-                <div class="stat-value">101</div> 
-                <!-- 분석수는 아직 js 연동 안함 -->
+              <div class="stat-header">
+                <span class="stat-title">총 분석 수</span>
+                <span class="stat-icon-bg purple"><i class="icon-chart">📈</i></span>
+              </div>
+              <div class="stat-value" id="totalAnalysisCountLabel">0</div>
             </div>
+          </div>
         </div>
-    </div>
 
-    <div class="projects-section">
-        <div class="section-header project-header">
+        <div class="projects-section">
+          <div class="section-header project-header">
             <div class="title-group">
-                <h3 class="section-main-title">프로젝트</h3>
-                <span class="section-sub-title">최신 업데이트 순</span>
+              <h3 class="section-main-title">프로젝트</h3>
+              <span class="section-sub-title">최신 업데이트 순</span>
             </div>
             <a href="/project/all" class="view-all">전체보기 ></a>
-        </div>
+          </div>
 
-        <div class="dashboard-projects" id="projectsGrid">
-            <!-- js -->
+          <div class="dashboard-projects" id="projectsGrid"></div>
         </div>
-    </div>
-</div>
+      </div>
 
-        <!-- 분석 도구 -->
-        <div class="dashboard-tools">
+      <div class="dashboard-tools">
         <h3>분석 도구</h3>
         <div class="tool-grid">
-            <div class="tool-card">
-              <img src="/images/simulation.png" alt="">
-              <p class="tool-card-title">AI 가상 유저 시뮬레이션</p>
-              <p class="tool-card-commend">유저 반응 예측</p>
-            </div>
-            <div class="tool-card">
-              <img src="/images/market.png" alt="">
-              <p class="tool-card-title">시장 & 경쟁 분석</p>
-              <p class="tool-card-commend">경쟁 & TAM/SAM/SOM</p>
-            </div>
-            <div class="tool-card">
-              <img src="/images/money.png" alt="">
-              <p class="tool-card-title">비용 & 수익성 분석</p>
-              <p class="tool-card-commend">BEP 계산</p>
-            </div>
-            <div class="tool-card">
-              <img src="/images/feedback.png" alt="">
-              <p class="tool-card-title">기획 피드백 AI</p>
-              <p class="tool-card-commend">논리 구조 평가</p>
-            </div>
-            <div class="tool-card">
-              <img src="/images/scenario.png" alt="">
-              <p class="tool-card-title">시나리오 비교</p>
-              <p class="tool-card-commend">A안 VS B안</p>
-            </div>
-            <div class="tool-card">
-              <img src="/images/document.png" alt="">
-              <p class="tool-card-title">자동 문서화</p>
-              <p class="tool-card-commend">보고서 생성</p>
-            </div>
+          <div class="tool-card">
+            <img src="/images/simulation.png" alt="">
+            <p class="tool-card-title">AI 가상유저 시뮬레이션</p>
+            <p class="tool-card-commend">유저 반응 예측</p>
+          </div>
+          <div class="tool-card">
+            <img src="/images/market.png" alt="">
+            <p class="tool-card-title">시장 & 경쟁 분석</p>
+            <p class="tool-card-commend">경쟁사 & TAM/SAM/SOM</p>
+          </div>
+          <div class="tool-card">
+            <img src="/images/money.png" alt="">
+            <p class="tool-card-title">비용 & 수익성 분석</p>
+            <p class="tool-card-commend">BEP 계산</p>
+          </div>
+          <div class="tool-card">
+            <img src="/images/feedback.png" alt="">
+            <p class="tool-card-title">기획 피드백 AI</p>
+            <p class="tool-card-commend">논리 구조 평가</p>
+          </div>
+          <div class="tool-card">
+            <img src="/images/scenario.png" alt="">
+            <p class="tool-card-title">시나리오 비교</p>
+            <p class="tool-card-commend">A안 VS B안</p>
+          </div>
+          <div class="tool-card">
+            <img src="/images/document.png" alt="">
+            <p class="tool-card-title">자동 문서화</p>
+            <p class="tool-card-commend">보고서 생성</p>
+          </div>
         </div>
-        </div>
+      </div>
     </main>
   </div>
 </div>
 
-<!-- 사이드바 컴포넌트 -->
 <script th:src="@{/js/sidebar.js}"></script>
 <script th:src="@{/js/header.js}"></script>
-<!-- 차트 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 
 <script>
-  /* ============================================================
-     all-projects.js (inline)
-     ============================================================ */
-
   let allProjects = [];
   let currentFilter = 'all';
   let searchQuery = '';
-  
-  /* ── 시간 포맷 ── */
+  let dashboardAnalytics = {
+    totalAnalysisCount: 0,
+    toolUsage: [],
+    year: { labels: [], data: [] },
+    month: { labels: [], data: [] },
+    week: { labels: [], data: [] }
+  };
+
   function timeAgo(isoStr) {
     const diff = Date.now() - new Date(isoStr).getTime();
     const min = Math.floor(diff / 60000);
@@ -172,67 +158,68 @@
     return `${day}일 전`;
   }
 
-  /* ── 카드 렌더 ── */
-  /* ── 카드 렌더 (리스트 스타일로 수정) ── */
-  function renderCard(p) {
-    const isCollab = p.type === 'collab';
-    
-    // 배지 설정
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function renderCard(project) {
+    const isCollab = project.type === 'collab';
     const badge = isCollab
       ? '<span class="badge badge-collab">협업</span>'
       : '<span class="badge badge-personal">개인</span>';
 
-    // 팀원 정보 (With. ...)
-    const memberInfo = isCollab && p.members && p.members.length > 0
-      ? `<span class="meta-team">With. ${p.members.map(escHtml).join(', ')}</span>`
+    const memberInfo = isCollab && project.members && project.members.length > 0
+      ? `<span class="meta-team">With. ${project.members.map(escHtml).join(', ')}</span>`
       : '';
 
-    // 우리가 만든 project-item 구조 그대로 반환
     return `
-      <div class="project-item" onclick="location.href='/project/detail/${p.id}'" style="cursor:pointer;">
+      <div class="project-item" onclick="location.href='/project/detail/${project.id}'" style="cursor:pointer;">
         <div class="project-content">
           <div class="project-title-row">
-            <span class="project-title">${escHtml(p.title)}</span>
+            <span class="project-title">${escHtml(project.title)}</span>
             ${badge}
           </div>
-          <div class="project-desc">${p.description ? escHtml(p.description) : '프로젝트 설명이 없습니다.'}</div>
+          <div class="project-desc">${project.description ? escHtml(project.description) : '프로젝트 설명이 없습니다.'}</div>
           <div class="project-meta">
-            <span class="meta-time">🕒 ${timeAgo(p.createdAt)}</span>
+            <span class="meta-time">⏱ ${timeAgo(project.createdAt)}</span>
             ${memberInfo}
           </div>
         </div>
-        <button class="project-arrow" onclick="goToDetail('${p.id}')">→</button>
+        <button class="project-arrow" onclick="location.href='/project/detail/${project.id}'">></button>
       </div>`;
   }
 
-  /* ── 렌더링 ── */
   function renderProjects() {
     const grid = document.getElementById('projectsGrid');
 
-    let filtered = allProjects.filter(p => {
+    const filtered = allProjects.filter(project => {
       const matchFilter =
         currentFilter === 'all' ||
-        (currentFilter === 'collab' && p.type === 'collab') ||
-        (currentFilter === 'personal' && p.type === 'personal');
+        (currentFilter === 'collab' && project.type === 'collab') ||
+        (currentFilter === 'personal' && project.type === 'personal');
 
       const q = searchQuery.toLowerCase();
       const matchSearch = !q ||
-        p.title.toLowerCase().includes(q) ||
-        (p.description || '').toLowerCase().includes(q);
+        project.title.toLowerCase().includes(q) ||
+        (project.description || '').toLowerCase().includes(q);
 
       return matchFilter && matchSearch;
     });
 
     document.getElementById('projectCountLabel').textContent = `${filtered.length}`;
 
-    if (filtered.length === 0) {
+    if (!filtered.length) {
       grid.innerHTML = `
         <div class="empty-state">
           <svg width="44" height="44" viewBox="0 0 24 24" fill="none">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           <p>${searchQuery ? '검색 결과가 없습니다.' : '프로젝트가 없습니다.'}</p>
-          <span>${searchQuery ? '다른 검색어를 입력해보세요.' : '새 프로젝트를 만들어 시작해보세요!'}</span>
+          <span>${searchQuery ? '다른 검색어를 입력해보세요.' : '새 프로젝트를 만들어 시작해보세요.'}</span>
         </div>`;
       return;
     }
@@ -240,62 +227,65 @@
     grid.innerHTML = filtered.map(renderCard).join('');
   }
 
-  /* ── 초기 로드 ── */
-  async function init() {
+  async function initProjects() {
     try {
       const response = await fetch('/api/projects');
       if (!response.ok) {
-        throw new Error('프로젝트 목록을 불러오지 못했습니다.');
+        throw new Error('project load failed');
       }
       allProjects = await response.json();
     } catch (error) {
       allProjects = [];
       console.error(error);
     }
+
     renderProjects();
   }
 
-  init();
-
-  /* ── 유틸 ── */
-  function escHtml(str) {
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  // ── 도넛 차트 ──
-  const donutData = [
-    { label: 'AI 시뮬레이션', value: 35, color: '#2563eb' },
-    { label: '자동 문서화',   value: 22, color: '#f59e0b' },
-    { label: '기획 피드백 AI', value: 18, color: '#f97316' },
-    { label: '비용&수익성',   value: 12, color: '#ec4899' },
-    { label: '시장&경쟁',     value:  8, color: '#8b5cf6' },
-    { label: '시나리오 비교', value:  5, color: '#ef4444' },
-  ];
-
-  new Chart(document.getElementById('donutChart'), {
+  const donutChart = new Chart(document.getElementById('donutChart'), {
     type: 'doughnut',
     data: {
-      labels: donutData.map(d => d.label),
-      datasets: [{ data: donutData.map(d => d.value), backgroundColor: donutData.map(d => d.color), borderWidth: 0, hoverOffset: 6 }]
+      labels: [],
+      datasets: [{
+        data: [],
+        backgroundColor: [],
+        borderWidth: 0,
+        hoverOffset: 6
+      }]
     },
-    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false } } }
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: {
+        legend: { display: false }
+      }
+    }
   });
 
-  // ── 라인 차트 ──
-  const periodData = {
-    year:  { labels: ['2020','2021','2022','2023','2024'], data: [32,38,55,42,40] },
-    month: { labels: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'], data: [8,10,14,12,18,15,20,17,13,16,19,14] },
-    week:  { labels: ['1주','2주','3주','4주'], data: [12,18,15,22] }
-  };
   const lineChart = new Chart(document.getElementById('lineChart'), {
     type: 'line',
     data: {
-      labels: periodData.year.labels,
-      datasets: [{ data: periodData.year.data, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.07)', borderWidth: 2, pointRadius: 4, pointBackgroundColor: '#2563eb', pointBorderColor: '#fff', pointBorderWidth: 2, tension: 0.35, fill: true }]
+      labels: [],
+      datasets: [{
+        data: [],
+        borderColor: '#2563eb',
+        backgroundColor: 'rgba(37,99,235,0.07)',
+        borderWidth: 2,
+        pointRadius: 4,
+        pointBackgroundColor: '#2563eb',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        tension: 0.35,
+        fill: true
+      }]
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
       scales: {
         x: {
           grid: { color: 'rgba(0,0,0,0.05)' },
@@ -309,88 +299,68 @@
       }
     }
   });
+
+  function fallbackDashboardAnalytics() {
+    return {
+      totalAnalysisCount: 0,
+      toolUsage: [
+        { label: 'AI 시뮬레이션', value: 0, color: '#2563eb' },
+        { label: '자동 문서화', value: 0, color: '#f59e0b' },
+        { label: '기획 피드백 AI', value: 0, color: '#f97316' },
+        { label: '비용&수익성 분석', value: 0, color: '#ec4899' },
+        { label: '시장&경쟁 분석', value: 0, color: '#8b5cf6' },
+        { label: '시나리오 비교', value: 0, color: '#ef4444' }
+      ],
+      year: { labels: [], data: [] },
+      month: { labels: [], data: [] },
+      week: { labels: [], data: [] }
+    };
+  }
+
+  function applyLineSeries(period) {
+    const series = dashboardAnalytics[period] || { labels: [], data: [] };
+    lineChart.data.labels = series.labels;
+    lineChart.data.datasets[0].data = series.data;
+    lineChart.update();
+  }
+
+  function applyDashboardAnalytics(data) {
+    dashboardAnalytics = data || fallbackDashboardAnalytics();
+    document.getElementById('totalAnalysisCountLabel').textContent = `${dashboardAnalytics.totalAnalysisCount ?? 0}`;
+
+    const usage = dashboardAnalytics.toolUsage || [];
+    donutChart.data.labels = usage.map(item => item.label);
+    donutChart.data.datasets[0].data = usage.map(item => item.value);
+    donutChart.data.datasets[0].backgroundColor = usage.map(item => item.color);
+    donutChart.update();
+
+    applyLineSeries('year');
+  }
+
+  async function initDashboardAnalytics() {
+    try {
+      const response = await fetch('/api/dashboard/analytics');
+      if (!response.ok) {
+        throw new Error('dashboard analytics load failed');
+      }
+
+      applyDashboardAnalytics(await response.json());
+    } catch (error) {
+      console.error(error);
+      applyDashboardAnalytics(fallbackDashboardAnalytics());
+    }
+  }
+
   document.querySelectorAll('.period-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.period-btn').forEach(button => button.classList.remove('active'));
       btn.classList.add('active');
-      const p = btn.dataset.p;
-      lineChart.data.labels = periodData[p].labels;
-      lineChart.data.datasets[0].data = periodData[p].data;
-      lineChart.update();
+      applyLineSeries(btn.dataset.p);
     });
   });
 
-  /** * [SimuUser 전역 함수]
-     * 대시보드 본문에 직접 배치하여 어떤 환경에서도 즉시 호출 가능하게 함
-     */
-
-    // 1. 친구 아이템 클릭 시 '채팅/삭제' 메뉴 토글
-    function toggleFriendAction(element) {
-        const items = document.querySelectorAll('.friend-item');
-        // 클릭한 것 외에 열려있는 메뉴는 모두 닫음
-        items.forEach(item => {
-            if (item !== element) item.classList.remove('active');
-        });
-        // 현재 클릭한 것 토글
-        element.classList.toggle('active');
-    }
-
-    // 2. 채팅 시작 (드로어 닫고 채팅창 로직 실행)
-    function startChat(name) {
-        const drawer = document.getElementById('friendDrawer');
-        const overlay = document.getElementById('drawerOverlay');
-        
-        if(drawer) drawer.classList.remove('active');
-        if(overlay) overlay.classList.remove('active');
-
-        console.log(name + "님과 채팅 연결 시도...");
-        // 추후 구현할 채팅창 오픈 함수 호출
-        if (typeof openChatWindow === 'function') {
-            openChatWindow(name);
-        } else {
-            alert(name + "님과의 채팅창을 우측 하단에 띄웁니다.");
-        }
-    }
-
-    // 3. 친구 삭제
-    function deleteFriend(name) {
-        if (confirm(name + "님을 친구 목록에서 삭제하시겠습니까?")) {
-            // event.stopPropagation() 덕분에 부모 클릭 이벤트가 안 퍼지지만 
-            // 안전하게 요소를 직접 찾아 삭제
-            const item = event.target.closest('.friend-item');
-            if(item) item.remove();
-            alert(name + "님이 목록에서 삭제되었습니다.");
-        }
-    }
-
-    /** * [드로어 열기/닫기 이벤트 리스너]
-     */
-    document.addEventListener('DOMContentLoaded', () => {
-        const friendBtn = document.getElementById('friendBtn');
-        const friendDrawer = document.getElementById('friendDrawer');
-        const closeBtn = document.getElementById('closeFriendDrawer');
-        const overlay = document.getElementById('drawerOverlay');
-
-        // 친구 버튼 클릭 시 드로어 열기
-        if (friendBtn) {
-            friendBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                friendDrawer.classList.add('active');
-                overlay.classList.add('active');
-            });
-        }
-
-        // 닫기 버튼 또는 배경 클릭 시 닫기
-        [closeBtn, overlay].forEach(el => {
-            if(el) {
-                el.addEventListener('click', () => {
-                    friendDrawer.classList.remove('active');
-                    overlay.classList.remove('active');
-                });
-            }
-        });
-    });
+  initProjects();
+  initDashboardAnalytics();
 </script>
-
 </body>
 </html>

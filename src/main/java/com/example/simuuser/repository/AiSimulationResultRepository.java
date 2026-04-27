@@ -9,4 +9,6 @@ import java.util.List;
 public interface AiSimulationResultRepository extends JpaRepository<AiSimulationResult, Long> {
 
     List<AiSimulationResult> findByProjectOrderByCreatedAtDesc(Project project);
+
+    List<AiSimulationResult> findByProjectIn(List<Project> projects);
 }

@@ -9,4 +9,6 @@ import java.util.List;
 public interface MarketAnalysisResultRepository extends JpaRepository<MarketAnalysisResult, Long> {
 
     List<MarketAnalysisResult> findByProjectOrderByCreatedAtDesc(Project project);
+
+    List<MarketAnalysisResult> findByProjectIn(List<Project> projects);
 }
