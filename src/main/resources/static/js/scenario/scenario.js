@@ -1,5 +1,20 @@
-/* ── 시간 포맷 & 유틸리티 ── */
-function timeAgo(isoStr) {
+(function () {
+  let allProjects = [];
+  let currentFilter = 'all';
+  let selectedProjectId = null;
+  const initialProjectId = new URLSearchParams(window.location.search).get('projectId');
+  const draftKey = 'scenarioDraft';
+
+  function escHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function timeAgo(isoStr) {
     if (!isoStr) return '';
     const diff = Date.now() - new Date(isoStr).getTime();
     const min = Math.floor(diff / 60000);
@@ -8,333 +23,342 @@ function timeAgo(isoStr) {
     const hr = Math.floor(min / 60);
     if (hr < 24) return `${hr}시간 전`;
     return `${Math.floor(hr / 24)}일 전`;
-}
+  }
 
-function escHtml(str) {
-    return String(str)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-/* ── 상태 ── */
-let allProjects = [];
-let currentFilter = 'all';
-let selectedProjectId = null;
-
-/* ── 프로젝트 로드 ── */
-function loadProjects() {
+  async function fetchProjects() {
     try {
-        // localStorage에서 데이터를 가져옵니다. 
-        // 데이터가 없다면 빈 배열을 기본값으로 사용합니다.
-        allProjects = JSON.parse(localStorage.getItem('simu_projects') || '[]');
-    } catch (e) {
-        allProjects = [];
+      const response = await fetch('/api/projects');
+      allProjects = response.ok ? await response.json() : [];
+    } catch (error) {
+      console.error(error);
+      allProjects = [];
     }
-}
 
-/* ── 프로젝트 렌더링 ── */
-function renderProjects() {
+    restoreDraft();
+    if (!selectedProjectId && initialProjectId && allProjects.some(project => String(project.id) === String(initialProjectId))) {
+      selectedProjectId = String(initialProjectId);
+    }
+
+    renderProjects();
+    updateSelection();
+  }
+
+  function renderProjects() {
     const container = document.getElementById('projectListScroll');
     if (!container) return;
 
-    const filtered = allProjects.filter(p => {
-        if (currentFilter === 'all') return true;
-        return p.type === currentFilter;
-    });
-
-    if (filtered.length === 0) {
-        container.innerHTML = `<div class="no-projects" style="padding:20px; text-align:center; color:#9ca3af;">등록된 프로젝트가 없습니다.</div>`;
-        return;
+    const filtered = allProjects.filter(project => currentFilter === 'all' || project.type === currentFilter);
+    if (!filtered.length) {
+      container.innerHTML = '<div class="no-projects" style="padding:20px;text-align:center;color:#9ca3af;">선택 가능한 프로젝트가 없습니다.</div>';
+      return;
     }
 
-    container.innerHTML = filtered.map(p => {
-        const isCollab = p.type === 'collab';
-        const badge = isCollab
-            ? '<span class="type-badge badge-collab">협업</span>'
-            : '<span class="type-badge badge-personal">개인</span>';
-        const memberHtml = isCollab && p.members && p.members.length
-            ? `<span class="members" style="margin-left:10px; font-size:12px; color:#6b7280;">With. ${p.members.map(escHtml).join(', ')}</span>`
-            : '';
-
-        return `
-            <div class="project-item${selectedProjectId === p.id ? ' selected' : ''}" 
-                 data-id="${p.id}" style="margin-bottom:10px; cursor:pointer;">
-                <div class="project-item-head">
-                    <span class="project-item-title" style="font-weight:700;">${escHtml(p.title)}</span>
-                    ${badge}
-                </div>
-                <p class="project-item-desc" style="font-size:13px; color:#6b7280; margin:4px 0;">${escHtml(p.description || '')}</p>
-                <div class="project-item-footer" style="font-size:12px; color:#9ca3af;">
-                    <span>${timeAgo(p.createdAt)}</span>
-                    ${memberHtml}
-                </div>
-            </div>`;
-    }).join('');
-
-    // 클릭 이벤트 바인딩
-    container.querySelectorAll('.project-item').forEach(el => {
-        el.addEventListener('click', () => {
-            const id = Number(el.dataset.id);
-            // 이미 선택된 걸 다시 누르면 선택 취소, 아니면 새로 선택
-            selectedProjectId = (selectedProjectId === id) ? null : id;
-            updateSelection();
-        });
-    });
-}
-
-function updateSelection() {
-    document.querySelectorAll('.project-item').forEach(el => {
-        el.classList.toggle('selected', Number(el.dataset.id) === selectedProjectId);
-    });
-}
-
-/* ── 기능 입력창 추가 (전역) ── */
-window.addFeatureInput = function(btn) {
-    const featureList = btn.closest('.scenario-card').querySelector('.feature-list');
-    if (featureList) {
-        const newItem = document.createElement('div');
-        newItem.className = 'feature-item';
-        newItem.style.marginTop = '8px';
-        newItem.innerHTML = `<input type="text" class="form-input" placeholder="새 기능 입력">`;
-        featureList.appendChild(newItem);
-    }
-};
-
-/* ── 메인 실행부 ── */
-document.addEventListener('DOMContentLoaded', function() {
-    const scenarioCountSelect = document.getElementById('scenarioCount');
-    const scenarioContainer = document.getElementById('scenarioContainer');
-    const btnNewProject = document.getElementById('btnNewProject');
-
-    // 1. 초기 데이터 로드 및 렌더링 (이 부분이 누락되었었습니다)
-    loadProjects();
-    renderProjects();
-
-    // 2. 필터 이벤트 등록
-    document.querySelectorAll('input[name="projectFilter"]').forEach(radio => {
-        radio.addEventListener('change', () => {
-            currentFilter = radio.value;
-            renderProjects();
-        });
-    });
-
-    // 3. 새로 만들기 버튼 클릭 이벤트
-    if (btnNewProject) {
-        btnNewProject.addEventListener('click', function() {
-            const url = this.getAttribute('data-href');
-            if (url) location.href = url;
-        });
-    }
-
-    // 4. 시나리오 카드 생성 로직
-/* ── 수정된 시나리오 카드 생성 로직 ── */
-function renderScenarioInputs() {
-    const count = parseInt(scenarioCountSelect.value);
-    scenarioContainer.innerHTML = '';
-    scenarioContainer.className = `scenario-grid grid-${count}`;
-
-    for (let i = 1; i <= count; i++) {
-        const card = document.createElement('div');
-        card.className = 'scenario-card';
-        card.innerHTML = `
-            <div class="scenario-card-header">
-                <span class="scenario-num">시나리오 ${i}</span>
-                <input type="text" class="form-input-title" placeholder="시나리오 제목 입력">
-            </div>
-
-            <div class="input-mode-selector">
-                <label class="mode-radio">
-                    <input type="radio" name="mode-${i}" value="upload" onchange="toggleInputMode(${i}, 'upload')" checked>
-                    <span class="radio-btn">내 PC 업로드</span>
-                </label>
-                <label class="mode-radio">
-                    <input type="radio" name="mode-${i}" value="project" onchange="toggleInputMode(${i}, 'project')">
-                    <span class="radio-btn">프로젝트 문서</span>
-                </label>
-                <label class="mode-radio">
-                    <input type="radio" name="mode-${i}" value="direct" onchange="toggleInputMode(${i}, 'direct')">
-                    <span class="radio-btn">직접 입력</span>
-                </label>
-            </div>
-
-            <div id="mode-content-${i}" class="mode-content-area">
-                ${getUploadUI(i)}
-            </div>
-        `;
-        scenarioContainer.appendChild(card);
-    }
-}
-
-/* ── 파일 선택 시 이름 표시 함수 (이름 통일) ── */
-window.updateFileName = function(index) {
-    const fileInput = document.getElementById(`file-${index}`);
-    const fileNameDisplay = document.getElementById(`file-name-${index}`);
-    
-    if (fileInput.files && fileInput.files[0]) {
-        const fileName = fileInput.files[0].name;
-        fileNameDisplay.textContent = fileName;
-        fileNameDisplay.style.color = "#2563eb"; // 파란색으로 포인트
-        fileNameDisplay.style.fontWeight = "600";
-    } else {
-        fileNameDisplay.textContent = "파일을 드래그하거나 클릭하여 업로드하세요";
-        fileNameDisplay.style.color = "#6b7280";
-        fileNameDisplay.style.fontWeight = "400";
-    }
-};
-
-    scenarioCountSelect.addEventListener('change', renderScenarioInputs);
-    renderScenarioInputs();
-});
-
-
-document.addEventListener('DOMContentLoaded', function() {
-    const btnRunCompare = document.getElementById('btnRunCompare');
-    const compareForm = document.getElementById('compareForm');
-
-    compareForm.addEventListener('submit', function(e) {
-        // 필요한 로직 처리 후 전송
-        console.log("분석 시작...");
-    });
-
-    if (btnRunCompare) {
-        btnRunCompare.addEventListener('click', function() {
-            // 1. 선택된 프로젝트가 있는지, 시나리오 제목이 입력됐는지 등 유효성 검사를 추가할 수 있습니다.
-            const compareTitle = document.getElementById('compareTitle').value;
-            if (!compareTitle) {
-                alert('비교 제목을 입력해주세요!');
-                return;
-            }
-
-            // 2. 결과 페이지로 이동 (Thymeleaf 경로 또는 실제 파일 경로)
-            // 예: /scenario/result 경로로 이동하고 싶을 때
-            location.href = '/scenario/result'; 
-        });
-    }
-});
-
-/* ── 모드 전환 함수 ── */
-window.toggleInputMode = function(index, mode) {
-    const container = document.getElementById(`mode-content-${index}`);
-    if (mode === 'upload') {
-        container.innerHTML = getUploadUI(index);
-    } else if (mode === 'project') {
-        container.innerHTML = getProjectTreeUI(index);
-    } else if (mode === 'direct') {
-        container.innerHTML = getDirectInputUI(index);
-    }
-};
-
-/* ── 다중 파일 상태 관리를 위한 전역 객체 ── */
-window.scenarioFiles = {}; // 예: { 1: [File, File], 2: [File] }
-
-/* ── 모드 전환 1. 내 PC 다중 업로드 UI ── */
-function getUploadUI(i) {
-    // 해당 시나리오의 파일 배열 초기화
-    if (!window.scenarioFiles[i]) window.scenarioFiles[i] = [];
-
-    return `
-        <div class="upload-limit-warning">* 파일은 최대 5개까지 업로드 가능합니다.</div>
-
-        <div class="file-drop-zone" id="drop-zone-${i}">
-            <input type="file" id="file-${i}" multiple style="display:none" onchange="handleMultiFiles(event, ${i})">
-            
-            <div class="file-drop-content" onclick="document.getElementById('file-${i}').click()">
-                <p style="margin: 0 0 4px 0; color: #4b5563; font-weight: 500;">파일을 드래그하거나 클릭하여 업로드하세요</p>
-                <span class="file-info" style="color: #9ca3af; font-size: 12px;">PDF, DOCX (각 20MB 제한)</span>
-            </div>
+    container.innerHTML = filtered.map(project => `
+      <div class="project-item ${String(project.id) === String(selectedProjectId) ? 'selected' : ''}" data-id="${project.id}" style="margin-bottom:10px;cursor:pointer;">
+        <div class="project-item-head">
+          <span class="project-item-title" style="font-weight:700;">${escHtml(project.title)}</span>
+          <span class="type-badge badge-${project.type === 'collab' ? 'collab' : 'personal'}">${project.type === 'collab' ? '협업' : '개인'}</span>
         </div>
+        <p class="project-item-desc" style="font-size:13px;color:#6b7280;margin:4px 0;">${escHtml(project.description || '')}</p>
+        <div class="project-item-footer" style="font-size:12px;color:#9ca3af;">${timeAgo(project.createdAt)}</div>
+      </div>
+    `).join('');
 
-        <div class="file-list-container" id="file-list-${i}"></div>
-    `;
-}
+    container.querySelectorAll('.project-item').forEach(item => {
+      item.addEventListener('click', () => {
+        selectedProjectId = item.dataset.id;
+        updateSelection();
+      });
+    });
+  }
 
-/* ── 다중 파일 추가 로직 ── */
-window.handleMultiFiles = function(event, index) {
-    const newFiles = Array.from(event.target.files);
-    let currentFiles = window.scenarioFiles[index] || [];
-    
-    // 최대 5개 개수 제한 체크
-    if (currentFiles.length + newFiles.length > 5) {
-        alert("하나의 시나리오당 파일은 최대 5개까지만 업로드할 수 있습니다.");
-        // 5개가 넘어가면 들어갈 수 있는 만큼만 자르기
-        const allowedCount = 5 - currentFiles.length;
-        currentFiles = currentFiles.concat(newFiles.slice(0, allowedCount));
-    } else {
-        currentFiles = currentFiles.concat(newFiles);
+  function updateSelection() {
+    document.querySelectorAll('.project-item').forEach(item => {
+      item.classList.toggle('selected', String(item.dataset.id) === String(selectedProjectId));
+    });
+
+    const projectInput = document.getElementById('selectedProjectIdInput');
+    if (projectInput) {
+      projectInput.value = selectedProjectId || '';
     }
-    
-    window.scenarioFiles[index] = currentFiles;
-    event.target.value = ""; // 입력창 초기화 (같은 파일 반복 선택 가능하도록)
-    
-    renderFileList(index);
-};
+  }
 
-/* ── 특정 파일 삭제 로직 ── */
-window.removeMultiFile = function(scenarioIndex, fileIndex) {
+  function restoreDraft() {
+    const raw = sessionStorage.getItem(draftKey);
+    if (!raw) return;
+
+    try {
+      const draft = JSON.parse(raw);
+      selectedProjectId = draft.projectId ? String(draft.projectId) : selectedProjectId;
+      const titleInput = document.getElementById('compareTitle');
+      if (titleInput) {
+        titleInput.value = draft.compareTitle || '';
+      }
+      if (draft.scenarioCount) {
+        const countSelect = document.getElementById('scenarioCount');
+        if (countSelect) {
+          countSelect.value = String(draft.scenarioCount);
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      sessionStorage.removeItem(draftKey);
+    }
+  }
+
+  function getUploadUI(index) {
+    if (!window.scenarioFiles[index]) window.scenarioFiles[index] = [];
+    return `
+      <div class="upload-limit-warning">파일은 최대 5개까지 업로드할 수 있습니다.</div>
+      <div class="file-drop-zone" id="drop-zone-${index}">
+        <input type="file" id="file-${index}" multiple style="display:none" onchange="handleMultiFiles(event, ${index})">
+        <div class="file-drop-content" onclick="document.getElementById('file-${index}').click()">
+          <p style="margin:0 0 4px 0;color:#4b5563;font-weight:500;">파일을 클릭해서 선택하세요</p>
+          <span class="file-info" style="color:#9ca3af;font-size:12px;">PDF, DOCX 이름만 비교 정보에 반영됩니다.</span>
+        </div>
+      </div>
+      <div class="file-list-container" id="file-list-${index}"></div>
+    `;
+  }
+
+  function getProjectTreeUI(index) {
+    return `
+      <div class="project-tree-view">
+        <p class="tree-guide">프로젝트 문서 모드는 현재 프로젝트 설명 기반 비교로 처리됩니다.</p>
+        <div class="form-group">
+          <label class="form-label">비교 메모</label>
+          <textarea class="form-input scenario-summary" rows="4" placeholder="이 시나리오에서 강조할 포인트를 적어주세요."></textarea>
+        </div>
+      </div>
+    `;
+  }
+
+  function getDirectInputUI() {
+    return `
+      <div class="form-group">
+        <label class="form-label">기획 설명</label>
+        <textarea class="form-input scenario-summary" rows="4" placeholder="기획 내용을 간단히 입력해주세요."></textarea>
+      </div>
+      <div class="form-group feature-list">
+        <label class="form-label">핵심 기능</label>
+        <div class="feature-item"><input type="text" class="form-input scenario-feature" placeholder="주요 기능 입력"></div>
+      </div>
+      <div class="add-feature-btn" onclick="addFeatureInput(this)">+ 기능 추가</div>
+    `;
+  }
+
+  function renderScenarioInputs() {
+    const scenarioCount = Number(document.getElementById('scenarioCount')?.value || 2);
+    const container = document.getElementById('scenarioContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+    container.className = `scenario-grid grid-${scenarioCount}`;
+    window.scenarioFiles = {};
+
+    for (let index = 1; index <= scenarioCount; index++) {
+      const card = document.createElement('div');
+      card.className = 'scenario-card';
+      card.dataset.index = String(index);
+      card.innerHTML = `
+        <div class="scenario-card-header">
+          <span class="scenario-num">시나리오 ${index}</span>
+          <input type="text" class="form-input-title scenario-title" placeholder="시나리오 제목 입력">
+        </div>
+        <div class="input-mode-selector">
+          <label class="mode-radio">
+            <input type="radio" name="mode-${index}" value="upload" onchange="toggleInputMode(${index}, 'upload')" checked>
+            <span class="radio-btn">파일 업로드</span>
+          </label>
+          <label class="mode-radio">
+            <input type="radio" name="mode-${index}" value="project" onchange="toggleInputMode(${index}, 'project')">
+            <span class="radio-btn">프로젝트 문서</span>
+          </label>
+          <label class="mode-radio">
+            <input type="radio" name="mode-${index}" value="direct" onchange="toggleInputMode(${index}, 'direct')">
+            <span class="radio-btn">직접 입력</span>
+          </label>
+        </div>
+        <div id="mode-content-${index}" class="mode-content-area">${getUploadUI(index)}</div>
+      `;
+      container.appendChild(card);
+    }
+
+    restoreScenarioDraftData();
+  }
+
+  function restoreScenarioDraftData() {
+    const raw = sessionStorage.getItem(`${draftKey}:scenarios`);
+    if (!raw) return;
+
+    try {
+      const scenarios = JSON.parse(raw);
+      scenarios.forEach((scenario, index) => {
+        const cardIndex = index + 1;
+        const titleInput = document.querySelector(`.scenario-card[data-index="${cardIndex}"] .scenario-title`);
+        if (titleInput) {
+          titleInput.value = scenario.title || '';
+        }
+
+        const mode = scenario.mode || 'upload';
+        const modeRadio = document.querySelector(`input[name="mode-${cardIndex}"][value="${mode}"]`);
+        if (modeRadio) {
+          modeRadio.checked = true;
+          window.toggleInputMode(cardIndex, mode);
+        }
+
+        const card = document.querySelector(`.scenario-card[data-index="${cardIndex}"]`);
+        if (!card) return;
+        const summary = card.querySelector('.scenario-summary');
+        if (summary) {
+          summary.value = scenario.summary || '';
+        }
+
+        const featureList = card.querySelector('.feature-list');
+        if (featureList && Array.isArray(scenario.features) && scenario.features.length) {
+          featureList.innerHTML = '<label class="form-label">핵심 기능</label>';
+          scenario.features.forEach(feature => {
+            const item = document.createElement('div');
+            item.className = 'feature-item';
+            item.style.marginTop = '8px';
+            item.innerHTML = `<input type="text" class="form-input scenario-feature" value="${escHtml(feature)}">`;
+            featureList.appendChild(item);
+          });
+        }
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      sessionStorage.removeItem(`${draftKey}:scenarios`);
+    }
+  }
+
+  function collectScenarios() {
+    return Array.from(document.querySelectorAll('.scenario-card')).map(card => {
+      const index = Number(card.dataset.index);
+      const title = card.querySelector('.scenario-title')?.value?.trim() || `시나리오 ${index}`;
+      const mode = card.querySelector(`input[name="mode-${index}"]:checked`)?.value || 'upload';
+      const summary = card.querySelector('.scenario-summary')?.value?.trim() || '';
+      const features = Array.from(card.querySelectorAll('.scenario-feature'))
+        .map(input => input.value.trim())
+        .filter(Boolean);
+      const references = mode === 'upload'
+        ? (window.scenarioFiles[index] || []).map(file => file.name)
+        : [];
+
+      return { title, mode, summary, features, references };
+    });
+  }
+
+  function validateBeforeSubmit() {
+    if (!selectedProjectId) {
+      alert('프로젝트를 먼저 선택해주세요.');
+      return false;
+    }
+
+    const compareTitle = document.getElementById('compareTitle')?.value?.trim() || '';
+    if (!compareTitle) {
+      alert('비교 제목을 입력해주세요.');
+      return false;
+    }
+
+    const scenarios = collectScenarios();
+    const validScenarioCount = scenarios.filter(item => item.title || item.summary || item.features.length || item.references.length).length;
+    if (validScenarioCount < 2) {
+      alert('최소 2개의 시나리오를 채워주세요.');
+      return false;
+    }
+
+    document.getElementById('selectedProjectIdInput').value = selectedProjectId;
+    document.getElementById('compareTitleHiddenInput').value = compareTitle;
+    document.getElementById('scenarioPayloadInput').value = JSON.stringify(scenarios);
+    sessionStorage.setItem(draftKey, JSON.stringify({
+      projectId: selectedProjectId,
+      compareTitle,
+      scenarioCount: scenarios.length
+    }));
+    sessionStorage.setItem(`${draftKey}:scenarios`, JSON.stringify(scenarios));
+    return true;
+  }
+
+  window.addFeatureInput = function (btn) {
+    const featureList = btn.previousElementSibling;
+    if (!featureList) return;
+    const item = document.createElement('div');
+    item.className = 'feature-item';
+    item.style.marginTop = '8px';
+    item.innerHTML = '<input type="text" class="form-input scenario-feature" placeholder="추가 기능 입력">';
+    featureList.appendChild(item);
+  };
+
+  window.toggleInputMode = function (index, mode) {
+    const container = document.getElementById(`mode-content-${index}`);
+    if (!container) return;
+    if (mode === 'upload') {
+      container.innerHTML = getUploadUI(index);
+    } else if (mode === 'project') {
+      container.innerHTML = getProjectTreeUI(index);
+    } else {
+      container.innerHTML = getDirectInputUI(index);
+    }
+  };
+
+  window.scenarioFiles = {};
+
+  window.handleMultiFiles = function (event, index) {
+    const newFiles = Array.from(event.target.files || []);
+    const currentFiles = window.scenarioFiles[index] || [];
+    window.scenarioFiles[index] = currentFiles.concat(newFiles).slice(0, 5);
+    event.target.value = '';
+    renderFileList(index);
+  };
+
+  window.removeMultiFile = function (scenarioIndex, fileIndex) {
     window.scenarioFiles[scenarioIndex].splice(fileIndex, 1);
     renderFileList(scenarioIndex);
-};
+  };
 
-/* ── 파일 리스트 UI 그리기 ── */
-window.renderFileList = function(index) {
+  function renderFileList(index) {
     const listContainer = document.getElementById(`file-list-${index}`);
     const dropZone = document.getElementById(`drop-zone-${index}`);
     const files = window.scenarioFiles[index] || [];
-    
-    // 파일이 하나라도 있으면 드롭존 테두리 파란색 유지
-    if (files.length > 0) {
-        dropZone.classList.add("has-file");
-    } else {
-        dropZone.classList.remove("has-file");
-    }
-    
-    // 파일 목록 HTML 생성 (파란색 문서 아이콘 + 파일명 + X 버튼)
-    listContainer.innerHTML = files.map((file, fIndex) => `
-        <div class="file-list-item">
-            <div class="file-item-info">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
-                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-                    <polyline points="13 2 13 9 20 9"></polyline>
-                </svg>
-                <span class="file-item-name">${file.name}</span>
-            </div>
-            <button type="button" class="btn-item-remove" onclick="removeMultiFile(${index}, ${fIndex})" title="삭제">✕</button>
+    if (!listContainer || !dropZone) return;
+
+    dropZone.classList.toggle('has-file', files.length > 0);
+    listContainer.innerHTML = files.map((file, fileIndex) => `
+      <div class="file-list-item">
+        <div class="file-item-info">
+          <span class="file-item-name">${escHtml(file.name)}</span>
         </div>
+        <button type="button" class="btn-item-remove" onclick="removeMultiFile(${index}, ${fileIndex})" title="삭제">X</button>
+      </div>
     `).join('');
-};
+  }
 
-/* 2. 프로젝트 문서 트리뷰 UI */
-function getProjectTreeUI(i) {
-    // 실제 데이터는 allProjects 등에서 가져와서 매핑 가능
-    return `
-        <div class="project-tree-view">
-            <p class="tree-guide">분석할 문서를 선택하세요</p>
-            <details open>
-                <summary>📁 기획안 탭</summary>
-                <ul>
-                    <li><label><input type="checkbox"> 📄 기능명세서_v1.pdf</label></li>
-                    <li><label><input type="checkbox"> 📄 와이어프레임_최종.docx</label></li>
-                </ul>
-            </details>
-            <details>
-                <summary>📁 리서치 탭</summary>
-                <ul>
-                    <li><label><input type="checkbox"> 📄 경쟁사분석.pdf</label></li>
-                </ul>
-            </details>
-        </div>`;
-}
+  function init() {
+    document.querySelectorAll('input[name="projectFilter"]').forEach(radio => {
+      radio.addEventListener('change', event => {
+        currentFilter = event.target.value;
+        renderProjects();
+      });
+    });
 
-/* ── 모드 전환 3. 직접 입력 UI (소제목 추가) ── */
-function getDirectInputUI(i) {
-    return `
-        <div class="form-group">
-            <label class="form-label">기획 설명</label>
-            <textarea class="form-input" rows="4" placeholder="기획 내용을 상세히 입력해주세요.."></textarea>
-        </div>
-        <div class="form-group feature-list" id="feature-list-${i}">
-            <label class="form-label">기획 기능</label>
-            <div class="feature-item"><input type="text" class="form-input" placeholder="주요 기능 입력"></div>
-        </div>
-        <div class="add-feature-btn" onclick="addFeatureInput(this)">+ 기능 추가</div>`;
-}
+    document.getElementById('scenarioCount')?.addEventListener('change', renderScenarioInputs);
+    document.getElementById('btnNewProject')?.addEventListener('click', function () {
+      const url = this.getAttribute('data-href');
+      if (url) window.location.href = url;
+    });
+
+    document.getElementById('compareForm')?.addEventListener('submit', event => {
+      if (!validateBeforeSubmit()) {
+        event.preventDefault();
+      }
+    });
+
+    renderScenarioInputs();
+    fetchProjects();
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();

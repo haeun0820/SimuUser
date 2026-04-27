@@ -289,11 +289,13 @@
     const marketList = document.getElementById('marketAnalysisList');
     const costList = document.getElementById('financeAnalysisList');
     const feedbackList = document.getElementById('planAnalysisList');
+    const scenarioTab = document.getElementById('tab-scenario');
 
     if (simuList) simuList.innerHTML = loadingHtml;
     if (marketList) marketList.innerHTML = loadingHtml;
     if (costList) costList.innerHTML = loadingHtml;
     if (feedbackList) feedbackList.innerHTML = loadingHtml;
+    if (scenarioTab) scenarioTab.innerHTML = loadingHtml;
   }
 
 /* ── 전역 변수 및 토큰 준비 ── */
@@ -506,11 +508,13 @@ async function createTab() {
       await loadMarketAnalyses(projectId);
       await loadCostAnalyses(projectId);
       await loadFeedbackAnalyses(projectId);
+      await loadScenarioAnalyses(projectId);
       await loadAiUserAnalyses(projectId);
       renderAiUserAnalysisList();
       renderMarketAnalysisList();
       renderCostAnalysisList();
       renderFeedbackAnalysisList();
+      renderScenarioAnalysisList();
     }
 
     if (currentProject) {
@@ -662,6 +666,31 @@ async function createTab() {
     }
   }
 
+  async function loadScenarioAnalyses(projectId) {
+    if (!currentProject) return;
+    currentProject.scenarioAnalyses = [];
+
+    try {
+      const response = await fetch(`/scenario/results/project/${projectId}`, {
+        headers: { Accept: 'application/json' }
+      });
+      if (!response.ok) return;
+
+      const analyses = await response.json();
+      currentProject.scenarioAnalyses = analyses.map(item => ({
+        id: String(item.id),
+        type: 'scenario',
+        title: item.compareTitle || '시나리오 비교',
+        createdAt: item.createdAt,
+        recommendedScenarioTitle: item.recommendedScenarioTitle,
+        result: item.result,
+        starred: false
+      }));
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
 function renderCostAnalysisList() {
   const listEl = document.getElementById('financeAnalysisList');
   if (!listEl || !currentProject) return;
@@ -748,6 +777,37 @@ function renderFeedbackAnalysisList() {
 function viewFeedbackResult(analysisId) {
   const detailProjectId = window.location.pathname.split('/').pop();
   window.location.href = `/feedback/result?projectId=${detailProjectId}&from=detail&resultId=${analysisId}`;
+}
+
+function renderScenarioAnalysisList() {
+  const listEl = document.getElementById('tab-scenario');
+  if (!listEl || !currentProject) return;
+  const analyses = currentProject.scenarioAnalyses || [];
+
+  if (analyses.length === 0) {
+    listEl.innerHTML = `<div class="empty-state" style="padding:40px;text-align:center;color:#94a3b8;">시나리오 비교 기록이 없습니다.</div>`;
+    return;
+  }
+
+  listEl.innerHTML = analyses.map(a => `
+    <div class="analysis-item" data-analysis-id="${a.id}">
+      <div class="item-status success">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </div>
+      <div class="item-info">
+        <span class="item-title">${escHtml(a.title)}</span>
+        <span class="item-date" style="font-size:12px;color:#94a3b8;margin-left:10px;">${timeAgo(a.createdAt)}</span>
+        <div style="font-size:12px;color:#64748b;margin-top:4px;">추천안: ${escHtml(a.recommendedScenarioTitle || '-')}</div>
+      </div>
+      <div class="item-actions">
+        <button class="btn-edit-small" onclick="viewScenarioResult('${a.id}')">보기</button>
+      </div>
+    </div>`).join('');
+}
+
+function viewScenarioResult(analysisId) {
+  const detailProjectId = window.location.pathname.split('/').pop();
+  window.location.href = `/scenario/result?projectId=${detailProjectId}&from=detail&resultId=${analysisId}`;
 }
 
   function viewAiUserResult(analysisId) {
@@ -990,6 +1050,9 @@ async function deleteTabFromDb(dbId, htmlId, btnElement) {
     }
     if (targetId === 'tab-plan') {
         renderFeedbackAnalysisList();
+    }
+    if (targetId === 'tab-scenario') {
+        renderScenarioAnalysisList();
     }
   }
 
