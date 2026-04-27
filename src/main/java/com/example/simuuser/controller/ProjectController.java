@@ -1,16 +1,12 @@
 package com.example.simuuser.controller;
 
-import com.example.simuuser.dto.ProjectCreateRequest;
-import com.example.simuuser.dto.ProjectResponse;
-import com.example.simuuser.dto.TabRequest;
-import com.example.simuuser.dto.UserSearchResponse;
-import com.example.simuuser.entity.ProjectTab;
-import com.example.simuuser.service.NotificationService;
-import com.example.simuuser.service.ProjectService;
-import com.example.simuuser.service.ProjectTabService;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -20,8 +16,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.util.List;
-import java.util.Map;
+import com.example.simuuser.dto.ProjectCreateRequest;
+import com.example.simuuser.dto.ProjectResponse;
+import com.example.simuuser.dto.TabRequest;
+import com.example.simuuser.dto.UserSearchResponse;
+import com.example.simuuser.entity.ProjectTab;
+import com.example.simuuser.service.NotificationService;
+import com.example.simuuser.service.ProjectService;
+import com.example.simuuser.service.ProjectTabService;
 
 @Controller
 public class ProjectController {
@@ -66,9 +68,31 @@ public class ProjectController {
         }
     }
 
+    @GetMapping("/project/edit/{projectId}")
+    public String editProject(@PathVariable("projectId") Long projectId, Model model, Authentication authentication) {
+        // 1. 기존 데이터 조회
+        ProjectResponse project = projectService.getProjectDetail(projectId, authentication);
+        // 2. HTML에 데이터 전달
+        model.addAttribute("project", project);
+        return "project/project_edit";
+    }
+    @ResponseBody
+    @PatchMapping("/api/projects/{projectId}")
+    public ResponseEntity<?> updateProject(
+            @PathVariable("projectId") Long projectId,
+            @RequestBody ProjectCreateRequest request,
+            Authentication authentication) {
+        try {
+            projectService.update(projectId, request, authentication);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @ResponseBody
     @GetMapping("/api/users/search")
-    public List<UserSearchResponse> searchUsers(@RequestParam String email, Authentication authentication) {
+    public List<UserSearchResponse> searchUsers(@RequestParam("email") String email, Authentication authentication) { // ("email") 추가
         return projectService.searchInviteCandidates(email, authentication);
     }
 

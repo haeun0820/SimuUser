@@ -52,6 +52,7 @@
                 <input
                 class="form-input"
                 id="serviceIdea"
+                th:value="${project.title}"
                 type="text"
                 placeholder="예 : AI 기반 맞춤형 식단 추천 앱"
                 maxlength="200"
@@ -66,6 +67,7 @@
                 <textarea
                 class="form-textarea"
                 id="description"
+                th:text="${project.description}"
                 placeholder="서비스의 핵심 기능, 해결하려는 문제, 차별점 등을 자유롭게 작성해주세요."
                 style="min-height:140px;"
                 ></textarea>
@@ -78,6 +80,7 @@
                 <input
                     class="form-input"
                     id="targetUser"
+                    th:value="${project.targetUser}"
                     type="text"
                     placeholder="예 : 20~30대 직장인"
                 >
@@ -86,14 +89,14 @@
                 <label class="form-label" for="industry">산업 분야</label>
                 <select class="form-select" id="industry">
                     <option value="">선택해주세요</option>
-                    <option value="commerce">커머스/쇼핑</option>
-                    <option value="fintech">금융/핀테크</option>
-                    <option value="health">의료/헬스케어</option>
-                    <option value="edu">교육/에듀테크</option>
-                    <option value="content">콘텐츠/엔터테인먼트</option>
-                    <option value="social">소셜/커뮤니티</option>
-                    <option value="mobility">모빌리티/여행</option>
-                    <option value="productivity">생산성/비즈니스</option>
+                    <option value="commerce" th:selected="${project.industry == 'commerce'}">커머스/쇼핑</option>
+                    <option value="fintech" th:selected="${project.industry == 'fintech'}">금융/핀테크</option>
+                    <option value="health" th:selected="${project.industry == 'health'}">의료/헬스케어</option>
+                    <option value="edu" th:selected="${project.industry == 'edu'}">교육/에듀테크</option>
+                    <option value="content" th:selected="${project.industry == 'content'}">콘텐츠/엔터테인먼트</option>
+                    <option value="social" th:selected="${project.industry == 'social'}">소셜/커뮤니티</option>
+                    <option value="mobility" th:selected="${project.industry == 'mobility'}">모빌리티/여행</option>
+                    <option value="productivity" th:selected="${project.industry == 'productivity'}">생산성/비즈니스</option>
                 </select>
                 </div>
             </div>
@@ -108,14 +111,14 @@
                 </label>
                 <div class="radio-group">
                     <label class="radio-label">
-                    <input type="radio" name="projectType" value="personal" checked>
-                    <span class="radio-circle"></span>
-                    개인
+                    <input type="radio" name="projectType" value="personal" 
+                        th:checked="${project.members == null || project.members.size() <= 1}">                        
+                        <span class="radio-circle"></span> 개인
                     </label>
                     <label class="radio-label">
-                    <input type="radio" name="projectType" value="collab">
-                    <span class="radio-circle"></span>
-                    협업
+                        <input type="radio" name="projectType" value="collab" 
+                            th:checked="${project.members != null && project.members.size() > 1}">
+                        <span class="radio-circle"></span> 협업
                     </label>
                 </div>
                 </div>
@@ -192,290 +195,179 @@
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/header.js}"></script>
 
-    <script>
-    /* ============================================================
-        new-project.js (inline)
-        ============================================================ */
 
+
+<script th:inline="javascript">
+/*<![CDATA[*/
     const members = [];
+    /*[# th:each="m : ${project.members}"]*/
+    if (/*[[${m.role}]]*/ !== 'OWNER') {
+        members.push({
+            email: /*[[${m.email}]]*/ '',
+            name: /*[[${m.name}]]*/ '', // 백엔드 ProjectMemberResponse의 name 필드 사용
+            role: /*[[${m.role}]]*/ '편집자',
+            profileImage: /*[[${m.profileImage}]]*/ ''
+        });
+    }
+    /*[/]*/
+/*]]>*/
     let memberModalSnapshot = [];
     let inviteSearchTimer;
+
+    // 2. 페이지 로드 시 초기 UI 세팅
+    window.addEventListener('DOMContentLoaded', () => {
+        const projectTypeInput = document.querySelector('input[name="projectType"]:checked');
+        const projectType = projectTypeInput ? projectTypeInput.value : 'personal';
+        
+        if (projectType === 'collab') {
+            document.getElementById('teamInviteSection').style.display = '';
+        }
+        
+        updateMemberBadge();
+        renderMemberList();
+    });
 
     /* ── 프로젝트 종류 토글 ── */
     document.querySelectorAll('input[name="projectType"]').forEach(radio => {
         radio.addEventListener('change', () => {
-        const isCollab = radio.value === 'collab' && radio.checked;
-        document.getElementById('teamInviteSection').style.display = isCollab ? '' : 'none';
-        if (!isCollab) {
-            members.splice(0, members.length);
-            updateMemberBadge();
-            renderMemberList();
-        }
+            const isCollab = radio.value === 'collab' && radio.checked;
+            document.getElementById('teamInviteSection').style.display = isCollab ? '' : 'none';
+            if (!isCollab) {
+                members.splice(0, members.length);
+                updateMemberBadge();
+                renderMemberList();
+            }
         });
     });
 
-    /* ── 팀원 추가 ── */
-    document.getElementById('inviteEmail').addEventListener('input', searchInviteUsers);
-    document.getElementById('inviteEmail').addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); stageMember(); }
-    });
-
-    function searchInviteUsers() {
-        document.getElementById('inviteEmail').dataset.name = '';
+    /* ── 팀원 검색 및 추가 로직 ── */
+    document.getElementById('inviteEmail').addEventListener('input', () => {
         clearTimeout(inviteSearchTimer);
         inviteSearchTimer = setTimeout(fetchInviteUsers, 250);
-    }
+    });
 
     async function fetchInviteUsers() {
-        const input = document.getElementById('inviteEmail');
-        const results = document.getElementById('userSearchResults');
-        const keyword = input.value.trim();
-
-        if (keyword.length < 2) {
-        results.style.display = 'none';
-        results.innerHTML = '';
-        return;
-        }
-
-        const response = await fetch(`/api/users/search?email=${encodeURIComponent(keyword)}`);
-        if (!response.ok) {
-        results.style.display = 'none';
-        results.innerHTML = '';
-        return;
-        }
-
-        const users = await response.json();
-        if (users.length === 0) {
-        results.style.display = 'none';
-        results.innerHTML = '';
-        return;
-        }
-
-        results.innerHTML = users.map(user => {
-        const displayName = user.name || user.userId || user.email;
-        const initial = displayName.charAt(0).toUpperCase();
-        const avatar = user.profileImage
-            ? `<img src="${escHtml(user.profileImage)}" alt="" class="search-user-avatar-img">`
-            : escHtml(initial);
-        return `
-        <button type="button" class="invite-user-option"
-                data-email="${escHtml(user.email)}"
-                data-name="${escHtml(displayName)}"
-                data-profile-image="${escHtml(user.profileImage || '')}">
-            <span class="search-user-avatar">${avatar}</span>
-            <span class="search-user-text">
-            <span class="search-user-name">${escHtml(displayName)}</span>
-            <span class="search-user-email">${escHtml(user.email)}</span>
-            </span>
-            <span class="search-user-action">추가</span>
-        </button>`;
-        }).join('');
-        results.style.display = 'block';
-
-        results.querySelectorAll('.invite-user-option').forEach(button => {
-        button.addEventListener('click', async () => {
-            input.value = button.dataset.email;
-            input.dataset.name = button.dataset.name || '';
-            input.dataset.profileImage = button.dataset.profileImage || '';
-            results.style.display = 'none';
-            results.innerHTML = '';
-            await stageMember();
-        });
-        });
+        const keyword = document.getElementById('inviteEmail').value.trim();
+        if (keyword.length < 2) return;
+        
+        try {
+            const response = await fetch(`/api/users/search?email=${encodeURIComponent(keyword)}`);
+            const users = await response.json();
+            const results = document.getElementById('userSearchResults');
+            results.innerHTML = users.map(u => `
+                <button type="button" class="invite-user-option" onclick="selectUser('${u.email}', '${u.name}')">
+                    <span>${u.name} (${u.email})</span>
+                </button>
+            `).join('');
+            results.style.display = 'block';
+        } catch (e) {}
     }
 
-    async function stageMember() {
-        const input = document.getElementById('inviteEmail');
-        const errEl = document.getElementById('err-email');
-        const email = input.value.trim();
-        const role = document.getElementById('inviteRoleSelect').value;
-        const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        if (!email || !emailRe.test(email)) {
-        input.classList.add('error');
-        errEl.style.display = 'block';
-        return;
+    window.selectUser = function(email, name) {
+        if(members.some(m => m.email === email)) {
+            alert('이미 추가된 팀원입니다.');
+            return;
         }
-        if (members.some(member => member.email.toLowerCase() === email.toLowerCase())) {
-        input.classList.add('error');
-        errEl.textContent = '이미 추가된 이메일입니다.';
-        errEl.style.display = 'block';
-        return;
-        }
-
-        const foundUser = await findInviteUser(email);
-        const name = foundUser?.name || foundUser?.userId || input.dataset.name || email;
-        const profileImage = foundUser?.profileImage || input.dataset.profileImage || '';
-
-        input.classList.remove('error');
-        errEl.style.display = 'none';
-        errEl.textContent = '올바른 이메일을 입력해주세요.';
+        members.push({ email, name, role: document.getElementById('inviteRoleSelect').value });
         document.getElementById('userSearchResults').style.display = 'none';
-
-        members.push({ email, role, name, profileImage });
-        input.value = '';
-        input.dataset.name = '';
-        input.dataset.profileImage = '';
+        document.getElementById('inviteEmail').value = '';
         updateMemberBadge();
         renderMemberList();
     }
 
-    async function findInviteUser(email) {
-        try {
-        const response = await fetch(`/api/users/search?email=${encodeURIComponent(email)}`);
-        if (!response.ok) return null;
-        const users = await response.json();
-        return users.find(user => user.email && user.email.toLowerCase() === email.toLowerCase()) || null;
-        } catch (e) {
-        return null;
-        }
-    }
-
     function updateMemberBadge() {
         const badge = document.getElementById('memberBadge');
-        document.getElementById('memberCount').textContent = members.length;
-        badge.style.display = members.length > 0 ? 'inline-flex' : 'none';
+        const countSpan = document.getElementById('memberCount');
+        if(countSpan) countSpan.textContent = members.length;
+        if(badge) badge.style.display = members.length > 0 ? 'inline-flex' : 'none';
     }
 
     function renderMemberList() {
         const list = document.getElementById('memberList');
         if (members.length === 0) {
-        list.innerHTML = '<div class="empty-members">초대된 팀원이 없습니다.</div>';
-        return;
+            list.innerHTML = '<div class="empty-members">초대된 팀원이 없습니다.</div>';
+            return;
         }
-        list.innerHTML = members.map((member, i) => `
-        <div class="member-item pending-member-item">
-            <div class="pending-member-main">
-            <div class="pending-member-avatar">${member.profileImage ? `<img src="${escHtml(member.profileImage)}" alt="" class="pending-member-avatar-img">` : escHtml((member.name || member.email).charAt(0).toUpperCase())}</div>
-            <div>
-                <div class="pending-member-name">${escHtml(member.name || member.email)} <span class="pending-member-status">요청 예정</span></div>
-                <div class="member-email">${escHtml(member.email)}</div>
-            </div>
-            </div>
-            <div class="pending-member-actions">
-            <span class="pending-member-role">${escHtml(member.role || '편집자')}</span>
-            <button class="btn-remove" data-index="${i}">삭제</button>
-            </div>
-        </div>`).join('');
-
-        list.querySelectorAll('.btn-remove').forEach(btn => {
-        btn.addEventListener('click', () => {
-            members.splice(Number(btn.dataset.index), 1);
-            updateMemberBadge();
-            renderMemberList();
-        });
-        });
+        list.innerHTML = members.map((m, i) => `
+            <div class="member-item pending-member-item">
+                <div class="pending-member-main">
+                    <div class="pending-member-avatar">${escHtml(m.name.charAt(0).toUpperCase())}</div>
+                    <div>
+                        <div class="pending-member-name">${escHtml(m.name)}</div>
+                        <div class="member-email">${escHtml(m.email)}</div>
+                    </div>
+                </div>
+                <div class="pending-member-actions">
+                    <span class="pending-member-role">${escHtml(m.role)}</span>
+                    <button type="button" class="btn-remove" onclick="removeMember(${i})">삭제</button>
+                </div>
+            </div>`).join('');
     }
 
-    /* ── 팝업 열기/닫기 ── */
-    document.getElementById('btnOpenMemberModal').addEventListener('click', openMemberModal);
-    document.getElementById('memberBadge').addEventListener('click', openMemberModal);
-    document.getElementById('btnConfirmMembers').addEventListener('click', () => closeMemberModal(true));
-    document.getElementById('btnCancelMembers').addEventListener('click', () => closeMemberModal(false));
-
-    function openMemberModal() {
-        memberModalSnapshot = members.map(member => ({ ...member }));
-        renderMemberList();
-        document.getElementById('memberPopup').style.display = 'flex';
-        setTimeout(() => document.getElementById('inviteEmail')?.focus(), 0);
-    }
-    document.getElementById('btnClosePopup').addEventListener('click', () => closeMemberModal(false));
-    document.getElementById('memberPopup').addEventListener('click', e => {
-        if (e.target === document.getElementById('memberPopup')) closeMemberModal(false);
-    });
-    function closeMemberModal(confirmed) {
-        if (!confirmed) {
-        members.splice(0, members.length, ...memberModalSnapshot.map(member => ({ ...member })));
+    window.removeMember = function(index) {
+        members.splice(index, 1);
         updateMemberBadge();
         renderMemberList();
-        }
-        document.getElementById('inviteEmail').value = '';
-        document.getElementById('inviteEmail').dataset.name = '';
-        document.getElementById('inviteEmail').dataset.profileImage = '';
-        document.getElementById('userSearchResults').style.display = 'none';
-        document.getElementById('memberPopup').style.display = 'none';
     }
 
-    /* ── 폼 제출 ── */
+    /* ── 팝업 제어 ── */
+    document.getElementById('btnOpenMemberModal').addEventListener('click', () => {
+        memberModalSnapshot = JSON.parse(JSON.stringify(members));
+        document.getElementById('memberPopup').style.display = 'flex';
+    });
+    document.getElementById('btnClosePopup').addEventListener('click', () => document.getElementById('memberPopup').style.display = 'none');
+    document.getElementById('btnConfirmMembers').addEventListener('click', () => document.getElementById('memberPopup').style.display = 'none');
+    document.getElementById('btnCancelMembers').addEventListener('click', () => {
+        members.splice(0, members.length, ...memberModalSnapshot);
+        updateMemberBadge();
+        renderMemberList();
+        document.getElementById('memberPopup').style.display = 'none';
+    });
+
+    /* ── 최종 폼 제출 ── */
     document.getElementById('projectForm').addEventListener('submit', async e => {
         e.preventDefault();
-        if (!validateForm()) return;
-
-        const projectType = document.querySelector('input[name="projectType"]:checked').value;
-
-        const memberInvites = members.map(member => ({
-        email: member.email,
-        role: member.role
-        }));
-
-        const project = {
-        title: document.getElementById('serviceIdea').value.trim(),
-        description: document.getElementById('description').value.trim(),
-        targetUser: document.getElementById('targetUser').value.trim(),
-        industry: document.getElementById('industry').value,
-        type: projectType,
-        members: projectType === 'collab' ? memberInvites.map(member => member.email) : [],
-        memberInvites: projectType === 'collab' ? memberInvites : []
+        
+        const projectId = /*[[${project.id}]]*/ null; 
+        const projectData = {
+            title: document.getElementById('serviceIdea').value.trim(),
+            description: document.getElementById('description').value.trim(),
+            targetUser: document.getElementById('targetUser').value.trim(),
+            industry: document.getElementById('industry').value,
+            members: members.map(m => m.email)
         };
 
         const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
         const headers = { 'Content-Type': 'application/json' };
-
         if (csrfToken && csrfHeader) {
-        headers[csrfHeader] = csrfToken;
+            headers[csrfHeader] = csrfToken;
         }
 
-        const response = await fetch('/api/projects', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(project)
-        });
+        try {
+            const response = await fetch(`/api/projects/${projectId}`, {
+                method: 'PATCH', 
+                headers: headers,
+                body: JSON.stringify(projectData)
+            });
 
-        if (!response.ok) {
-        const result = await response.json().catch(() => ({ message: '프로젝트 수정에 실패했습니다.' }));
-        alert(result.message || '프로젝트 수정에 실패했습니다.');
-        return;
-        }
-
-        // 전체 프로젝트 화면으로 이동
-        window.location.href = '/project/all';
-    });
-
-    function validateForm() {
-        let valid = true;
-        const idea = document.getElementById('serviceIdea');
-        const errIdea = document.getElementById('err-serviceIdea');
-
-        if (!idea.value.trim()) {
-        idea.classList.add('error');
-        errIdea.style.display = 'block';
-        valid = false;
-        } else {
-        idea.classList.remove('error');
-        errIdea.style.display = 'none';
-        }
-        return valid;
-    }
-
-    document.getElementById('serviceIdea').addEventListener('input', function () {
-        if (this.value.trim()) {
-        this.classList.remove('error');
-        document.getElementById('err-serviceIdea').style.display = 'none';
+            if (response.ok) {
+                alert('성공적으로 수정되었습니다.');
+                window.location.href = '/project/all';
+            } else {
+                const err = await response.json();
+                alert('수정 실패: ' + (err.message || '알 수 없는 오류'));
+            }
+        } catch (error) {
+            alert('네트워크 오류가 발생했습니다.');
         }
     });
 
-    /* ── 취소 버튼 ── */
-    document.getElementById('btnCancel').addEventListener('click', () => {
-        if (confirm('입력한 내용이 저장되지 않습니다. 취소하시겠습니까?')) {
-        window.location.href = '/project/all';
-        }
-    });
-
-    /* ── 유틸 ── */
     function escHtml(str) {
+        if (!str) return "";
         return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
-    </script>
+/*]]>*/
+</script>
     </body>
     </html>
