@@ -1,5 +1,7 @@
 package com.example.simuuser.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -10,8 +12,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "projects")
@@ -86,5 +86,12 @@ public class Project {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public void updateInfo(String title, String description, String targetUser, String industry) {
+    this.title = title;
+    this.description = description;
+    this.targetUser = targetUser;
+    this.industry = industry;
     }
 }

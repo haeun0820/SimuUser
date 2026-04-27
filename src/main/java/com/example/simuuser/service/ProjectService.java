@@ -1,5 +1,16 @@
 package com.example.simuuser.service;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.simuuser.dto.ProjectCreateRequest;
 import com.example.simuuser.dto.ProjectInviteResponse;
 import com.example.simuuser.dto.ProjectMemberInviteRequest;
@@ -7,23 +18,13 @@ import com.example.simuuser.dto.ProjectMemberResponse;
 import com.example.simuuser.dto.ProjectResponse;
 import com.example.simuuser.dto.UserSearchResponse;
 import com.example.simuuser.entity.AppUser;
+import com.example.simuuser.entity.Notification;
 import com.example.simuuser.entity.Project;
 import com.example.simuuser.entity.ProjectMember;
 import com.example.simuuser.repository.AppUserRepository;
 import com.example.simuuser.repository.NotificationRepository;
 import com.example.simuuser.repository.ProjectMemberRepository;
 import com.example.simuuser.repository.ProjectRepository;
-import com.example.simuuser.entity.Notification;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 @Service
 public class ProjectService {
@@ -377,5 +378,41 @@ public class ProjectService {
         }
 
         return new ArrayList<>(normalizedInvites.values());
+    }
+
+    @Transactional(readOnly = true)
+    public ProjectResponse getProjectDetail(Long projectId, Authentication authentication) {
+        AppUser currentUser = getCurrentUser(authentication);
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없습니다."));
+
+        // 프로젝트 멤버인지 확인 (권한 체크)
+        if (!projectMemberRepository.existsByProjectAndUserAndStatus(project, currentUser, "ACCEPTED")) {
+            throw new IllegalStateException("프로젝트 팀원만 내용을 볼 수 있습니다.");
+        }
+
+        List<ProjectMember> members = projectMemberRepository.findByProjectOrderByCreatedAtAsc(project);
+        return new ProjectResponse(project, members, currentUser.getId());
+    }
+
+    @Transactional
+    public void update(Long projectId, ProjectCreateRequest request, Authentication authentication) {
+        AppUser currentUser = getCurrentUser(authentication);
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없습니다."));
+
+        // 프로젝트 소유자(OWNER)만 수정 가능하도록 제한
+        if (!project.getOwner().getId().equals(currentUser.getId())) {
+            throw new IllegalStateException("프로젝트 소유자만 수정할 수 있습니다.");
+        }
+
+        // 유효성 검사 및 데이터 업데이트
+        validate(request);
+        project.updateInfo(
+                request.getTitle().trim(),
+                request.getDescription(),
+                request.getTargetUser(),
+                request.getIndustry()
+        );
     }
 }

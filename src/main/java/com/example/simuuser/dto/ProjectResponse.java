@@ -1,9 +1,9 @@
 package com.example.simuuser.dto;
 
+import java.util.List;
+
 import com.example.simuuser.entity.Project;
 import com.example.simuuser.entity.ProjectMember;
-
-import java.util.List;
 
 public class ProjectResponse {
 
@@ -13,7 +13,7 @@ public class ProjectResponse {
     private final String targetUser;
     private final String industry;
     private final String type;
-    private final List<String> members;
+    private final List<ProjectMemberResponse> members;
     private final String createdAt;
     private final String currentUserRole;
     private final boolean owner;
@@ -27,20 +27,24 @@ public class ProjectResponse {
         this.industry = project.getIndustry();
         this.type = project.getType();
         this.members = members.stream()
-                .filter(member -> "ACCEPTED".equals(member.getStatus()))
-                .filter(member -> currentUserId == null || !member.getUser().getId().equals(currentUserId))
-                .map(member -> member.getUser().getEmail())
-                .filter(email -> email != null && !email.isBlank())
+                .map(member -> new ProjectMemberResponse(member, currentUserId))
                 .toList();
+
         this.createdAt = project.getCreatedAt() == null ? null : project.getCreatedAt().toString();
+        
         ProjectMember currentMember = members.stream()
                 .filter(member -> currentUserId != null && member.getUser().getId().equals(currentUserId))
                 .findFirst()
                 .orElse(null);
+        
         this.currentUserRole = currentMember == null ? null : currentMember.getRole();
         this.owner = currentUserId != null
                 && (project.getOwner().getId().equals(currentUserId) || "OWNER".equals(this.currentUserRole));
         this.hasChatRoom = "collab".equalsIgnoreCase(project.getType());
+    }
+
+    public List<ProjectMemberResponse> getMembers() {
+        return members;
     }
 
     public Long getId() {
@@ -65,10 +69,6 @@ public class ProjectResponse {
 
     public String getType() {
         return type;
-    }
-
-    public List<String> getMembers() {
-        return members;
     }
 
     public String getCreatedAt() {
