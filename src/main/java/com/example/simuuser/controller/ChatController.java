@@ -1,6 +1,8 @@
 package com.example.simuuser.controller;
 
+import com.example.simuuser.dto.ChatMessageResponse;
 import com.example.simuuser.service.ChatService;
+import com.example.simuuser.websocket.ChatWebSocketBroadcaster;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -17,9 +19,11 @@ import java.util.Map;
 public class ChatController {
 
     private final ChatService chatService;
+    private final ChatWebSocketBroadcaster chatWebSocketBroadcaster;
 
-    public ChatController(ChatService chatService) {
+    public ChatController(ChatService chatService, ChatWebSocketBroadcaster chatWebSocketBroadcaster) {
         this.chatService = chatService;
+        this.chatWebSocketBroadcaster = chatWebSocketBroadcaster;
     }
 
     @GetMapping("/chat/window")
@@ -111,9 +115,13 @@ public class ChatController {
     @PostMapping("/api/chat/rooms/{roomId}/messages")
     public ResponseEntity<?> sendMessage(@PathVariable Long roomId, @RequestBody Map<String, String> body, Authentication authentication) {
         try {
-            return ResponseEntity.ok(chatService.sendMessage(roomId, body.get("content"), authentication));
+            ChatMessageResponse response = chatService.sendMessage(roomId, body.get("content"), authentication);
+            chatWebSocketBroadcaster.broadcast(roomId, response);
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("message", "메시지 전송 중 오류가 발생했습니다."));
         }
     }
 }

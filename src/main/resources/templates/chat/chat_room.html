@@ -21,23 +21,20 @@
                 <button type="button" disabled>파일 업로드</button>
             </div>
         </div>
-        <input type="text" id="msgInput" placeholder="메시지를 입력해주세요.." onkeypress="if(event.keyCode==13) send()">
+        <input type="text" id="msgInput" placeholder="메시지를 입력해주세요." onkeypress="if(event.keyCode==13) send()">
         <button id="sendBtn" onclick="send()" type="button">전송</button>
     </div>
 
     <script>
         const roomId = window.location.pathname.split('/').pop();
-        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
-        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
-        let pollHandle = null;
+        let chatSocket = null;
+        let reconnectHandle = null;
         let lastMessageId = null;
-
-        function csrfHeaders() {
-            return csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {};
-        }
 
         const plusBtn = document.getElementById('plusBtn');
         const plusMenu = document.getElementById('plusMenu');
+        const msgInput = document.getElementById('msgInput');
+        const sendBtn = document.getElementById('sendBtn');
 
         plusBtn.onclick = (e) => {
             e.stopPropagation();
@@ -53,8 +50,24 @@
             return new Date(value).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
         }
 
+        function setChatEnabled(enabled) {
+            msgInput.disabled = !enabled;
+            sendBtn.disabled = !enabled;
+        }
+
         function appendMessage(message) {
+            if (!message || typeof message.id !== 'number') {
+                return;
+            }
+            if (lastMessageId !== null && message.id <= lastMessageId) {
+                return;
+            }
+
             const chatMsgs = document.getElementById('chatMsgs');
+            if (chatMsgs.children.length === 1 && chatMsgs.firstElementChild?.textContent?.includes('대화를 시작해보세요.')) {
+                chatMsgs.innerHTML = '';
+            }
+
             const div = document.createElement('div');
             div.className = message.mine ? 'msg my-msg' : 'msg';
             div.textContent = message.content;
@@ -70,8 +83,7 @@
             if (!response.ok) {
                 document.getElementById('chatTitle').textContent = '채팅';
                 document.getElementById('chatMsgs').innerHTML = `<div class="msg">${result.message || '채팅방을 불러올 수 없습니다.'}</div>`;
-                document.getElementById('msgInput').disabled = true;
-                document.getElementById('sendBtn').disabled = true;
+                setChatEnabled(false);
                 return false;
             }
 
@@ -103,39 +115,89 @@
             result.forEach(appendMessage);
         }
 
-        async function send() {
-            const input = document.getElementById('msgInput');
-            const content = input.value.trim();
-            if (!content) return;
+        function websocketUrl() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            return `${protocol}//${window.location.host}/ws/chat?roomId=${roomId}`;
+        }
 
-            const response = await fetch(`/api/chat/rooms/${roomId}/messages`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...csrfHeaders()
-                },
-                body: JSON.stringify({ content })
-            });
+        function scheduleReconnect() {
+            if (reconnectHandle) {
+                return;
+            }
+            setChatEnabled(false);
+            reconnectHandle = window.setTimeout(() => {
+                reconnectHandle = null;
+                connectChatSocket();
+            }, 2000);
+        }
 
-            const result = await response.json().catch(() => ({}));
-            if (!response.ok) {
-                alert(result.message || '메시지 전송에 실패했습니다.');
+        function connectChatSocket() {
+            if (chatSocket && (chatSocket.readyState === WebSocket.OPEN || chatSocket.readyState === WebSocket.CONNECTING)) {
                 return;
             }
 
-            input.value = '';
-            appendMessage(result);
+            chatSocket = new WebSocket(websocketUrl());
+
+            chatSocket.addEventListener('open', async () => {
+                setChatEnabled(true);
+                if (lastMessageId !== null) {
+                    await loadMessages(false);
+                }
+            });
+
+            chatSocket.addEventListener('message', (event) => {
+                const payload = JSON.parse(event.data);
+                if (payload.error) {
+                    alert(payload.error);
+                    return;
+                }
+                appendMessage(payload);
+            });
+
+            chatSocket.addEventListener('close', () => {
+                scheduleReconnect();
+            });
+
+            chatSocket.addEventListener('error', () => {
+                if (chatSocket && chatSocket.readyState !== WebSocket.CLOSED) {
+                    chatSocket.close();
+                }
+            });
         }
 
+        function send() {
+            const content = msgInput.value.trim();
+            if (!content) {
+                return;
+            }
+
+            if (!chatSocket || chatSocket.readyState !== WebSocket.OPEN) {
+                alert('채팅 서버에 다시 연결 중입니다.');
+                return;
+            }
+
+            chatSocket.send(JSON.stringify({ content }));
+            msgInput.value = '';
+        }
+
+        window.send = send;
+
         (async function init() {
+            setChatEnabled(false);
             const canOpen = await loadRoom();
-            if (!canOpen) return;
+            if (!canOpen) {
+                return;
+            }
 
             await loadMessages(true);
-            pollHandle = window.setInterval(() => loadMessages(false), 5000);
+            connectChatSocket();
+
             window.addEventListener('beforeunload', () => {
-                if (pollHandle) {
-                    window.clearInterval(pollHandle);
+                if (reconnectHandle) {
+                    window.clearTimeout(reconnectHandle);
+                }
+                if (chatSocket) {
+                    chatSocket.close();
                 }
             });
         })();
