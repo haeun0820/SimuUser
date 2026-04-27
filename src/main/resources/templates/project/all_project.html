@@ -100,6 +100,20 @@
   }
 
 
+  function memberDisplayName(member) {
+    if (!member || typeof member !== 'object') return '';
+    return member.name || member.email || '';
+  }
+
+  function collabMemberText(members) {
+    if (!Array.isArray(members)) return '';
+    const names = members
+      .filter(member => member && !member.currentUser && member.status === 'ACCEPTED')
+      .map(memberDisplayName)
+      .filter(Boolean);
+    return names.length ? `With. ${names.join(', ')}` : '';
+  }
+
   /* ── 카드 렌더 ── */
   function renderCard(p) {
     const isCollab = p.type === 'collab';
@@ -107,8 +121,9 @@
       ? '<span class="project-type-badge badge-collab">협업</span>'
       : '<span class="project-type-badge badge-personal">개인</span>';
 
-    const memberInfo = isCollab && p.members && p.members.length > 0
-      ? `<span class="project-members">With. ${p.members.map(escHtml).join(', ')}</span>`
+    const memberInfoText = collabMemberText(p.members);
+    const memberInfo = isCollab && memberInfoText
+      ? `<span class="project-members">${escHtml(memberInfoText)}</span>`
       : '';
 
     const industryTag = p.industry
