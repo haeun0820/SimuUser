@@ -20,9 +20,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class ChatService {
@@ -58,13 +62,19 @@ public class ChatService {
         AppUser currentUser = appUserService.getCurrentUser(authentication);
         syncExistingProjectRooms(currentUser);
 
-        return chatParticipantRepository.findByUserOrderByRoomUpdatedAtDesc(currentUser).stream()
+        List<ChatRoom> rooms = chatParticipantRepository.findByUserOrderByRoomUpdatedAtDesc(currentUser).stream()
                 .filter(participant -> "ACCEPTED".equals(participant.getStatus()))
                 .map(ChatParticipant::getRoom)
                 .filter(room -> "ACTIVE".equals(room.getStatus()))
                 .distinct()
                 .sorted(Comparator.comparing(ChatRoom::getUpdatedAt).reversed())
-                .map(room -> toSummary(room, currentUser))
+                .toList();
+
+        Map<Long, ChatMessage> lastMessageByRoomId = getLastMessageByRoomId(rooms);
+        Map<Long, List<ChatParticipant>> participantsByRoomId = getParticipantsByRoomId(rooms);
+
+        return rooms.stream()
+                .map(room -> toSummary(room, currentUser, lastMessageByRoomId.get(room.getId()), participantsByRoomId.get(room.getId())))
                 .toList();
     }
 
@@ -72,12 +82,17 @@ public class ChatService {
     public List<ChatRequestResponse> findPendingRequests(Authentication authentication) {
         AppUser currentUser = appUserService.getCurrentUser(authentication);
 
-        return chatParticipantRepository.findByUserOrderByRoomUpdatedAtDesc(currentUser).stream()
+        List<ChatRoom> rooms = chatParticipantRepository.findByUserOrderByRoomUpdatedAtDesc(currentUser).stream()
                 .filter(participant -> "PENDING".equals(participant.getStatus()))
                 .map(ChatParticipant::getRoom)
                 .filter(room -> "PRIVATE".equals(room.getType()))
                 .filter(room -> "PENDING".equals(room.getStatus()))
-                .map(room -> toRequest(room, currentUser))
+                .toList();
+
+        Map<Long, ChatMessage> lastMessageByRoomId = getLastMessageByRoomId(rooms);
+
+        return rooms.stream()
+                .map(room -> toRequest(room, currentUser, lastMessageByRoomId.get(room.getId())))
                 .filter(Objects::nonNull)
                 .toList();
     }
@@ -104,7 +119,7 @@ public class ChatService {
             ChatParticipant currentParticipant = findParticipant(existingRoom, currentUser);
 
             if ("ACTIVE".equals(existingRoom.getStatus())) {
-                return toSummary(existingRoom, currentUser);
+                return toSummary(existingRoom, currentUser, null, null);
             }
 
             if ("PENDING".equals(existingRoom.getStatus())) {
@@ -116,7 +131,7 @@ public class ChatService {
                     currentParticipant.accept();
                     targetParticipant.accept();
                     existingRoom.activate();
-                    return toSummary(existingRoom, currentUser);
+                    return toSummary(existingRoom, currentUser, null, null);
                 }
             }
 
@@ -128,7 +143,7 @@ public class ChatService {
                 targetParticipant.markPending();
             }
 
-            return toSummary(existingRoom, currentUser);
+            return toSummary(existingRoom, currentUser, null, null);
         }
 
         ChatRoom room = chatRoomRepository.save(new ChatRoom("PRIVATE", "PENDING", null, currentUser));
@@ -136,7 +151,7 @@ public class ChatService {
         chatParticipantRepository.save(new ChatParticipant(room, targetUser, "PENDING"));
         room.touch();
 
-        return toSummary(room, currentUser);
+        return toSummary(room, currentUser, null, null);
     }
 
     @Transactional
@@ -146,22 +161,26 @@ public class ChatService {
                 .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없습니다."));
 
         ChatRoom room = createOrGetProjectRoomEntity(project, currentUser);
-        return toSummary(room, currentUser);
+        return toSummary(room, currentUser, null, null);
     }
 
     @Transactional
     public ChatRoomDetailResponse findRoomDetail(Long roomId, Authentication authentication) {
         AppUser currentUser = appUserService.getCurrentUser(authentication);
         ChatRoom room = resolveRoomReference(roomId, currentUser, true);
-        return new ChatRoomDetailResponse(room.getId(), room.getType(), resolveRoomName(room, currentUser), "ACTIVE".equals(room.getStatus()));
+        return new ChatRoomDetailResponse(room.getId(), room.getType(), resolveRoomName(room, currentUser, null), "ACTIVE".equals(room.getStatus()));
     }
 
     @Transactional
-    public List<ChatMessageResponse> findMessages(Long roomId, Authentication authentication) {
+    public List<ChatMessageResponse> findMessages(Long roomId, Long afterMessageId, Authentication authentication) {
         AppUser currentUser = appUserService.getCurrentUser(authentication);
         ChatRoom room = resolveRoomReference(roomId, currentUser, true);
 
-        return chatMessageRepository.findByRoomOrderByCreatedAtAsc(room).stream()
+        List<ChatMessage> messages = afterMessageId == null
+                ? chatMessageRepository.findByRoomOrderByCreatedAtAsc(room)
+                : chatMessageRepository.findByRoomAndIdGreaterThanOrderByCreatedAtAsc(room, afterMessageId);
+
+        return messages.stream()
                 .map(message -> new ChatMessageResponse(message, currentUser.getId()))
                 .toList();
     }
@@ -203,7 +222,7 @@ public class ChatService {
 
         participant.accept();
         room.activate();
-        return toSummary(room, currentUser);
+        return toSummary(room, currentUser, null, null);
     }
 
     @Transactional
@@ -311,25 +330,34 @@ public class ChatService {
         return room;
     }
 
-    private ChatRoomSummaryResponse toSummary(ChatRoom room, AppUser currentUser) {
-        ChatMessage lastMessage = chatMessageRepository.findTopByRoomOrderByCreatedAtDesc(room).orElse(null);
+    private ChatRoomSummaryResponse toSummary(
+            ChatRoom room,
+            AppUser currentUser,
+            ChatMessage preloadedLastMessage,
+            List<ChatParticipant> preloadedParticipants
+    ) {
+        ChatMessage lastMessage = preloadedLastMessage != null
+                ? preloadedLastMessage
+                : chatMessageRepository.findTopByRoomOrderByCreatedAtDesc(room).orElse(null);
         return new ChatRoomSummaryResponse(
                 room.getId(),
                 room.getType(),
-                resolveRoomName(room, currentUser),
-                resolveRoomProfileImage(room, currentUser),
+                resolveRoomName(room, currentUser, preloadedParticipants),
+                resolveRoomProfileImage(room, currentUser, preloadedParticipants),
                 lastMessage == null ? "" : lastMessage.getContent(),
                 lastMessage == null ? room.getUpdatedAt() : lastMessage.getCreatedAt()
         );
     }
 
-    private ChatRequestResponse toRequest(ChatRoom room, AppUser currentUser) {
+    private ChatRequestResponse toRequest(ChatRoom room, AppUser currentUser, ChatMessage preloadedLastMessage) {
         AppUser requester = room.getRequestedBy();
         if (requester == null || requester.getId().equals(currentUser.getId())) {
             return null;
         }
 
-        ChatMessage lastMessage = chatMessageRepository.findTopByRoomOrderByCreatedAtDesc(room).orElse(null);
+        ChatMessage lastMessage = preloadedLastMessage != null
+                ? preloadedLastMessage
+                : chatMessageRepository.findTopByRoomOrderByCreatedAtDesc(room).orElse(null);
         return new ChatRequestResponse(
                 room.getId(),
                 displayName(requester),
@@ -340,12 +368,12 @@ public class ChatService {
         );
     }
 
-    private String resolveRoomName(ChatRoom room, AppUser currentUser) {
+    private String resolveRoomName(ChatRoom room, AppUser currentUser, List<ChatParticipant> preloadedParticipants) {
         if ("TEAM".equals(room.getType()) && room.getProject() != null) {
             return room.getProject().getTitle() + " 팀 채팅";
         }
 
-        return chatParticipantRepository.findByRoomOrderByJoinedAtAsc(room).stream()
+        return getParticipants(room, preloadedParticipants).stream()
                 .map(ChatParticipant::getUser)
                 .filter(user -> !user.getId().equals(currentUser.getId()))
                 .findFirst()
@@ -353,17 +381,42 @@ public class ChatService {
                 .orElse("채팅");
     }
 
-    private String resolveRoomProfileImage(ChatRoom room, AppUser currentUser) {
+    private String resolveRoomProfileImage(ChatRoom room, AppUser currentUser, List<ChatParticipant> preloadedParticipants) {
         if ("TEAM".equals(room.getType())) {
             return null;
         }
 
-        return chatParticipantRepository.findByRoomOrderByJoinedAtAsc(room).stream()
+        return getParticipants(room, preloadedParticipants).stream()
                 .map(ChatParticipant::getUser)
                 .filter(user -> !user.getId().equals(currentUser.getId()))
                 .findFirst()
                 .map(AppUser::getProfileImage)
                 .orElse(null);
+    }
+
+    private List<ChatParticipant> getParticipants(ChatRoom room, List<ChatParticipant> preloadedParticipants) {
+        return preloadedParticipants != null ? preloadedParticipants : chatParticipantRepository.findByRoomOrderByJoinedAtAsc(room);
+    }
+
+    private Map<Long, ChatMessage> getLastMessageByRoomId(List<ChatRoom> rooms) {
+        if (rooms.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, ChatMessage> lastMessageByRoomId = new HashMap<>();
+        for (ChatMessage message : chatMessageRepository.findByRoomInOrderByRoomIdAscCreatedAtDesc(rooms)) {
+            lastMessageByRoomId.putIfAbsent(message.getRoom().getId(), message);
+        }
+        return lastMessageByRoomId;
+    }
+
+    private Map<Long, List<ChatParticipant>> getParticipantsByRoomId(List<ChatRoom> rooms) {
+        if (rooms.isEmpty()) {
+            return Map.of();
+        }
+
+        return chatParticipantRepository.findByRoomInOrderByRoomIdAscJoinedAtAsc(rooms).stream()
+                .collect(Collectors.groupingBy(participant -> participant.getRoom().getId(), HashMap::new, Collectors.toCollection(ArrayList::new)));
     }
 
     private String displayName(AppUser user) {

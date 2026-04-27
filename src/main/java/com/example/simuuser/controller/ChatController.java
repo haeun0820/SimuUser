@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.Map;
@@ -96,9 +97,11 @@ public class ChatController {
 
     @ResponseBody
     @GetMapping("/api/chat/rooms/{roomId}/messages")
-    public ResponseEntity<?> messages(@PathVariable Long roomId, Authentication authentication) {
+    public ResponseEntity<?> messages(@PathVariable Long roomId,
+                                      @RequestParam(required = false) Long afterMessageId,
+                                      Authentication authentication) {
         try {
-            return ResponseEntity.ok(chatService.findMessages(roomId, authentication));
+            return ResponseEntity.ok(chatService.findMessages(roomId, afterMessageId, authentication));
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }

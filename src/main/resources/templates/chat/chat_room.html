@@ -30,6 +30,7 @@
         const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
         let pollHandle = null;
+        let lastMessageId = null;
 
         function csrfHeaders() {
             return csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {};
@@ -60,6 +61,7 @@
             div.title = formatTime(message.createdAt);
             chatMsgs.appendChild(div);
             chatMsgs.scrollTop = chatMsgs.scrollHeight;
+            lastMessageId = message.id;
         }
 
         async function loadRoom() {
@@ -77,8 +79,9 @@
             return true;
         }
 
-        async function loadMessages() {
-            const response = await fetch(`/api/chat/rooms/${roomId}/messages`);
+        async function loadMessages(reset = false) {
+            const query = !reset && lastMessageId ? `?afterMessageId=${lastMessageId}` : '';
+            const response = await fetch(`/api/chat/rooms/${roomId}/messages${query}`);
             const result = await response.json().catch(() => []);
 
             if (!response.ok) {
@@ -87,15 +90,17 @@
             }
 
             const chatMsgs = document.getElementById('chatMsgs');
-            chatMsgs.innerHTML = '';
+            if (reset) {
+                chatMsgs.innerHTML = '';
+                lastMessageId = null;
+            }
 
-            if (!result.length) {
+            if (reset && !result.length) {
                 chatMsgs.innerHTML = '<div class="msg">대화를 시작해보세요.</div>';
                 return;
             }
 
             result.forEach(appendMessage);
-            chatMsgs.scrollTop = chatMsgs.scrollHeight;
         }
 
         async function send() {
@@ -119,15 +124,15 @@
             }
 
             input.value = '';
-            await loadMessages();
+            appendMessage(result);
         }
 
         (async function init() {
             const canOpen = await loadRoom();
             if (!canOpen) return;
 
-            await loadMessages();
-            pollHandle = window.setInterval(loadMessages, 5000);
+            await loadMessages(true);
+            pollHandle = window.setInterval(() => loadMessages(false), 5000);
             window.addEventListener('beforeunload', () => {
                 if (pollHandle) {
                     window.clearInterval(pollHandle);
