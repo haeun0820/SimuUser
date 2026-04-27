@@ -6,15 +6,19 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "documents")
-@Getter 
+@Getter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class Document {
 
     @Id
@@ -23,8 +27,14 @@ public class Document {
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tab_id", nullable = false)
+    @JoinColumn(name = "tab_id")
     private ProjectTab projectTab;
+
+    @ManyToOne
+    @JoinColumn(name = "project_id")
+    private Project project; // 이 필드 이름이 builder의 .project()가 됩니다.
+
+    private String type;
 
     @Column(nullable = false)
     private String title;
@@ -36,9 +46,11 @@ public class Document {
     private String content;
 
     // Document.java 내부 추가/수정
+    @Builder.Default
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DocumentVersion> versions = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DocumentComment> comments = new ArrayList<>(); // DocumentComment로 변경
 

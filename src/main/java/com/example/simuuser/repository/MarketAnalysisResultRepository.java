@@ -11,4 +11,6 @@ public interface MarketAnalysisResultRepository extends JpaRepository<MarketAnal
     List<MarketAnalysisResult> findByProjectOrderByCreatedAtDesc(Project project);
 
     List<MarketAnalysisResult> findByProjectIn(List<Project> projects);
+
+    List<MarketAnalysisResult> findByProject(Project project);
 }

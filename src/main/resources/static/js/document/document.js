@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('closeCreateModal').onclick = () => { createModal.style.display = 'none'; };
     document.getElementById('closeDetailModal').onclick = () => { detailModal.style.display = 'none'; };
 
-    // 문서 생성/수정 확인 버튼
+    // 💡 [핵심] 문서 생성/수정 확인 버튼 (오직 이 함수 하나만 실행됩니다!)
     btnSubmit.onclick = function() {
         const title = document.getElementById('newDocTitle').value;
         const desc = document.getElementById('newDocDesc').value;
@@ -51,35 +51,74 @@ document.addEventListener('DOMContentLoaded', function() {
         if(!title) return alert("제목을 입력해주세요.");
 
         if (editMode) {
+            // [수동 편집 기능]
             const docIdx = generatedDocs.findIndex(d => d.id === editId);
             if (docIdx > -1) {
                 generatedDocs[docIdx].title = title;
                 generatedDocs[docIdx].description = desc;
                 generatedDocs[docIdx].type = currentDocType;
             }
+            renderDocuments();
+            createModal.style.display = 'none';
+
         } else {
-            const newDoc = {
-                id: Date.now(),
+            // [AI 자동 생성 기능]
+            if (!selectedProjectId) {
+                return alert("먼저 왼쪽 목록에서 프로젝트를 선택해주세요.");
+            }
+
+            const requestData = {
+                projectId: selectedProjectId, 
+                documentType: currentDocType,
                 title: title,
-                description: desc,
-                content: "AI가 생성할 문서 내용입니다.", 
-                type: currentDocType,
-                date: new Date().toLocaleDateString(),
-                author: '정유나'
+                description: desc
             };
-            generatedDocs.unshift(newDoc);
-        }
 
-        renderDocuments();
-        createModal.style.display = 'none';
+            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
-        const openEditorBtn = document.getElementById('btnOpenEditor');
-        if (openEditorBtn) {
-            openEditorBtn.onclick = () => {
-                if (currentDocId) {
-                    openDocEditor(currentDocId);
+            btnSubmit.innerText = "생성 중...";
+            btnSubmit.disabled = true;
+
+            fetch('/api/documents/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrfHeader]: csrfToken
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`백엔드 서버 오류가 발생했습니다. (상태 코드: ${response.status})`);
                 }
-            };
+                return response.json();
+            })
+            .then(data => {
+                alert("AI 문서가 성공적으로 생성되었습니다!");
+                
+                const newDoc = {
+                    id: data.id, 
+                    title: data.title,
+                    description: data.description,
+                    content: data.content,
+                    type: currentDocType,
+                    date: new Date().toLocaleDateString(),
+                    author: 'AI 어시스턴트' 
+                };
+                generatedDocs.unshift(newDoc); 
+                
+                renderDocuments(); 
+                createModal.style.display = 'none';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(error.message);
+            })
+            .finally(() => {
+                btnSubmit.innerText = "추가";
+                btnSubmit.disabled = false;
+            });
         }
     };
 
@@ -102,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // 탭 필터링 (전체/기획서/보고서/분석결과)
+    // 탭 필터링
     document.querySelectorAll('.doc-tab').forEach(tab => {
         tab.onclick = function() {
             document.querySelectorAll('.doc-tab').forEach(t => t.classList.remove('active'));
@@ -192,7 +231,14 @@ function renderDocuments(filter = 'all') {
     
     const filtered = filter === 'all' ? generatedDocs : generatedDocs.filter(d => d.type === filter);
 
-    if (generatedDocs.length === 0) return;
+    if (generatedDocs.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">📄</div>
+                <p>아직 생성된 문서가 없습니다.<br>문서를 AI를 이용해 자동 생성해보세요</p>
+            </div>`;
+        return;
+    }
 
     container.innerHTML = filtered.map(doc => `
         <div class="doc-item">
@@ -240,7 +286,7 @@ function showDetail(id) {
     const doc = generatedDocs.find(d => d.id === id);
     if(!doc) return;
 
-    currentDocId = id; // 전역 변수에 현재 문서 ID 저장
+    currentDocId = id; 
 
     document.getElementById('viewTitle').innerText = doc.title;
     document.getElementById('viewTypeTag').innerText = doc.type;
@@ -250,30 +296,18 @@ function showDetail(id) {
     document.getElementById('detailModal').style.display = 'flex';
 }
 
-// document.js 내부
 function openDocEditor(id) {
     const doc = generatedDocs.find(d => d.id === id);
     if (!doc) return;
 
-    // localStorage에 저장 (에디터 페이지에서 꺼내 쓰기용)
     localStorage.setItem('currentEditDoc', JSON.stringify(doc));
-    
-    // 스프링 부트가 관리하는 경로로 새 창 열기 (ID 포함)
     window.open('/document/editor?id=' + id, '_blank');
 }
-
-// 상세보기 팝업의 '문서 열기' 버튼 이벤트 바인딩 예시
-// HTML에 id="btnOpenEditor"가 있다고 가정
-// document.getElementById('btnOpenEditor').onclick = () => openDocEditor(currentDocId);
 
 /* ── 삭제 기능 ── */
 function deleteDoc(id) {
     if (confirm("문서를 삭제하시겠습니까?")) {
         generatedDocs = generatedDocs.filter(d => d.id !== id);
-        if (generatedDocs.length === 0) {
-            location.reload(); 
-        } else {
-            renderDocuments();
-        }
+        renderDocuments();
     }
 }

@@ -1,5 +1,6 @@
 package com.example.simuuser.repository;
 
+import com.example.simuuser.entity.AiSimulationResult;
 import com.example.simuuser.entity.CostAnalysisResult;
 import com.example.simuuser.entity.Project;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,4 +12,6 @@ public interface CostAnalysisResultRepository extends JpaRepository<CostAnalysis
     List<CostAnalysisResult> findByProjectOrderByCreatedAtDesc(Project project);
 
     List<CostAnalysisResult> findByProjectIn(List<Project> projects);
+
+    List<CostAnalysisResult> findByProject(Project project);
 }

@@ -11,4 +11,6 @@ public interface AiSimulationResultRepository extends JpaRepository<AiSimulation
     List<AiSimulationResult> findByProjectOrderByCreatedAtDesc(Project project);
 
     List<AiSimulationResult> findByProjectIn(List<Project> projects);
+
+    List<AiSimulationResult> findByProject(Project project);
 }
