@@ -5,9 +5,11 @@ import com.example.simuuser.entity.AiSimulationResult;
 import com.example.simuuser.entity.CostAnalysisResult;
 import com.example.simuuser.entity.MarketAnalysisResult;
 import com.example.simuuser.entity.Project;
+import com.example.simuuser.entity.ScenarioComparisonResult;
 import com.example.simuuser.repository.AiSimulationResultRepository;
 import com.example.simuuser.repository.CostAnalysisResultRepository;
 import com.example.simuuser.repository.MarketAnalysisResultRepository;
+import com.example.simuuser.repository.ScenarioComparisonResultRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,17 +30,20 @@ public class DashboardService {
     private final AiSimulationResultRepository aiSimulationResultRepository;
     private final CostAnalysisResultRepository costAnalysisResultRepository;
     private final MarketAnalysisResultRepository marketAnalysisResultRepository;
+    private final ScenarioComparisonResultRepository scenarioComparisonResultRepository;
 
     public DashboardService(
             ProjectService projectService,
             AiSimulationResultRepository aiSimulationResultRepository,
             CostAnalysisResultRepository costAnalysisResultRepository,
-            MarketAnalysisResultRepository marketAnalysisResultRepository
+            MarketAnalysisResultRepository marketAnalysisResultRepository,
+            ScenarioComparisonResultRepository scenarioComparisonResultRepository
     ) {
         this.projectService = projectService;
         this.aiSimulationResultRepository = aiSimulationResultRepository;
         this.costAnalysisResultRepository = costAnalysisResultRepository;
         this.marketAnalysisResultRepository = marketAnalysisResultRepository;
+        this.scenarioComparisonResultRepository = scenarioComparisonResultRepository;
     }
 
     @Transactional(readOnly = true)
@@ -51,15 +56,17 @@ public class DashboardService {
         List<AiSimulationResult> aiResults = aiSimulationResultRepository.findByProjectIn(projects);
         List<CostAnalysisResult> costResults = costAnalysisResultRepository.findByProjectIn(projects);
         List<MarketAnalysisResult> marketResults = marketAnalysisResultRepository.findByProjectIn(projects);
+        List<ScenarioComparisonResult> scenarioResults = scenarioComparisonResultRepository.findByProjectIn(projects);
 
         List<LocalDateTime> allCreatedAt = new ArrayList<>();
         aiResults.forEach(result -> allCreatedAt.add(result.getCreatedAt()));
         costResults.forEach(result -> allCreatedAt.add(result.getCreatedAt()));
         marketResults.forEach(result -> allCreatedAt.add(result.getCreatedAt()));
+        scenarioResults.forEach(result -> allCreatedAt.add(result.getCreatedAt()));
 
         return new DashboardAnalyticsResponse(
                 allCreatedAt.size(),
-                buildToolUsage(aiResults.size(), costResults.size(), marketResults.size()),
+                buildToolUsage(aiResults.size(), costResults.size(), marketResults.size(), scenarioResults.size()),
                 buildYearSeries(allCreatedAt),
                 buildMonthSeries(allCreatedAt),
                 buildWeekSeries(allCreatedAt)
@@ -69,21 +76,21 @@ public class DashboardService {
     private DashboardAnalyticsResponse emptyResponse() {
         return new DashboardAnalyticsResponse(
                 0,
-                buildToolUsage(0, 0, 0),
+                buildToolUsage(0, 0, 0, 0),
                 new DashboardAnalyticsResponse.ChartSeries(List.of(), List.of()),
                 new DashboardAnalyticsResponse.ChartSeries(List.of(), List.of()),
                 new DashboardAnalyticsResponse.ChartSeries(List.of(), List.of())
         );
     }
 
-    private List<DashboardAnalyticsResponse.ToolUsageItem> buildToolUsage(int aiCount, int costCount, int marketCount) {
+    private List<DashboardAnalyticsResponse.ToolUsageItem> buildToolUsage(int aiCount, int costCount, int marketCount, int scenarioCount) {
         return List.of(
                 new DashboardAnalyticsResponse.ToolUsageItem("aiSimulation", "AI 시뮬레이션", aiCount, "#2563eb"),
                 new DashboardAnalyticsResponse.ToolUsageItem("autoDocument", "자동 문서화", 0, "#f59e0b"),
                 new DashboardAnalyticsResponse.ToolUsageItem("feedbackAi", "기획 피드백 AI", 0, "#f97316"),
                 new DashboardAnalyticsResponse.ToolUsageItem("costAnalysis", "비용&수익성 분석", costCount, "#ec4899"),
                 new DashboardAnalyticsResponse.ToolUsageItem("marketAnalysis", "시장&경쟁 분석", marketCount, "#8b5cf6"),
-                new DashboardAnalyticsResponse.ToolUsageItem("scenarioCompare", "시나리오 비교", 0, "#ef4444")
+                new DashboardAnalyticsResponse.ToolUsageItem("scenarioCompare", "시나리오 비교", scenarioCount, "#ef4444")
         );
     }
 

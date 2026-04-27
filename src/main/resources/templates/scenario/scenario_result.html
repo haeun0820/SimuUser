@@ -3,181 +3,77 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="_csrf" th:if="${_csrf}" th:content="${_csrf.token}">
+  <meta name="_csrf_header" th:if="${_csrf}" th:content="${_csrf.headerName}">
   <title>SimuUser</title>
   <link rel="stylesheet" th:href="@{/css/scenario/scenario_result.css}">
   <link rel="stylesheet" th:href="@{/css/header/header.css}">
 </head>
 <body>
 <div class="app-layout">
-    <div id="sidebar-root" data-active="scenario"></div>
+  <div id="sidebar-root" data-active="scenario"></div>
 
-    <div class="main-area">
-        <header th:replace="~{header/header :: header(${ {'분석도구','시나리오 비교'} })}"></header>
+  <div class="main-area">
+    <header th:replace="~{header/header :: header(${ {'분석도구','시나리오 비교'} })}"></header>
 
-        <main class="page-content">
-            <div class="page-header">
-                <div class="page-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                        <path d="M3 3v18h18M7 16l4-4 4 4 5-8" />
-                    </svg>
-                </div>
-                <div>
-                    <div class="page-title">시나리오 비교</div>
-                    <div class="page-subtitle">두 가지 기획안을 비교하여 최적의 방향을 선택합니다</div>
-                </div>
-            </div>
+    <main class="page-content">
+      <div class="page-header">
+        <div class="page-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+            <path d="M3 3v18h18M7 16l4-4 4 4 5-8" />
+          </svg>
+        </div>
+        <div>
+          <div class="page-title">시나리오 비교</div>
+          <div class="page-subtitle">여러 기획안을 비교해서 더 적합한 방향을 정리합니다.</div>
+        </div>
+      </div>
 
-            <div class="result-action-group">
-        <button type="button" class="btn-action-outline" onclick="history.back()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M19 12H5M12 19l-7-7 7-7"/>
-            </svg>
-            설정으로 돌아가기
-        </button>
-        <button type="button" class="btn-action-primary" onclick="location.reload()">
-            다시 시뮬레이션
-        </button>
-        <button type="button" class="btn-action-success" id="btnSaveResult">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                <polyline points="17 21 17 13 7 13 7 21"/>
-                <polyline points="7 3 7 8 15 8"/>
-            </svg>
-            저장하기
-        </button>
-    </div>
+      <div class="result-action-group">
+        <button type="button" class="btn-action-outline" onclick="history.back()">이전으로 돌아가기</button>
+        <button type="button" class="btn-action-primary" id="btnRerunScenario">다시 분석</button>
+        <button type="button" class="btn-action-success" id="btnSaveScenarioResult">저장하기</button>
+      </div>
 
-            <div class="best-recommend-card">
-                <div class="recommend-icon">🏆</div>
-                <div class="recommend-label">AI 추천 최적안</div>
-                <div class="recommend-title">B안</div>
-                <p class="recommend-desc">기획안 분석 결과 어떠어떠한 이유로 인해 B안이 A안보다 더 좋다고 판단 됐습니다.</p>
-            </div>
+      <div class="best-recommend-card">
+        <div class="recommend-icon">AI</div>
+        <div class="recommend-label" id="recommendLabel">AI 추천 최적안</div>
+        <div class="recommend-title" id="recommendTitle">-</div>
+        <p class="recommend-desc" id="recommendReason">분석 결과를 불러오는 중입니다.</p>
+      </div>
 
-            <div class="scenario-summary-grid">
-                <div class="summary-card card-a">
-                    <div class="card-head">
-                        <span class="plan-badge">A안</span>
-                        <div class="score-info">
-                            <span class="score-num">40</span>
-                            <span class="score-label">종합 점수</span>
-                        </div>
-                    </div>
-                    <div class="progress-bar"><div class="fill" style="width: 40%;"></div></div>
-                    
-                    <div class="pros-cons-box">
-                        <div class="point-item pros">
-                            <div class="point-title">📈 장점</div>
-                            <ul>
-                                <li>특정 인물(하은)에 초점을 맞춰 명확한 대상 설정</li>
-                                <li>핵심 기능이 간결하여 이해하기 쉬움</li>
-                            </ul>
-                        </div>
-                        <div class="point-item cons">
-                            <div class="point-title">📉 단점</div>
-                            <ul>
-                                <li>서비스 'gggg'와의 연관성 및 가치 창출 불분명</li>
-                                <li>부정적인 뉘앙스를 포함하여 사용자 경험에 대한 우려</li>
-                                <li>시장성 및 확장성에 대한 근거 부족</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+      <div class="scenario-summary-grid" id="scenarioSummaryGrid"></div>
 
-                <div class="summary-card card-b">
-                    <div class="card-head">
-                        <span class="plan-badge">B안</span>
-                        <div class="score-info">
-                            <span class="score-num">80</span>
-                            <span class="score-label">종합 점수</span>
-                        </div>
-                    </div>
-                    <div class="progress-bar"><div class="fill" style="width: 80%;"></div></div>
-                    
-                    <div class="pros-cons-box">
-                        <div class="point-item pros">
-                            <div class="point-title">📈 장점</div>
-                            <ul>
-                                <li>특정 인물(하은)에 초점을 맞춰 명확한 대상 설정</li>
-                                <li>핵심 기능이 간결하여 이해하기 쉬움</li>
-                            </ul>
-                        </div>
-                        <div class="point-item cons">
-                            <div class="point-title">📉 단점</div>
-                            <ul>
-                                <li>서비스 'gggg'와의 연관성 및 가치 창출 불분명</li>
-                                <li>부정적인 뉘앙스를 포함하여 사용자 경험에 대한 우려</li>
-                                <li>시장성 및 확장성에 대한 근거 부족</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
+      <div class="detail-analysis-card">
+        <h3 class="section-title">항목별 비교 분석</h3>
+        <table class="analysis-table">
+          <thead id="criteriaTableHead"></thead>
+          <tbody id="criteriaTableBody"></tbody>
+        </table>
+      </div>
 
-            <div class="detail-analysis-card">
-                <h3 class="section-title">세부 비교 분석</h3>
-                <table class="analysis-table">
-                    <thead>
-                        <tr>
-                            <th>기준</th>
-                            <th>A안</th>
-                            <th>B안</th>
-                            <th>우세</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>사업성/수익성</td>
-                            <td class="score-a">0</td>
-                            <td class="score-b">50</td>
-                            <td><span class="win-badge">B안</span></td>
-                        </tr>
-                        <tr>
-                            <td>사용자 가치</td>
-                            <td class="score-a">0</td>
-                            <td class="score-b">80</td>
-                            <td><span class="win-badge">B안</span></td>
-                        </tr>
-                        <tr>
-                            <td>구현 가능성</td>
-                            <td class="score-a">20</td>
-                            <td class="score-b">40</td>
-                            <td><span class="win-badge">B안</span></td>
-                        </tr>
-                        <tr>
-                            <td>명확성/구체성</td>
-                            <td class="score-a">20</td>
-                            <td class="score-b">60</td>
-                            <td><span class="win-badge">B안</span></td>
-                        </tr>
-                        <tr>
-                            <td>시장 경쟁력</td>
-                            <td class="score-a">60</td>
-                            <td class="score-b">80</td>
-                            <td><span class="win-badge">B안</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="final-suggestion-grid">
-                <div class="suggestion-box">
-                    <h4>최종 추천</h4>
-                    <p>시나리오 B를 강력하게 추천합니다. 시나리오 B는 AI를 활용한 쇼핑몰 개발이라는 명확한 목표와 비즈니스 모델을 제시하며...</p>
-                </div>
-                <div class="suggestion-box hybrid">
-                    <h4>하이이브리드 제안</h4>
-                    <p>시나리오 A는 제품 기획의 관점에서 어떠한 긍정적 요소도 없으므로, 두 시나리오를 결합하는 것은 적절하지 않습니다...</p>
-                </div>
-            </div>
-        </main>
-    </div>
+      <div class="final-suggestion-grid">
+        <div class="suggestion-box">
+          <h4>최종 추천</h4>
+          <p id="finalSuggestionText">-</p>
+        </div>
+        <div class="suggestion-box hybrid">
+          <h4>하이브리드 제안</h4>
+          <p id="hybridSuggestionText">-</p>
+        </div>
+      </div>
+    </main>
+  </div>
 </div>
 
-<!-- 사이드바 -->
+<script th:inline="javascript">
+  window.scenarioAnalysisContext = {
+    request: /*[[${scenarioRequestData}]]*/ {},
+    result: /*[[${scenarioResultData}]]*/ {}
+  };
+</script>
 <script th:src="@{/js/sidebar.js}"></script>
 <script th:src="@{/js/header.js}"></script>
-<!-- 페이지 스크립트 -->
-<script th:src="@{/js/scenario/scenario.js}"></script>
+<script th:src="@{/js/scenario/scenario_result.js}"></script>
 </body>
 </html>
