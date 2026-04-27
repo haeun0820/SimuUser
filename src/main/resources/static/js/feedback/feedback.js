@@ -3,6 +3,7 @@
   let selectedProjectId = null;
   let currentFilter = 'all';
   const initialProjectId = new URLSearchParams(window.location.search).get('projectId');
+  const draftKey = 'feedbackDraft';
 
   /* ── 프로젝트 리스트 관련 (기존 로직 유지) ── */
   async function fetchProjects() {
@@ -75,6 +76,33 @@
     btn.disabled = !selectedProjectId;
   }
 
+  function restoreDraft() {
+    const raw = sessionStorage.getItem(draftKey);
+    if (!raw) return;
+
+    try {
+      const draft = JSON.parse(raw);
+      if (draft.projectId) {
+        selectedProjectId = String(draft.projectId);
+      }
+
+      if (draft.sourceType === 'text') {
+        const textRadio = document.querySelector('input[name="inputMethod"][value="text"]');
+        const textArea = document.querySelector('textarea[name="textContent"]');
+        if (textRadio && textArea) {
+          textRadio.checked = true;
+          document.getElementById('fileInputArea').classList.remove('active');
+          document.getElementById('textInputArea').classList.add('active');
+          textArea.value = draft.textContent || '';
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      sessionStorage.removeItem(draftKey);
+    }
+  }
+
   /* ── 피드백 실행 및 결과 이동 ── */
   function runFeedback(event) {
     if (!selectedProjectId) {
@@ -85,13 +113,22 @@
     const projectIdInput = document.getElementById('selectedProjectIdInput');
     if (projectIdInput) projectIdInput.value = selectedProjectId;
 
+    const selectedMethod = document.querySelector('input[name="inputMethod"]:checked')?.value || 'file';
+    const textContent = document.querySelector('textarea[name="textContent"]')?.value || '';
+    sessionStorage.setItem(draftKey, JSON.stringify({
+      projectId: selectedProjectId,
+      sourceType: selectedMethod,
+      textContent
+    }));
+
     const overlay = document.getElementById('loadingOverlay');
     overlay.classList.add('active');
   }
 
   function init() {
-    fetchProjects();
     initMethodTabs();
+    restoreDraft();
+    fetchProjects();
     
     document.querySelectorAll('input[name="projectFilter"]').forEach(radio => {
       radio.addEventListener('change', (e) => {

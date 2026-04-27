@@ -1,6 +1,8 @@
 package com.example.simuuser.controller;
 
+import com.example.simuuser.dto.FeedbackAnalysisResultSaveRequest;
 import com.example.simuuser.dto.ProjectResponse;
+import com.example.simuuser.service.FeedbackAnalysisResultService;
 import com.example.simuuser.service.ProjectService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,7 +13,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,6 +31,7 @@ import java.util.Map;
 public class FeedbackController {
 
     private final ProjectService projectService;
+    private final FeedbackAnalysisResultService feedbackAnalysisResultService;
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
     private final String geminiApiKey;
@@ -35,10 +40,12 @@ public class FeedbackController {
 
     public FeedbackController(
             ProjectService projectService,
+            FeedbackAnalysisResultService feedbackAnalysisResultService,
             @Value("${gemini.api.key:}") String geminiApiKey,
             @Value("${gemini.model:gemini-2.5-flash}") String geminiModel
     ) {
         this.projectService = projectService;
+        this.feedbackAnalysisResultService = feedbackAnalysisResultService;
         this.objectMapper = new ObjectMapper();
         this.restTemplate = new RestTemplate();
         this.geminiApiKey = geminiApiKey;
@@ -52,7 +59,14 @@ public class FeedbackController {
 
     @GetMapping("/feedback/result")
     public String feedbackResultPage(Model model) {
-        model.addAttribute("result", emptyAnalysisData("분석할 기획서 내용을 입력한 뒤 다시 실행해주세요."));
+        Map<String, Object> result = emptyAnalysisData("분석할 기획 내용이 없습니다. 다시 분석을 실행해주세요.");
+        model.addAttribute("result", result);
+        model.addAttribute("feedbackResultData", result);
+        model.addAttribute("analysisRequest", Map.of(
+                "projectId", null,
+                "sourceType", "project",
+                "sourceContent", ""
+        ));
         return "feedback/feedback_result";
     }
 
@@ -64,19 +78,42 @@ public class FeedbackController {
             Model model,
             Authentication authentication
     ) {
+        String sourceType = resolveSourceType(file, textContent);
+        String sourceContent = "";
+
         try {
             ProjectResponse project = findProject(projectId, authentication);
-            String planText = readPlanText(file, textContent, project);
-            Map<String, Object> geminiResponse = callGemini(buildGeminiRequest(buildPrompt(project, planText)));
+            sourceContent = readPlanText(file, textContent, project);
+            Map<String, Object> geminiResponse = callGemini(buildGeminiRequest(buildPrompt(project, sourceContent)));
             Map<String, Object> result = normalizeResult(parseJsonResult(extractText(geminiResponse)));
-            model.addAttribute("result", result);
+            applyResultModel(model, result, projectId, sourceType, sourceContent);
         } catch (RestClientException e) {
-            model.addAttribute("result", emptyAnalysisData(toGeminiErrorMessage(e)));
+            applyResultModel(model, emptyAnalysisData(toGeminiErrorMessage(e)), projectId, sourceType, sourceContent);
         } catch (Exception e) {
-            model.addAttribute("result", emptyAnalysisData("기획 피드백 분석에 실패했습니다: " + e.getMessage()));
+            applyResultModel(model, emptyAnalysisData("기획 피드백 분석에 실패했습니다: " + e.getMessage()), projectId, sourceType, sourceContent);
         }
 
         return "feedback/feedback_result";
+    }
+
+    @PostMapping("/feedback/results")
+    @ResponseBody
+    public Map<String, Object> saveFeedbackResult(@RequestBody FeedbackAnalysisResultSaveRequest request, Authentication authentication) {
+        try {
+            return Map.of("saved", feedbackAnalysisResultService.save(request, authentication));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    private void applyResultModel(Model model, Map<String, Object> result, Long projectId, String sourceType, String sourceContent) {
+        model.addAttribute("result", result);
+        model.addAttribute("feedbackResultData", result);
+        model.addAttribute("analysisRequest", Map.of(
+                "projectId", projectId,
+                "sourceType", sourceType,
+                "sourceContent", sourceContent == null ? "" : sourceContent
+        ));
     }
 
     private ProjectResponse findProject(Long projectId, Authentication authentication) {
@@ -104,7 +141,7 @@ public class FeedbackController {
             return """
                     프로젝트명: %s
                     설명: %s
-                    타겟 유저: %s
+                    타겟 사용자: %s
                     산업 분야: %s
                     """.formatted(
                     text(project.getTitle(), ""),
@@ -114,7 +151,17 @@ public class FeedbackController {
             ).trim();
         }
 
-        throw new IllegalArgumentException("분석할 기획서 내용이 필요합니다.");
+        throw new IllegalArgumentException("분석할 기획 내용이 필요합니다.");
+    }
+
+    private String resolveSourceType(MultipartFile file, String textContent) {
+        if (textContent != null && !textContent.trim().isBlank()) {
+            return "text";
+        }
+        if (file != null && !file.isEmpty()) {
+            return "file";
+        }
+        return "project";
     }
 
     private Map<String, Object> callGemini(Map<String, Object> requestBody) {
@@ -175,7 +222,7 @@ public class FeedbackController {
                 : """
                 - 프로젝트명: %s
                 - 설명: %s
-                - 타겟 유저: %s
+                - 타겟 사용자: %s
                 - 산업 분야: %s
                 """.formatted(
                 text(project.getTitle(), "미입력"),
@@ -186,7 +233,7 @@ public class FeedbackController {
 
         return """
                 당신은 스타트업 사업기획서와 제품기획서를 검토하는 한국어 AI 피드백 전문가입니다.
-                아래 기획 내용을 분석하고 JSON만 반환하세요. 마크다운, 코드블록, 설명 문장은 넣지 마세요.
+                아래 기획 내용을 분석하고 JSON만 반환하세요. 마크다운, 코드블록, 설명 문장은 절대 넣지 마세요.
 
                 [프로젝트 정보]
                 %s
@@ -206,16 +253,16 @@ public class FeedbackController {
                   "improvements": ["개선 방향"],
                   "risks": ["리스크"],
                   "scenarios": {
-                    "best": "최상 시나리오와 대응 방안",
-                    "normal": "보통 시나리오와 대응 방안",
-                    "worst": "최악 시나리오와 대응 방안"
+                    "best": "최상 시나리오와 대응방안",
+                    "normal": "보통 시나리오와 대응방안",
+                    "worst": "최악 시나리오와 대응방안"
                   }
                 }
 
                 규칙:
                 - 모든 텍스트는 한국어로 작성하세요.
                 - 점수는 0부터 100 사이 정수로 작성하세요.
-                - totalScore는 logicScore, completionScore, feasibilityScore를 종합한 현실적인 점수로 작성하세요.
+                - totalScore는 logicScore, completionScore, feasibilityScore를 종합한 일관적인 점수로 작성하세요.
                 - strengths는 2~5개, weaknesses는 3~6개로 작성하세요.
                 - missingElements는 4~10개로 작성하세요.
                 - improvements는 4~6개로 작성하세요.
@@ -310,7 +357,7 @@ public class FeedbackController {
         result.put("strengths", List.of());
         result.put("weaknesses", List.of(message));
         result.put("missingElements", List.of());
-        result.put("improvements", List.of("기획서 내용을 입력하거나 텍스트 파일을 업로드한 뒤 다시 분석을 실행하세요."));
+        result.put("improvements", List.of("기획 내용을 입력하거나 텍스트 또는 파일을 업로드한 뒤 다시 분석을 실행하세요."));
         result.put("risks", List.of());
         result.put("scenarios", Map.of("best", "", "normal", "", "worst", ""));
         return result;
