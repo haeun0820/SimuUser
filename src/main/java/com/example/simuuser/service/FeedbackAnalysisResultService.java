@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -55,7 +56,7 @@ public class FeedbackAnalysisResultService {
                 project,
                 currentUser,
                 normalize(request.getSourceType(), 20, "project"),
-                trimLongText(request.getSourceContent()),
+                sanitizeSourceContent(request.getSourceType(), request.getSourceContent()),
                 clamp(number(request.getResult().get("totalScore"), 0), 0, 100),
                 clamp(number(request.getResult().get("logicScore"), 0), 0, 100),
                 clamp(number(request.getResult().get("completionScore"), 0), 0, 100),
@@ -64,6 +65,27 @@ public class FeedbackAnalysisResultService {
         ));
 
         return new FeedbackAnalysisResultResponse(saved, request.getResult());
+    }
+
+    @Transactional(readOnly = true)
+    public List<FeedbackAnalysisResultResponse> findByProject(Long projectId, Authentication authentication) {
+        AppUser currentUser = projectService.getCurrentUser(authentication);
+        Project project = findAccessibleProject(projectId, currentUser);
+
+        return feedbackAnalysisResultRepository.findByProjectOrderByCreatedAtDesc(project)
+                .stream()
+                .map(result -> new FeedbackAnalysisResultResponse(result, fromJson(result.getResultJson())))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public FeedbackAnalysisResultResponse findOne(Long resultId, Authentication authentication) {
+        AppUser currentUser = projectService.getCurrentUser(authentication);
+        FeedbackAnalysisResult result = feedbackAnalysisResultRepository.findById(resultId)
+                .orElseThrow(() -> new IllegalArgumentException("Feedback result not found."));
+
+        findAccessibleProject(result.getProject().getId(), currentUser);
+        return new FeedbackAnalysisResultResponse(result, fromJson(result.getResultJson()));
     }
 
     private Project findAccessibleProject(Long projectId, AppUser currentUser) {
@@ -85,7 +107,6 @@ public class FeedbackAnalysisResultService {
         }
     }
 
-    @SuppressWarnings("unused")
     private Map<String, Object> fromJson(String resultJson) {
         try {
             return objectMapper.readValue(resultJson, new TypeReference<>() {});
@@ -109,6 +130,14 @@ public class FeedbackAnalysisResultService {
         }
         String normalized = value.trim();
         return normalized.length() > 10000 ? normalized.substring(0, 10000) : normalized;
+    }
+
+    private String sanitizeSourceContent(String sourceType, String sourceContent) {
+        String normalizedType = normalize(sourceType, 20, "project");
+        if ("file".equalsIgnoreCase(normalizedType)) {
+            return null;
+        }
+        return trimLongText(sourceContent);
     }
 
     private int number(Object value, int fallback) {

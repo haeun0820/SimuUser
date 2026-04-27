@@ -170,9 +170,7 @@
         </div>
       
         <div id="tab-plan" class="tab-content">
-            <div class="empty-state" style="padding: 40px; text-align: center; color: #94a3b8;">
-                기획 피드백 기록이 없습니다.
-            </div>
+            <div class="analysis-list" id="planAnalysisList"></div>
         </div>
         <div id="tab-scenario" class="tab-content">
             <div class="empty-state" style="padding: 40px; text-align: center; color: #94a3b8;">
@@ -290,10 +288,12 @@
     const simuList = document.getElementById('simuAnalysisList');
     const marketList = document.getElementById('marketAnalysisList');
     const costList = document.getElementById('financeAnalysisList');
+    const feedbackList = document.getElementById('planAnalysisList');
 
     if (simuList) simuList.innerHTML = loadingHtml;
     if (marketList) marketList.innerHTML = loadingHtml;
     if (costList) costList.innerHTML = loadingHtml;
+    if (feedbackList) feedbackList.innerHTML = loadingHtml;
   }
 
 /* ── 전역 변수 및 토큰 준비 ── */
@@ -505,10 +505,12 @@ async function createTab() {
 
       await loadMarketAnalyses(projectId);
       await loadCostAnalyses(projectId);
+      await loadFeedbackAnalyses(projectId);
       await loadAiUserAnalyses(projectId);
       renderAiUserAnalysisList();
       renderMarketAnalysisList();
       renderCostAnalysisList();
+      renderFeedbackAnalysisList();
     }
 
     if (currentProject) {
@@ -635,6 +637,31 @@ async function createTab() {
     }
   }
 
+  async function loadFeedbackAnalyses(projectId) {
+    if (!currentProject) return;
+    currentProject.feedbackAnalyses = [];
+
+    try {
+      const response = await fetch(`/feedback/results/project/${projectId}`, {
+        headers: { Accept: 'application/json' }
+      });
+      if (!response.ok) return;
+
+      const analyses = await response.json();
+      currentProject.feedbackAnalyses = analyses.map(item => ({
+        id: String(item.id),
+        type: 'feedback',
+        title: '기획 피드백 AI',
+        createdAt: item.createdAt,
+        result: item.result,
+        sourceType: item.sourceType,
+        starred: false
+      }));
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
 function renderCostAnalysisList() {
   const listEl = document.getElementById('financeAnalysisList');
   if (!listEl || !currentProject) return;
@@ -691,6 +718,36 @@ function deleteCostAnalysis(analysisId) {
   currentProject.costAnalyses = currentProject.costAnalyses.filter(x => x.id !== analysisId);
   updateLocalStorage();
   renderCostAnalysisList();
+}
+
+function renderFeedbackAnalysisList() {
+  const listEl = document.getElementById('planAnalysisList');
+  if (!listEl || !currentProject) return;
+  const analyses = currentProject.feedbackAnalyses || [];
+
+  if (analyses.length === 0) {
+    listEl.innerHTML = `<div class="empty-state" style="padding:40px;text-align:center;color:#94a3b8;">기획 피드백 기록이 없습니다.</div>`;
+    return;
+  }
+
+  listEl.innerHTML = analyses.map(a => `
+    <div class="analysis-item" data-analysis-id="${a.id}">
+      <div class="item-status success">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </div>
+      <div class="item-info">
+        <span class="item-title">${escHtml(a.title)}</span>
+        <span class="item-date" style="font-size:12px;color:#94a3b8;margin-left:10px;">${timeAgo(a.createdAt)}</span>
+      </div>
+      <div class="item-actions">
+        <button class="btn-edit-small" onclick="viewFeedbackResult('${a.id}')">보기</button>
+      </div>
+    </div>`).join('');
+}
+
+function viewFeedbackResult(analysisId) {
+  const detailProjectId = window.location.pathname.split('/').pop();
+  window.location.href = `/feedback/result?projectId=${detailProjectId}&from=detail&resultId=${analysisId}`;
 }
 
   function viewAiUserResult(analysisId) {
@@ -880,6 +937,25 @@ async function deleteTabFromDb(dbId, htmlId, btnElement) {
     if (btnAddTab) btnAddTab.onclick = openTabModal;
   }
 
+  function getRequestedTabId() {
+    const requestedTabId = new URLSearchParams(window.location.search).get('tab');
+    if (!requestedTabId) {
+      return 'tab-user-simu';
+    }
+
+    return document.querySelector(`.tab-btn[data-target="${requestedTabId}"]`)
+      ? requestedTabId
+      : 'tab-user-simu';
+  }
+
+  function activateRequestedTab() {
+    const targetId = getRequestedTabId();
+    const targetButton = document.querySelector(`.tab-btn[data-target="${targetId}"]`);
+    if (targetButton) {
+      switchTab(targetButton);
+    }
+  }
+
   function switchTab(btn) {
     const targetId = btn.getAttribute('data-target');
     currentTabId = targetId;
@@ -911,6 +987,9 @@ async function deleteTabFromDb(dbId, htmlId, btnElement) {
     }
     if (targetId === 'tab-finance') {
         renderCostAnalysisList();
+    }
+    if (targetId === 'tab-plan') {
+        renderFeedbackAnalysisList();
     }
   }
 
@@ -1518,7 +1597,8 @@ window.onclick = (e) => {
     await loadProjectDetail(); // 프로젝트 기본 정보 로드
     await loadSavedTabs(projectId); // DB에서 탭 불러오기 추가
     initTabs();
-    updateAnalyzeButton('tab-user-simu');
+    activateRequestedTab();
+    updateAnalyzeButton(currentTabId);
 });
 
 // 1. 채팅 버튼 핸들러

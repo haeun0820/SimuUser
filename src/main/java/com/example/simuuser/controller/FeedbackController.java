@@ -1,5 +1,6 @@
 package com.example.simuuser.controller;
 
+import com.example.simuuser.dto.FeedbackAnalysisResultResponse;
 import com.example.simuuser.dto.FeedbackAnalysisResultSaveRequest;
 import com.example.simuuser.dto.ProjectResponse;
 import com.example.simuuser.service.FeedbackAnalysisResultService;
@@ -12,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -58,15 +60,32 @@ public class FeedbackController {
     }
 
     @GetMapping("/feedback/result")
-    public String feedbackResultPage(Model model) {
+    public String feedbackResultPage(
+            @RequestParam(value = "resultId", required = false) Long resultId,
+            Model model,
+            Authentication authentication
+    ) {
+        if (resultId != null) {
+            FeedbackAnalysisResultResponse savedResult = feedbackAnalysisResultService.findOne(resultId, authentication);
+            model.addAttribute("result", savedResult.getResult());
+            model.addAttribute("feedbackResultData", savedResult.getResult());
+            model.addAttribute("analysisRequest", Map.of(
+                    "projectId", savedResult.getProjectId(),
+                    "sourceType", savedResult.getSourceType(),
+                    "sourceContent", text(savedResult.getSourceContent(), ""),
+                    "savedResultId", savedResult.getId()
+            ));
+            return "feedback/feedback_result";
+        }
         Map<String, Object> result = emptyAnalysisData("분석할 기획 내용이 없습니다. 다시 분석을 실행해주세요.");
+        Map<String, Object> analysisRequest = new HashMap<>();
+        analysisRequest.put("projectId", null);
+        analysisRequest.put("sourceType", "project");
+        analysisRequest.put("sourceContent", "");
+        analysisRequest.put("savedResultId", null);
         model.addAttribute("result", result);
         model.addAttribute("feedbackResultData", result);
-        model.addAttribute("analysisRequest", Map.of(
-                "projectId", null,
-                "sourceType", "project",
-                "sourceContent", ""
-        ));
+        model.addAttribute("analysisRequest", analysisRequest);
         return "feedback/feedback_result";
     }
 
@@ -106,14 +125,24 @@ public class FeedbackController {
         }
     }
 
+    @GetMapping("/feedback/results/project/{projectId}")
+    @ResponseBody
+    public List<FeedbackAnalysisResultResponse> findFeedbackResultsByProject(
+            @PathVariable Long projectId,
+            Authentication authentication
+    ) {
+        return feedbackAnalysisResultService.findByProject(projectId, authentication);
+    }
+
     private void applyResultModel(Model model, Map<String, Object> result, Long projectId, String sourceType, String sourceContent) {
+        Map<String, Object> analysisRequest = new HashMap<>();
+        analysisRequest.put("projectId", projectId);
+        analysisRequest.put("sourceType", sourceType);
+        analysisRequest.put("sourceContent", sourceContent == null ? "" : sourceContent);
+        analysisRequest.put("savedResultId", null);
         model.addAttribute("result", result);
         model.addAttribute("feedbackResultData", result);
-        model.addAttribute("analysisRequest", Map.of(
-                "projectId", projectId,
-                "sourceType", sourceType,
-                "sourceContent", sourceContent == null ? "" : sourceContent
-        ));
+        model.addAttribute("analysisRequest", analysisRequest);
     }
 
     private ProjectResponse findProject(Long projectId, Authentication authentication) {
