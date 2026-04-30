@@ -306,8 +306,19 @@ renderTabs();
                 document.getElementById('headerTitle').innerText = data.title;
                 const headerDesc = document.getElementById('headerDesc');
                 if (headerDesc) headerDesc.innerText = data.description || '설명이 없습니다.';
-                editorPage.innerHTML = data.content || "<div><br></div>";
+                //editorPage.innerHTML = data.content || "<div><br></div>";
                 
+                let formattedContent = "<div><br></div>";
+                if (data.content) {
+                    // marked 라이브러리가 로드되어 있으면 변환해서 넣고, 아니면 그냥 넣습니다.
+                    formattedContent = typeof marked !== 'undefined' ? marked.parse(data.content) : data.content;
+                }
+                
+                editorPage.innerHTML = formattedContent;
+
+                const currentTab = tabs.find(t => t.id === activeTabId);
+                if (currentTab) currentTab.content = formattedContent;
+
                 // 이미지 리사이즈 적용
                 setTimeout(() => {
                     document.querySelectorAll('.img-resizable-container').forEach(makeResizable);
