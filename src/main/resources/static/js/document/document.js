@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const newDoc = {
                     id: data.id, 
                     title: data.title,
-                    description: data.description,
+                    description: data.description || desc, 
                     content: data.content,
                     type: currentDocType,
                     date: new Date().toLocaleDateString(),
@@ -222,6 +222,58 @@ function updateProjectSelection() {
     document.querySelectorAll('.project-item').forEach(el => {
         el.classList.toggle('selected', parseInt(el.dataset.id) === selectedProjectId);
     });
+
+    if (selectedProjectId) {
+        console.log("👉 선택된 프로젝트 ID:", selectedProjectId); // 로그 확인용
+        loadDocumentsForProject(selectedProjectId); // 백엔드에 문서 요청!
+    } else {
+        generatedDocs = [];
+        renderDocuments();
+    }
+}
+
+async function loadDocumentsForProject(projectId) {
+    try {
+        // 💡 [CCTV 1] 화면에서 도대체 몇 번 프로젝트 ID를 요청하고 있는지 확인!
+        console.log("👉 내가 클릭한 프로젝트 ID:", projectId);
+
+        const response = await fetch(`/api/documents/project/${projectId}`);
+        if (!response.ok) throw new Error('문서 목록을 불러오지 못했습니다.');
+        
+        const data = await response.json();
+        
+        // 💡 [CCTV 2] 백엔드가 진짜로 빈 깡통을 주는지, 아니면 데이터를 주는지 확인!
+        console.log("👉 백엔드에서 보내준 문서 데이터:", data);
+
+        // 백엔드 데이터를 프론트엔드 배열 형식에 맞게 변환
+        // 💡 [수정] 백엔드 데이터를 프론트엔드 배열 형식에 맞게 안전하게 변환
+        generatedDocs = data.map(doc => {
+            let dateStr = '날짜 없음'; // 기본값 (DB에 날짜가 NULL일 경우)
+            if (doc.createdAt) {
+                if (Array.isArray(doc.createdAt)) {
+                    // 자바가 배열 [2026, 4, 30] 형태로 보냈을 때
+                    dateStr = new Date(doc.createdAt[0], doc.createdAt[1] - 1, doc.createdAt[2]).toLocaleDateString();
+                } else {
+                    // 자바가 문자열 "2026-04-30..." 형태로 보냈을 때
+                    dateStr = new Date(doc.createdAt).toLocaleDateString();
+                }
+            }
+
+            return {
+                id: doc.id,
+                title: doc.title,
+                description: doc.description || '설명이 없습니다.', 
+                content: doc.content,
+                type: doc.type || '기획서', // type이 비어있으면 기본값으로 기획서 표시
+                date: dateStr,
+                author: 'AI 어시스턴트'
+            };
+        });
+        
+        renderDocuments(); // 화면 다시 그리기
+    } catch (error) {
+        console.error('Error:', error);
+    }
 }
 
 /* ── 문서 리스트 렌더링 ── */
@@ -293,6 +345,13 @@ function showDetail(id) {
     document.getElementById('viewTypeTag').className = `type-tag ${getTypeClass(doc.type)}`;
     document.getElementById('viewDescription').innerText = doc.content || "내용 생성 중입니다...";
     
+    const btnOpenEditor = document.getElementById('btnOpenEditor');
+    if (btnOpenEditor) {
+        btnOpenEditor.onclick = function() {
+            openDocEditor(id); // 새 탭 열기 함수 호출!
+        };
+    }
+
     document.getElementById('detailModal').style.display = 'flex';
 }
 

@@ -12,6 +12,8 @@ public class DocumentResponse {
     private String description;
     private String content;
     private LocalDateTime updatedAt;
+    private String type; 
+    private LocalDateTime createdAt;
 
     public DocumentResponse(Document doc) {
         this.id = doc.getId();
@@ -19,6 +21,8 @@ public class DocumentResponse {
         this.description = doc.getDescription();
         this.content = doc.getContent();
         this.updatedAt = doc.getUpdatedAt();
+        this.type = doc.getType();
+        this.createdAt = doc.getCreatedAt();
     }
 
     // Getter들 (반드시 있어야 JSON으로 변환됩니다)

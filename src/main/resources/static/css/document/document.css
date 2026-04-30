@@ -117,7 +117,21 @@ header {
 
 
 /* 공통 레이아웃 & 프로젝트 카드는 기존 스타일 유지 */
-.document-section { margin-top: 24px; background: #fff; border-radius: 12px; padding: 20px; min-height: 400px; border: 1px solid #e5e7eb; }
+/* 1. 하얀색 문서 섹션 박스 (수정) */
+.document-section { 
+    margin-top: 24px; 
+    background: #fff; 
+    border-radius: 12px; 
+    padding: 20px; 
+    padding-bottom: 24px; /* 💡 리스트가 바닥에 딱 붙지 않게 아래 여백 살짝 추가! */
+    min-height: 400px; 
+    border: 1px solid #e5e7eb; 
+
+    /* 👇 이 두 줄이 화면 스크롤을 살리는 핵심입니다! 👇 */
+    flex-shrink: 0; /* 💡 화면이 좁아져도 절대 강제로 찌그러지지 않게 방어! */
+    height: auto;   /* 💡 내용물이 100개면 100개 크기만큼 무한히 길어지도록 허용! */
+}
+
 .doc-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .doc-tabs { display: flex; gap: 8px; background: #f3f4f6; padding: 4px; border-radius: 8px; }
 .doc-tab { padding: 6px 16px; border: none; background: none; border-radius: 6px; cursor: pointer; font-size: 14px; color: #6b7280; }

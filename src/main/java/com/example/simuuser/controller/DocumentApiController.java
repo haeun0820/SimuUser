@@ -1,9 +1,13 @@
 package com.example.simuuser.controller;
 
+import java.util.List;
+
 import com.example.simuuser.dto.DocumentRequest;
 import com.example.simuuser.dto.DocumentResponse;
 import com.example.simuuser.service.AiDocumentService;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 public class DocumentApiController {
 
     private final AiDocumentService aiDocumentService;
-
+    
     // 프론트엔드의 fetch('/api/documents/generate', { method: 'POST' }) 요청을 여기서 받습니다!
     @PostMapping("/generate")
     public ResponseEntity<DocumentResponse> generateDocument(@RequestBody DocumentRequest request) {
@@ -22,5 +26,12 @@ public class DocumentApiController {
         
         // 생성된 결과를 프론트엔드로 반환
         return ResponseEntity.ok(response);
+    }
+
+        @GetMapping("/project/{projectId}")
+    public ResponseEntity<List<DocumentResponse>> getDocumentsByProject(@PathVariable Long projectId) {
+        // AI 서비스 쪽에 메서드를 하나 더 만들어서 호출 (또는 레포지토리 직접 호출)
+        List<DocumentResponse> docs = aiDocumentService.getDocumentsByProjectId(projectId);
+        return ResponseEntity.ok(docs);
     }
 }
