@@ -178,9 +178,10 @@
             </div>
         </div>
         <div id="tab-document" class="tab-content">
-            <div class="empty-state" style="padding: 40px; text-align: center; color: #94a3b8;">
+          <div id="autoDocContainer"></div>
+            <!-- <div class="empty-state" style="padding: 40px; text-align: center; color: #94a3b8;">
                 자동 문서화 기록이 없습니다.
-            </div>
+            </div> -->
         </div>
 
         <div class="analysis-footer" style="text-align: center;">
@@ -1055,6 +1056,11 @@ async function deleteTabFromDb(dbId, htmlId, btnElement) {
     if (targetId === 'tab-scenario') {
         renderScenarioAnalysisList();
     }
+
+    if (targetId === 'tab-document') { // (주의: HTML의 자동 문서화 탭 id가 'tab-document'가 맞는지 확인해 주세요!)
+        const projectId = window.location.pathname.split('/').pop();
+        loadAutoDocuments(projectId);
+    }
   }
 
   /* ── [4] 분석하기 버튼 ── */
@@ -1747,6 +1753,74 @@ async function deleteProject() {
             location.href = "/project/all";
         }
     } catch (err) { console.error(err); }
+}
+
+// 💡 1. 백엔드에서 해당 프로젝트의 문서들을 싹 가져옵니다.
+async function loadAutoDocuments(projectId) {
+    try {
+        // 우리가 예전에 만들어둔 바로 그 API를 똑같이 호출합니다!
+        const response = await fetch(`/api/documents/project/${projectId}`);
+        if (!response.ok) throw new Error('문서 목록을 불러오지 못했습니다.');
+        
+        const docs = await response.json();
+        renderAutoDocuments(docs);
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+// 💡 2. 가져온 문서들을 예쁜 카드 형태로 화면에 그립니다.
+function renderAutoDocuments(docs) {
+    // [주의] '자동 문서화' 탭의 내용이 들어갈 빈 공간(div)의 ID를 맞춰주세요!
+    const container = document.getElementById('autoDocContainer'); 
+    if (!container) return;
+
+    // 문서가 없을 때의 화면
+    if (docs.length === 0) {
+        container.innerHTML = `
+            <div style="text-align:center; padding:60px 0; color:#9ca3af;">
+                자동 문서화 기록이 없습니다.
+            </div>`;
+        return;
+    }
+
+    // 문서가 있을 때: 자동 문서화 페이지에서 썼던 것과 비슷한 예쁜 카드로 그리기
+    container.innerHTML = docs.map(doc => {
+        // 날짜 변환 (배열이든 문자열이든 안전하게 처리)
+        let dateStr = '날짜 없음';
+        if (doc.createdAt) {
+            dateStr = Array.isArray(doc.createdAt) 
+                ? new Date(doc.createdAt[0], doc.createdAt[1] - 1, doc.createdAt[2]).toLocaleDateString()
+                : new Date(doc.createdAt).toLocaleDateString();
+        }
+
+        // 태그 색상 정하기 (기존 로직 재활용)
+        let tagClass = 'background:#eff6ff; color:#3b82f6;'; // 기본 파란색 (기획서)
+        if (doc.type === '보고서') tagClass = 'background:#f5f3ff; color:#8b5cf6;';
+        if (doc.type === '분석결과') tagClass = 'background:#f0fdf4; color:#22c55e;';
+
+        return `
+            <div class="doc-item" style="border:1px solid #e5e7eb; padding:20px; border-radius:12px; margin-bottom:12px; background:#fff; display:flex; justify-content:space-between; align-items:center;">
+                <div style="flex:1;">
+                    <h4 style="margin:0 0 8px 0; font-size:16px; color:#111827;">${doc.title}</h4>
+                    <p style="margin:0 0 12px 0; font-size:13px; color:#6b7280;">${doc.description || '설명이 없습니다.'}</p>
+                    <div style="display:flex; gap:12px; font-size:12px; color:#9ca3af; align-items:center;">
+                        <span style="${tagClass} padding:4px 8px; border-radius:6px; font-weight:600;">${doc.type || '기획서'}</span>
+                        <span>${dateStr}</span>
+                        <span>생성자 : AI 어시스턴트</span>
+                    </div>
+                </div>
+                
+                <!-- 문서 열기 버튼 (문서 에디터로 연결) -->
+                <div>
+                    <button onclick="window.open('/document/editor?id=${doc.id}', '_blank')" 
+                            style="padding:8px 16px; background:#f3f4f6; border:none; border-radius:8px; cursor:pointer; font-weight:600; color:#4b5563;">
+                        문서 열기
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 </script>
 </body>
