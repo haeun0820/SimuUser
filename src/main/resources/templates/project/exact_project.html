@@ -9,6 +9,9 @@
   <link rel="stylesheet" th:href="@{/css/project/exact_project.css}">
   <link rel="stylesheet" th:href="@{/css/header/header.css}">
   
+  <!-- PDF 변환 라이브러리 추가 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
 </head>
 <body>
 <div class="app-layout">
@@ -1759,41 +1762,131 @@ function renderAutoDocuments(docs) {
 
     // 문서가 있을 때: 자동 문서화 페이지에서 썼던 것과 비슷한 예쁜 카드로 그리기
     container.innerHTML = docs.map(doc => {
-        // 날짜 변환 (배열이든 문자열이든 안전하게 처리)
         let dateStr = '날짜 없음';
         if (doc.createdAt) {
             dateStr = Array.isArray(doc.createdAt) 
-                ? new Date(doc.createdAt[0], doc.createdAt[1] - 1, doc.createdAt[2]).toLocaleDateString()
+                ? `${doc.createdAt[0]}-${doc.createdAt[1]}-${doc.createdAt[2]}`
                 : new Date(doc.createdAt).toLocaleDateString();
         }
 
-        // 태그 색상 정하기 (기존 로직 재활용)
-        let tagClass = 'background:#eff6ff; color:#3b82f6;'; // 기본 파란색 (기획서)
+        let tagClass = 'background:#eff6ff; color:#3b82f6;'; 
         if (doc.type === '보고서') tagClass = 'background:#f5f3ff; color:#8b5cf6;';
         if (doc.type === '분석결과') tagClass = 'background:#f0fdf4; color:#22c55e;';
 
+        // 즐겨찾기 상태에 따른 별 색상
+        const starFill = doc.starred ? '#f59e0b' : 'none';
+        const starStroke = doc.starred ? '#f59e0b' : '#9ca3af';
+
         return `
-            <div class="doc-item" style="border:1px solid #e5e7eb; padding:20px; border-radius:12px; margin-bottom:12px; background:#fff; display:flex; justify-content:space-between; align-items:center;">
+            <div class="doc-item" id="doc-card-${doc.id}" style="border:1px solid #e5e7eb; padding:20px; border-radius:12px; margin-bottom:12px; background:#fff; display:flex; justify-content:space-between; align-items:center; transition: all 0.2s hover; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                 <div style="flex:1;">
-                    <h4 style="margin:0 0 8px 0; font-size:16px; color:#111827;">${doc.title}</h4>
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                        <h4 style="margin:0; font-size:16px; color:#111827;">${doc.title}</h4>
+                        <button onclick="toggleDocStar(this, ${doc.id})" style="background:none; border:none; cursor:pointer; padding:0; display:flex;">
+                            <svg class="star-icon" width="20" height="20" viewBox="0 0 24 24" fill="${starFill}" stroke="${starStroke}" stroke-width="2">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                            </svg>
+                        </button>
+                    </div>
                     <p style="margin:0 0 12px 0; font-size:13px; color:#6b7280;">${doc.description || '설명이 없습니다.'}</p>
                     <div style="display:flex; gap:12px; font-size:12px; color:#9ca3af; align-items:center;">
                         <span style="${tagClass} padding:4px 8px; border-radius:6px; font-weight:600;">${doc.type || '기획서'}</span>
                         <span>${dateStr}</span>
-                        <span>생성자 : AI 어시스턴트</span>
                     </div>
                 </div>
                 
-                <!-- 문서 열기 버튼 (문서 에디터로 연결) -->
-                <div>
+                <!-- 액션 버튼 그룹 -->
+                <div style="display:flex; gap:8px; align-items:center;">
                     <button onclick="window.open('/document/editor?id=${doc.id}', '_blank')" 
-                            style="padding:8px 16px; background:#f3f4f6; border:none; border-radius:8px; cursor:pointer; font-weight:600; color:#4b5563;">
+                            style="padding:8px 14px; background:#fff; border:1px solid #e5e7eb; border-radius:8px; cursor:pointer; font-weight:600; color:#374151; font-size:13px;">
                         문서 열기
+                    </button>
+                    <button onclick="downloadDocAsPDF(${doc.id}, '${doc.title}')" 
+                            style="padding:8px 14px; background:#fff; border:1px solid #e5e7eb; border-radius:8px; cursor:pointer; font-weight:600; color:#374151; font-size:13px;">
+                        다운로드
+                    </button>
+                    <button onclick="deleteAutoDoc(${doc.id})" 
+                            style="padding:8px; background:#fff; border:1px solid #fee2e2; border-radius:8px; cursor:pointer; color:#ef4444; display:flex;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
                     </button>
                 </div>
             </div>
         `;
     }).join('');
+}
+
+// 💡 3. PDF 다운로드 기능 (현재 문서의 내용을 가져와 PDF로 변환)
+async function downloadDocAsPDF(docId, title) {
+    try {
+        // 서버에서 문서 상세 내용(HTML 포함)을 가져옵니다.
+        const response = await fetch(`/api/documents/${docId}`);
+        const doc = await response.json();
+        
+        // 가상의 컨테이너를 만들어 PDF로 변환할 내용을 넣습니다.
+        const element = document.createElement('div');
+        element.innerHTML = `
+            <div style="padding: 40px;">
+                <h1 style="text-align:center;">${doc.title}</h1>
+                <hr>
+                <div style="margin-top:20px;">${doc.content || '내용이 없습니다.'}</div>
+            </div>
+        `;
+
+        const opt = {
+            margin: 10,
+            filename: `${title}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save();
+    } catch (error) {
+        console.error('PDF 다운로드 실패:', error);
+        alert('PDF 생성 중 오류가 발생했습니다.');
+    }
+}
+
+// 💡 4. 즐겨찾기 토글 기능
+async function toggleDocStar(btn, docId) {
+    try {
+        const response = await fetch(`/api/documents/${docId}/star`, {
+            method: 'PATCH',
+            headers: { [header]: token }
+        });
+
+        if (response.ok) {
+            const isStarred = await response.json(); // 서버에서 바뀐 상태(true/false) 반환 가정
+            const icon = btn.querySelector('.star-icon');
+            icon.setAttribute('fill', isStarred ? '#f59e0b' : 'none');
+            icon.setAttribute('stroke', isStarred ? '#f59e0b' : '#9ca3af');
+        }
+    } catch (error) {
+        console.error('즐겨찾기 실패:', error);
+    }
+}
+
+// 💡 5. 문서 삭제 기능
+async function deleteAutoDoc(docId) {
+    if (!confirm("정말로 이 문서를 삭제하시겠습니까?")) return;
+
+    try {
+        const response = await fetch(`/api/documents/${docId}`, {
+            method: 'DELETE',
+            headers: { [header]: token }
+        });
+
+        if (response.ok) {
+            alert("삭제되었습니다.");
+            const projectId = window.location.pathname.split('/').pop();
+            loadAutoDocuments(projectId); // 목록 새로고침
+        }
+    } catch (error) {
+        alert("삭제 중 오류가 발생했습니다.");
+    }
 }
 </script>
 </body>
