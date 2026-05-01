@@ -8,6 +8,7 @@
   <title>시장 &amp; 경쟁 분석 – SimuUser</title>
   <link rel="stylesheet" th:href="@{/css/market/market.css}">
   <link rel="stylesheet" th:href="@{/css/header/header.css}">
+  <link rel="stylesheet" th:href="@{/css/common/project-picker.css}">
 </head>
 <body>
 <div class="app-layout">
@@ -20,7 +21,7 @@
 
     <header th:replace="~{header/header :: header(${ {'분석도구','시장 & 경쟁 분석'} })}"></header>
 
-    <main class="page-content">
+    <main class="page-content project-picker-page">
       <div class="tool-page-header">
         <div class="tool-icon-wrap">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
@@ -32,7 +33,7 @@
           <p class="tool-subtitle">시장 포화도, 경쟁 강도, TAM/SAM/SOM을 분석합니다</p>
         </div>
       </div>
-<div class="selection-section">
+<div class="selection-section unified-project-picker roomy-project-picker">
       <div class="selection-header">
         <h2 class="selection-title">프로젝트 선택</h2>
         

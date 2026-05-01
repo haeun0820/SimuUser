@@ -53,16 +53,31 @@
       return;
     }
 
-    container.innerHTML = filtered.map(project => `
-      <div class="project-item ${String(project.id) === String(selectedProjectId) ? 'selected' : ''}" data-id="${project.id}" style="margin-bottom:10px;cursor:pointer;">
+    container.innerHTML = filtered.map(project => {
+      const isSelected = String(project.id) === String(selectedProjectId);
+      return `
+      <div class="project-item ${isSelected ? 'selected' : ''}" data-id="${project.id}" role="button" tabindex="0">
         <div class="project-item-head">
-          <span class="project-item-title" style="font-weight:700;">${escHtml(project.title)}</span>
+          <span class="project-item-title">${escHtml(project.title)}</span>
           <span class="type-badge badge-${project.type === 'collab' ? 'collab' : 'personal'}">${project.type === 'collab' ? '협업' : '개인'}</span>
+          <div class="check-icon" style="${isSelected ? 'display:flex' : 'display:none'}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
         </div>
-        <p class="project-item-desc" style="font-size:13px;color:#6b7280;margin:4px 0;">${escHtml(project.description || '')}</p>
-        <div class="project-item-footer" style="font-size:12px;color:#9ca3af;">${timeAgo(project.createdAt)}</div>
+        <p class="project-item-desc">${escHtml(project.description || '')}</p>
+        <div class="project-item-footer">
+          <span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:3px;">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
+              <path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+            </svg>${timeAgo(project.createdAt)}
+          </span>
+        </div>
       </div>
-    `).join('');
+    `;
+    }).join('');
 
     container.querySelectorAll('.project-item').forEach(item => {
       item.addEventListener('click', () => {
@@ -74,7 +89,10 @@
 
   function updateSelection() {
     document.querySelectorAll('.project-item').forEach(item => {
-      item.classList.toggle('selected', String(item.dataset.id) === String(selectedProjectId));
+      const isTarget = String(item.dataset.id) === String(selectedProjectId);
+      item.classList.toggle('selected', isTarget);
+      const check = item.querySelector('.check-icon');
+      if (check) check.style.display = isTarget ? 'flex' : 'none';
     });
 
     const projectInput = document.getElementById('selectedProjectIdInput');

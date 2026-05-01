@@ -58,20 +58,21 @@
   function renderProjectItem(p) {
     const isCollab = p.type === 'collab';
     const badge = isCollab
-      ? '<span class="project-type-badge badge-collab">협업</span>'
-      : '<span class="project-type-badge badge-personal">개인</span>';
-
-    const membersTag = isCollab && p.members && p.members.length > 0
-      ? `<span class="project-members-tag">With. ${p.members.map(escHtml).join(', ')}</span>`
-      : '';
+      ? '<span class="type-badge badge-collab">협업</span>'
+      : '<span class="type-badge badge-personal">개인</span>';
 
     const isSelected = String(p.id) === String(selectedProjectId);
 
     return `
-      <div class="project-item${isSelected ? ' selected' : ''}" data-id="${p.id}">
+      <div class="project-item${isSelected ? ' selected' : ''}" data-id="${p.id}" role="button" tabindex="0">
         <div class="project-item-head">
           <span class="project-item-title">${escHtml(p.title)}</span>
           ${badge}
+          <div class="check-icon" style="${isSelected ? 'display:flex' : 'display:none'}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
         </div>
         <p class="project-item-desc">${escHtml(p.description || '설명이 없습니다.')}</p>
         <div class="project-item-footer">
@@ -82,12 +83,6 @@
             </svg>
             ${timeAgo(p.createdAt)}
           </span>
-          ${membersTag}
-        </div>
-        <div class="item-check">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-            <polyline points="20 6 9 17 4 12" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
         </div>
       </div>`;
   }

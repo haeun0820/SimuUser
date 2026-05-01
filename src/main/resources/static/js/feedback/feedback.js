@@ -5,6 +5,26 @@
   const initialProjectId = new URLSearchParams(window.location.search).get('projectId');
   const draftKey = 'feedbackDraft';
 
+  function escHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function timeAgo(isoString) {
+    if (!isoString) return '';
+    const time = new Date(isoString).getTime();
+    if (Number.isNaN(time)) return '';
+    const diffMinutes = Math.floor((Date.now() - time) / 60000);
+    if (diffMinutes < 1) return '방금 전';
+    if (diffMinutes < 60) return `${diffMinutes}분 전`;
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `${diffHours}시간 전`;
+    return `${Math.floor(diffHours / 24)}일 전`;
+  }
+
   /* ── 프로젝트 리스트 관련 (기존 로직 유지) ── */
   async function fetchProjects() {
     try {
@@ -27,13 +47,25 @@
     let filtered = currentFilter === 'all' ? allProjects : allProjects.filter(p => p.type === currentFilter);
     
     listEl.innerHTML = filtered.map(p => `
-      <div class="project-item ${String(p.id) === String(selectedProjectId) ? 'selected' : ''}" data-id="${p.id}">
+      <div class="project-item ${String(p.id) === String(selectedProjectId) ? 'selected' : ''}" data-id="${p.id}" role="button" tabindex="0">
         <div class="project-item-head">
-          <span class="project-item-title">${p.title}</span>
-          <span class="project-type-badge badge-${p.type}">${p.type === 'collab' ? '협업' : '개인'}</span>
+          <span class="project-item-title">${escHtml(p.title)}</span>
+          <span class="type-badge badge-${p.type}">${p.type === 'collab' ? '협업' : '개인'}</span>
+          <div class="check-icon" style="${String(p.id) === String(selectedProjectId) ? 'display:flex' : 'display:none'}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
         </div>
-        <p class="project-item-desc">${p.description || '설명이 없습니다.'}</p>
-        <div class="item-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <p class="project-item-desc">${escHtml(p.description || '설명이 없습니다.')}</p>
+        <div class="project-item-footer">
+          <span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:3px;">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
+              <path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+            </svg>${timeAgo(p.createdAt)}
+          </span>
+        </div>
       </div>
     `).join('');
 

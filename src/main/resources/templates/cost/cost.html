@@ -7,6 +7,7 @@
   <meta name="_csrf_header" th:if="${_csrf}" th:content="${_csrf.headerName}">
   <title>비용 & 수익성 분석 - SimuUser</title>
   <link rel="stylesheet" th:href="@{/css/cost/cost.css}">
+  <link rel="stylesheet" th:href="@{/css/common/project-picker.css}">
 </head>
 <body>
 <div class="app-layout">
@@ -53,7 +54,7 @@
       </div>
     </header>
 
-    <main class="page-content">
+    <main class="page-content project-picker-page">
       <div class="cost-page-header">
         <div class="cost-page-icon">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
@@ -67,7 +68,7 @@
         </div>
       </div>
 
-      <section class="cost-card">
+      <section class="cost-card unified-project-picker">
         <div class="project-select-header">
           <h2 class="section-title">프로젝트 선택</h2>
           <div class="type-filter" id="typeFilter">

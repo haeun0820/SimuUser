@@ -159,6 +159,18 @@ function getTypeClass(type) {
     return 'tag-blue';
 }
 
+function timeAgo(isoString) {
+    if (!isoString) return '';
+    const time = new Date(isoString).getTime();
+    if (Number.isNaN(time)) return '';
+    const diffMinutes = Math.floor((Date.now() - time) / 60000);
+    if (diffMinutes < 1) return '방금 전';
+    if (diffMinutes < 60) return `${diffMinutes}분 전`;
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `${diffHours}시간 전`;
+    return `${Math.floor(diffHours / 24)}일 전`;
+}
+
 /* ── 프로젝트 데이터 서버에서 가져오기 ── */
 async function loadProjects() {
     try {
@@ -204,7 +216,12 @@ function renderProjects() {
                 </div>
                 <p class="project-item-desc" style="font-size:13px; color:#6b7280; margin:4px 0;">${p.description || ''}</p>
                 <div class="project-item-footer" style="font-size:12px; color:#9ca3af;">
-                    <span>${p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '방금 전'}</span>
+                    <span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:3px;">
+                            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
+                            <path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                        </svg>${timeAgo(p.createdAt)}
+                    </span>
                 </div>
             </div>`;
     }).join('');

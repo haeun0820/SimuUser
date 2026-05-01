@@ -582,3 +582,11 @@ body {
   opacity: 0.5;
   pointer-events: none;
 }
+
+.project-item-meta {
+  gap: 3px;
+}
+
+.project-item-meta svg {
+  flex-shrink: 0;
+}

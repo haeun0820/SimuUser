@@ -94,7 +94,7 @@
     },
     {
         type: "link",
-        id: "docs",
+        id: "document",
         icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                 <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
                 <path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI 가상 유저 시뮬레이션 - SimuUser</title>
   <link rel="stylesheet" th:href="@{/css/aiuser/ai_user.css}">
+  <link rel="stylesheet" th:href="@{/css/common/project-picker.css}">
 </head>
 <body>
 <div class="app-layout">
@@ -50,7 +51,7 @@
 
     <input type="hidden" id="resultPageUrl" th:value="@{/aiuser/result}">
 
-    <main class="page-content">
+    <main class="page-content project-picker-page">
       <div class="page-header">
         <div class="page-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -64,7 +65,7 @@
       </div>
 
       <form id="simulationForm" novalidate>
-        <div class="project-select-card">
+        <div class="project-select-card unified-project-picker">
           <div class="project-select-header">
             <span class="section-title" style="margin-bottom:0;">프로젝트 선택</span>
             <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
