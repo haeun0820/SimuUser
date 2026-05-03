@@ -91,7 +91,7 @@
         selectedProjectTitle = target.title;
         selectedProjectDescription = target.description; // ← 추가
         renderProjects([target]);
-        updateBreadcrumbForDetail(target);
+        applyDetailContext(target);
         setExecuteEnabled(true);
         return;
       }
@@ -100,7 +100,7 @@
     renderProjects(projectsCache);
 
     if (fromDetail && presetProjectId) {
-      updateBreadcrumbForDetail(projectsCache.find(project => String(project.id) === presetProjectId));
+      applyDetailContext(projectsCache.find(project => String(project.id) === presetProjectId));
     }
   }
 
@@ -114,6 +114,24 @@
       <a href="/project/all">프로젝트</a>
       <span class="bc-sep">/</span>
       <a href="/project/detail/${id}">${title}</a>
+      <span class="bc-sep">/</span>
+      <span class="bc-current">비용 &amp; 수익성 분석</span>
+    `;
+  }
+
+  function applyDetailContext(project) {
+    if (!fromDetail || !presetProjectId) return;
+
+    document.querySelector('.unified-project-picker')?.classList.add('detail-project-picker');
+
+    const nav = document.querySelector('.breadcrumb-nav');
+    if (!nav) return;
+
+    const projectTitle = project ? escHtml(project.title) : '프로젝트';
+    nav.innerHTML = `
+      <span>프로젝트</span>
+      <span class="bc-sep">/</span>
+      <span>${projectTitle}</span>
       <span class="bc-sep">/</span>
       <span class="bc-current">비용 &amp; 수익성 분석</span>
     `;

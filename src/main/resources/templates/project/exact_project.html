@@ -1054,7 +1054,7 @@ async function deleteTabFromDb(dbId, htmlId, btnElement) {
       'tab-finance':   `/cost/cost?projectId=${projectId}&from=detail`,
       'tab-plan':      `/feedback?projectId=${projectId}&from=detail`,
       'tab-scenario':  `/scenario?projectId=${projectId}&from=detail`,
-      'tab-document':  `#`,
+      'tab-document':  `/document?projectId=${projectId}&from=detail`,
     };
 
     btn.onclick = () => {

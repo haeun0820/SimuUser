@@ -48,6 +48,25 @@
   }
 
   /* ── [수정] 데이터 세팅 시 필터링 로직 ── */
+  function applyDetailContext(project) {
+    if (!fromDetail || !presetProjectId) return;
+
+    document.querySelector('.unified-project-picker')?.classList.add('detail-project-picker');
+    document.getElementById('btnNewProject')?.style.setProperty('display', 'none', 'important');
+
+    const nav = document.querySelector('.breadcrumb-nav');
+    if (!nav) return;
+
+    const projectTitle = project ? escHtml(project.title) : '프로젝트';
+    nav.innerHTML = `
+      <span>프로젝트</span>
+      <span class="bc-sep">/</span>
+      <span>${projectTitle}</span>
+      <span class="bc-sep">/</span>
+      <span class="bc-current">AI 가상 유저 시뮬레이션</span>
+    `;
+  }
+
   function setProjects(projects) {
     let mapped = Array.isArray(projects) ? projects.map(normalizeProject) : [];
     
@@ -59,6 +78,7 @@
       // 필터 탭 숨기기
       const filterArea = document.querySelector('.project-filter-tabs');
       if (filterArea) filterArea.style.display = 'none';
+      applyDetailContext(target);
     } else {
       allProjects = mapped.filter(project => Number.isFinite(project.id));
     }

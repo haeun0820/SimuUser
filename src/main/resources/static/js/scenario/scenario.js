@@ -2,7 +2,9 @@
   let allProjects = [];
   let currentFilter = 'all';
   let selectedProjectId = null;
-  const initialProjectId = new URLSearchParams(window.location.search).get('projectId');
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialProjectId = urlParams.get('projectId');
+  const fromDetail = urlParams.get('from') === 'detail';
   const draftKey = 'scenarioDraft';
 
   function escHtml(value) {
@@ -25,6 +27,26 @@
     return `${Math.floor(hr / 24)}일 전`;
   }
 
+  function applyDetailContext(project) {
+    if (!fromDetail || !initialProjectId) return;
+
+    document.querySelector('.unified-project-picker')?.classList.add('detail-project-picker');
+    document.querySelector('.project-filter-tabs')?.style.setProperty('display', 'none', 'important');
+    document.getElementById('btnNewProject')?.style.setProperty('display', 'none', 'important');
+
+    const nav = document.querySelector('.breadcrumb-nav');
+    if (!nav) return;
+
+    const projectTitle = project ? escHtml(project.title) : '프로젝트';
+    nav.innerHTML = `
+      <span>프로젝트</span>
+      <span class="bc-sep">/</span>
+      <span>${projectTitle}</span>
+      <span class="bc-sep">/</span>
+      <span class="bc-current">시나리오 비교</span>
+    `;
+  }
+
   async function fetchProjects() {
     try {
       const response = await fetch('/api/projects');
@@ -35,7 +57,7 @@
     }
 
     restoreDraft();
-    if (!selectedProjectId && initialProjectId && allProjects.some(project => String(project.id) === String(initialProjectId))) {
+    if ((fromDetail || !selectedProjectId) && initialProjectId && allProjects.some(project => String(project.id) === String(initialProjectId))) {
       selectedProjectId = String(initialProjectId);
     }
 
@@ -47,7 +69,11 @@
     const container = document.getElementById('projectListScroll');
     if (!container) return;
 
-    const filtered = allProjects.filter(project => currentFilter === 'all' || project.type === currentFilter);
+    let filtered = allProjects.filter(project => currentFilter === 'all' || project.type === currentFilter);
+    if (fromDetail && initialProjectId) {
+      filtered = allProjects.filter(project => String(project.id) === String(initialProjectId));
+      applyDetailContext(filtered[0]);
+    }
     if (!filtered.length) {
       container.innerHTML = '<div class="no-projects" style="padding:20px;text-align:center;color:#9ca3af;">선택 가능한 프로젝트가 없습니다.</div>';
       return;
@@ -357,6 +383,7 @@
   function init() {
     document.querySelectorAll('input[name="projectFilter"]').forEach(radio => {
       radio.addEventListener('change', event => {
+        if (fromDetail) return;
         currentFilter = event.target.value;
         renderProjects();
       });

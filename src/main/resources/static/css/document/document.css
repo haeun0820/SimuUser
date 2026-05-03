@@ -376,6 +376,14 @@ textarea.form-input {
     padding-right: 4px;
 }
 
+.project-select-card.detail-project-picker .project-list-scroll {
+    height: 96px;
+    max-height: 96px;
+    min-height: 96px;
+    overflow-y: hidden;
+    padding-right: 0;
+}
+
 .project-list-scroll .project-item {
     height: 96px;
     min-height: 96px;

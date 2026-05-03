@@ -2,7 +2,9 @@
   let allProjects = [];
   let selectedProjectId = null;
   let currentFilter = 'all';
-  const initialProjectId = new URLSearchParams(window.location.search).get('projectId');
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialProjectId = urlParams.get('projectId');
+  const fromDetail = urlParams.get('from') === 'detail';
   const draftKey = 'feedbackDraft';
 
   function escHtml(value) {
@@ -26,6 +28,26 @@
   }
 
   /* ── 프로젝트 리스트 관련 (기존 로직 유지) ── */
+  function applyDetailContext(project) {
+    if (!fromDetail || !initialProjectId) return;
+
+    document.querySelector('.unified-project-picker')?.classList.add('detail-project-picker');
+    document.querySelector('.project-filter-tabs')?.style.setProperty('display', 'none', 'important');
+    document.querySelector('.btn-new-proj')?.style.setProperty('display', 'none', 'important');
+
+    const nav = document.querySelector('.breadcrumb-nav');
+    if (!nav) return;
+
+    const projectTitle = project ? escHtml(project.title) : '프로젝트';
+    nav.innerHTML = `
+      <span>프로젝트</span>
+      <span class="bc-sep">/</span>
+      <span>${projectTitle}</span>
+      <span class="bc-sep">/</span>
+      <span class="bc-current">기획 &amp; 피드백 AI</span>
+    `;
+  }
+
   async function fetchProjects() {
     try {
       const res = await fetch('/api/projects');
@@ -45,6 +67,10 @@
     if (!listEl) return;
     
     let filtered = currentFilter === 'all' ? allProjects : allProjects.filter(p => p.type === currentFilter);
+    if (fromDetail && initialProjectId) {
+      filtered = allProjects.filter(p => String(p.id) === String(initialProjectId));
+      applyDetailContext(filtered[0]);
+    }
     
     listEl.innerHTML = filtered.map(p => `
       <div class="project-item ${String(p.id) === String(selectedProjectId) ? 'selected' : ''}" data-id="${p.id}" role="button" tabindex="0">
@@ -164,6 +190,7 @@
     
     document.querySelectorAll('input[name="projectFilter"]').forEach(radio => {
       radio.addEventListener('change', (e) => {
+        if (fromDetail) return;
         currentFilter = e.target.value;
         selectedProjectId = null;
         renderProjectList();

@@ -55,6 +55,24 @@
   }
 
   /* ── 프로젝트 카드 렌더 ── */
+  function updateHeaderForDetail(project) {
+    if (!fromDetail || !fromProjectId) return;
+
+    document.querySelector('.unified-project-picker')?.classList.add('detail-project-picker');
+
+    const nav = document.querySelector('.breadcrumb-nav');
+    if (!nav) return;
+
+    const projectTitle = project ? escHtml(project.title) : '프로젝트';
+    nav.innerHTML = `
+      <span>프로젝트</span>
+      <span class="bc-sep">/</span>
+      <span>${projectTitle}</span>
+      <span class="bc-sep">/</span>
+      <span class="bc-current">시장 &amp; 경쟁 분석</span>
+    `;
+  }
+
   function renderProjectItem(p) {
     const isCollab = p.type === 'collab';
     const badge = isCollab
@@ -97,6 +115,7 @@
   // 상세 페이지에서 진입 시 해당 프로젝트만 표시
   if (fromDetail && fromProjectId) {
     filtered = allProjects.filter(p => String(p.id) === fromProjectId);
+    updateHeaderForDetail(filtered[0]);
     
     // [추가] 라디오 필터 및 새로 만들기 버튼 숨기기
     const filterRadios = document.getElementById('filterRadios');

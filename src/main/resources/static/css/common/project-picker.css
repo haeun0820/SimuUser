@@ -322,3 +322,17 @@
   max-height: 202px !important;
   min-height: 0 !important;
 }
+
+.unified-project-picker.detail-project-picker {
+  margin-bottom: 20px !important;
+}
+
+.unified-project-picker.detail-project-picker .project-list-scroll,
+.unified-project-picker.detail-project-picker .project-scroll-list,
+.unified-project-picker.detail-project-picker .project-list-container {
+  height: 96px !important;
+  max-height: 96px !important;
+  min-height: 96px !important;
+  overflow-y: hidden !important;
+  padding-right: 0 !important;
+}

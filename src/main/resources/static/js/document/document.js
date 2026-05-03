@@ -7,6 +7,9 @@ let editId = null;      // 편집 중인 문서의 ID
 let allProjects = [];
 let currentFilter = 'all'; // 프로젝트 필터 (전체/협업/개인)
 let selectedProjectId = null;
+const urlParams = new URLSearchParams(window.location.search);
+const presetProjectId = urlParams.get('projectId');
+const fromDetail = urlParams.get('from') === 'detail';
 
 let currentDocId = null; // 현재 상세보기 중인 문서 ID 저장용
 
@@ -136,6 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.querySelectorAll('input[name="projectFilter"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
+            if (fromDetail) return;
             currentFilter = e.target.value;
             renderProjects();
         });
@@ -171,13 +175,27 @@ function timeAgo(isoString) {
     return `${Math.floor(diffHours / 24)}일 전`;
 }
 
+function escHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
 /* ── 프로젝트 데이터 서버에서 가져오기 ── */
 async function loadProjects() {
     try {
         const response = await fetch('/api/projects');
         if (!response.ok) throw new Error('프로젝트 로드 실패');
         allProjects = await response.json();
+        if (fromDetail && presetProjectId) {
+            const target = allProjects.find(project => String(project.id) === String(presetProjectId));
+            if (target) selectedProjectId = target.id;
+            applyDetailContext(target);
+        }
         renderProjects();
+        if (selectedProjectId) updateProjectSelection();
     } catch (error) {
         console.error('Error:', error);
         const container = document.getElementById('projectListScroll');
@@ -187,15 +205,40 @@ async function loadProjects() {
     }
 }
 
+function applyDetailContext(project) {
+    if (!fromDetail || !presetProjectId) return;
+
+    document.querySelector('.project-select-card')?.classList.add('detail-project-picker');
+    document.querySelector('.project-filter-tabs')?.style.setProperty('display', 'none', 'important');
+    document.querySelector('.btn-new-proj')?.style.setProperty('display', 'none', 'important');
+
+    const nav = document.querySelector('.breadcrumb-nav');
+    if (!nav) return;
+
+    const projectTitle = project ? escHtml(project.title) : '프로젝트';
+    nav.innerHTML = `
+      <span>프로젝트</span>
+      <span class="bc-sep">/</span>
+      <span>${projectTitle}</span>
+      <span class="bc-sep">/</span>
+      <span class="bc-current">자동 문서화</span>
+    `;
+}
+
 /* ── 프로젝트 리스트 렌더링 ── */
 function renderProjects() {
     const container = document.getElementById('projectListScroll');
     if (!container) return;
 
-    const filtered = allProjects.filter(p => {
+    let filtered = allProjects.filter(p => {
         if (currentFilter === 'all') return true;
         return p.type === currentFilter; 
     });
+
+    if (fromDetail && presetProjectId) {
+        filtered = allProjects.filter(p => String(p.id) === String(presetProjectId));
+        applyDetailContext(filtered[0]);
+    }
 
     if (filtered.length === 0) {
         container.innerHTML = `<div class="no-projects" style="padding:20px; text-align:center; color:#9ca3af;">등록된 프로젝트가 없습니다.</div>`;
@@ -229,7 +272,7 @@ function renderProjects() {
     container.querySelectorAll('.project-item').forEach(el => {
         el.onclick = () => {
             const id = parseInt(el.dataset.id);
-            selectedProjectId = (selectedProjectId === id) ? null : id;
+            selectedProjectId = fromDetail ? id : ((selectedProjectId === id) ? null : id);
             updateProjectSelection();
         };
     });
