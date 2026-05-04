@@ -2,6 +2,7 @@ package com.example.simuuser.controller;
 
 import com.example.simuuser.dto.ChatMessageResponse;
 import com.example.simuuser.service.ChatService;
+import com.example.simuuser.websocket.ChatSseBroadcaster;
 import com.example.simuuser.websocket.ChatWebSocketBroadcaster;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.Map;
 
@@ -20,10 +22,16 @@ public class ChatController {
 
     private final ChatService chatService;
     private final ChatWebSocketBroadcaster chatWebSocketBroadcaster;
+    private final ChatSseBroadcaster chatSseBroadcaster;
 
-    public ChatController(ChatService chatService, ChatWebSocketBroadcaster chatWebSocketBroadcaster) {
+    public ChatController(
+            ChatService chatService,
+            ChatWebSocketBroadcaster chatWebSocketBroadcaster,
+            ChatSseBroadcaster chatSseBroadcaster
+    ) {
         this.chatService = chatService;
         this.chatWebSocketBroadcaster = chatWebSocketBroadcaster;
+        this.chatSseBroadcaster = chatSseBroadcaster;
     }
 
     @GetMapping("/chat/window")
@@ -112,11 +120,24 @@ public class ChatController {
     }
 
     @ResponseBody
+    @GetMapping(value = "/api/chat/rooms/{roomId}/stream", produces = "text/event-stream")
+    public SseEmitter stream(@PathVariable Long roomId, Authentication authentication) {
+        Long actualRoomId = chatService.findRoomDetail(roomId, authentication).getId();
+        return chatSseBroadcaster.register(actualRoomId);
+    }
+
+    @ResponseBody
     @PostMapping("/api/chat/rooms/{roomId}/messages")
     public ResponseEntity<?> sendMessage(@PathVariable Long roomId, @RequestBody Map<String, String> body, Authentication authentication) {
         try {
             ChatMessageResponse response = chatService.sendMessage(roomId, body.get("content"), authentication);
-            chatWebSocketBroadcaster.broadcast(roomId, response);
+            Long actualRoomId = chatService.findRoomDetail(roomId, authentication).getId();
+            chatSseBroadcaster.broadcast(actualRoomId, response);
+            try {
+                chatWebSocketBroadcaster.broadcast(actualRoomId, response);
+            } catch (Exception ignored) {
+                // WebSocket delivery failures must not break message persistence.
+            }
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
