@@ -155,18 +155,26 @@
             }, 1500);
         }
 
+        function stopPolling() {
+            if (!pollHandle) {
+                return;
+            }
+
+            window.clearInterval(pollHandle);
+            pollHandle = null;
+        }
+
         function connectStream() {
             if (stream) {
                 stream.close();
             }
 
             stream = new EventSource(`/api/chat/rooms/${roomId}/stream`);
-            stream.addEventListener('message', (event) => {
-                try {
-                    appendMessage(JSON.parse(event.data));
-                } catch (e) {
-                    void syncMessages(false);
-                }
+            stream.onopen = () => {
+                stopPolling();
+            };
+            stream.addEventListener('message', () => {
+                void syncMessages(false);
             });
 
             stream.onerror = () => {
@@ -174,6 +182,7 @@
                     stream.close();
                     stream = null;
                 }
+                startPolling();
             };
         }
 
@@ -224,7 +233,6 @@
 
             await syncMessages(true);
             connectStream();
-            startPolling();
             setChatEnabled(true);
             msgInput.focus();
 

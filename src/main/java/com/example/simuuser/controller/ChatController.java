@@ -131,12 +131,12 @@ public class ChatController {
     public ResponseEntity<?> sendMessage(@PathVariable Long roomId, @RequestBody Map<String, String> body, Authentication authentication) {
         try {
             ChatMessageResponse response = chatService.sendMessage(roomId, body.get("content"), authentication);
-            Long actualRoomId = chatService.findRoomDetail(roomId, authentication).getId();
-            chatSseBroadcaster.broadcast(actualRoomId, response);
             try {
+                Long actualRoomId = chatService.findRoomDetail(roomId, authentication).getId();
+                chatSseBroadcaster.broadcast(actualRoomId, response);
                 chatWebSocketBroadcaster.broadcast(actualRoomId, response);
             } catch (Exception ignored) {
-                // WebSocket delivery failures must not break message persistence.
+                // Delivery failures must not break message persistence.
             }
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException | IllegalStateException e) {
