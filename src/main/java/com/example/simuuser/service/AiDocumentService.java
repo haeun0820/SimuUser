@@ -1,6 +1,7 @@
 package com.example.simuuser.service;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -45,21 +46,22 @@ public class AiDocumentService {
         Project project = projectRepository.findById(request.getProjectId())
                 .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없습니다."));
 
+        String todayDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일"));
+        
         String aiPrompt = "";
 
         if ("분석결과".equals(request.getDocumentType())) {
-            // [수정된 부분] project.getId() 대신 project 엔티티 자체를 넘겨줍니다!
             List<AiSimulationResult> aiResults = aiRepo.findByProject(project);
             List<CostAnalysisResult> costResults = costRepo.findByProject(project);
             List<FeedbackAnalysisResult> feedbackResults = feedbackRepo.findByProject(project);
             List<MarketAnalysisResult> marketResults = marketRepo.findByProject(project);
-
             List<ScenarioComparisonResult> scenarioResults = scenarioRepo.findByProject(project);
 
-        // 👇 프롬프트 빌더에 scenarioResults도 같이 넘겨줍니다!
-        aiPrompt = buildAnalysisPrompt(project, aiResults, costResults, feedbackResults, marketResults, scenarioResults, request);
+            // 프롬프트 생성 시 todayDate 전달
+            aiPrompt = buildAnalysisPrompt(project, aiResults, costResults, feedbackResults, marketResults, scenarioResults, request, todayDate);
         } else {
-            aiPrompt = buildGeneralPrompt(project, request);
+            // 프롬프트 생성 시 todayDate 전달
+            aiPrompt = buildGeneralPrompt(project, request, todayDate);
         }
 
         // AI API 호출
@@ -81,15 +83,16 @@ public class AiDocumentService {
         return new DocumentResponse(newDoc);
     }
 
-    private String buildGeneralPrompt(Project project, DocumentRequest request) {
+    private String buildGeneralPrompt(Project project, DocumentRequest request, String todayDate) {
         return String.format(
             "너는 전문적인 비즈니스 문서 작성자야. 다음 정보를 바탕으로 %s를 작성해줘.\n" +
             "- 프로젝트명: %s\n" +
+            "- 작성일: %s\n" + // 실제 날짜 정보 주입
             "- 프로젝트 설명: %s\n" +
             "- 작성할 문서 제목: %s\n" +
             "- 문서 추가 설명(요구사항): %s\n" +
-            "전문적인 어조로, 서론-본론-결론 구조의 마크다운 형식으로 작성해줘.",
-            request.getDocumentType(), project.getTitle(), project.getDescription(), 
+            "전문적인 어조로, 서론-본론-결론 구조의 마크다운 형식으로 작성해줘. 문서 상단에 작성일을 반드시 포함해줘.",
+            request.getDocumentType(), project.getTitle(), todayDate, project.getDescription(), 
             request.getTitle(), request.getDescription()
         );
     }
@@ -100,9 +103,9 @@ public class AiDocumentService {
                                        List<FeedbackAnalysisResult> feedback, 
                                        List<MarketAnalysisResult> market, 
                                        List<ScenarioComparisonResult> scenario, 
-                                       DocumentRequest request) {
+                                       DocumentRequest request,
+                                       String todayDate) {
         
-        // 4가지 분석 결과를 하나의 문자열로 보기 좋게 합칩니다.
         StringBuilder dataContext = new StringBuilder();
         
         dataContext.append("[AI 시뮬레이션 결과]\n");
@@ -121,13 +124,14 @@ public class AiDocumentService {
         scenario.forEach(item -> dataContext.append("- ").append(item.toString()).append("\n"));
 
         return String.format(
-            "너는 데이터 분석가야. 다음 프로젝트 정보와 4가지 분석 도구의 결과 데이터를 종합하여 통합 '분석결과 보고서'를 작성해줘.\n" +
+            "너는 데이터 분석가야. 다음 프로젝트 정보와 분석 데이터를 종합하여 '분석결과 보고서'를 작성해줘.\n" +
             "- 프로젝트명: %s\n" +
+            "- 보고서 작성일: %s\n" + // 실제 날짜 정보 주입
             "- 작성할 문서 제목: %s\n" +
             "- 사용자 요구사항: %s\n" +
             "=== 수집된 분석 데이터 ===\n%s\n===================\n" +
-            "이 데이터들이 의미하는 바를 연결해서 인사이트를 도출하고, 마크다운 형식의 보고서로 정리해줘.",
-            project.getTitle(), request.getTitle(), request.getDescription(), dataContext.toString()
+            "이 데이터들이 의미하는 바를 인사이트로 도출하고, 마크다운 형식으로 정리해줘. 문서 상단에 보고서 작성일을 명시해줘.",
+            project.getTitle(), todayDate, request.getTitle(), request.getDescription(), dataContext.toString()
         );
     }
 
