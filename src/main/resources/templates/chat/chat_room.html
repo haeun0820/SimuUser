@@ -26,7 +26,8 @@
     </div>
 
     <script>
-        const roomId = window.location.pathname.split('/').pop();
+        const routeRoomId = window.location.pathname.split('/').pop();
+        let roomId = routeRoomId;
         let chatSocket = null;
         let reconnectHandle = null;
         let lastMessageId = null;
@@ -78,7 +79,7 @@
         }
 
         async function loadRoom() {
-            const response = await fetch(`/api/chat/rooms/${roomId}`);
+            const response = await fetch(`/api/chat/rooms/${routeRoomId}`);
             const result = await response.json().catch(() => ({}));
             if (!response.ok) {
                 document.getElementById('chatTitle').textContent = '채팅';
@@ -87,6 +88,7 @@
                 return false;
             }
 
+            roomId = String(result.id);
             document.getElementById('chatTitle').textContent = result.name;
             return true;
         }

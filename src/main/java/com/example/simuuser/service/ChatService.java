@@ -60,7 +60,7 @@ public class ChatService {
     @Transactional
     public List<ChatRoomSummaryResponse> findMyRooms(Authentication authentication) {
         AppUser currentUser = appUserService.getCurrentUser(authentication);
-        syncExistingProjectRooms(currentUser);
+        syncAccessibleProjectRooms(currentUser);
 
         List<ChatRoom> rooms = chatParticipantRepository.findByUserOrderByRoomUpdatedAtDesc(currentUser).stream()
                 .filter(participant -> "ACCEPTED".equals(participant.getStatus()))
@@ -241,15 +241,21 @@ public class ChatService {
         room.decline();
     }
 
-    private void syncExistingProjectRooms(AppUser currentUser) {
+    private void syncAccessibleProjectRooms(AppUser currentUser) {
         List<Project> collabProjects = projectMemberRepository.findByUserAndStatusOrderByCreatedAtDesc(currentUser, "ACCEPTED").stream()
                 .map(ProjectMember::getProject)
                 .filter(project -> "collab".equalsIgnoreCase(project.getType()))
                 .distinct()
                 .toList();
 
-        for (Project project : collabProjects) {
-            chatRoomRepository.findByProject(project).ifPresent(room -> syncProjectParticipants(room, project));
+        if (collabProjects.isEmpty()) {
+            return;
+        }
+
+        for (ChatRoom room : chatRoomRepository.findByProjectIn(collabProjects)) {
+            if (!chatParticipantRepository.existsByRoomAndUserAndStatus(room, currentUser, "ACCEPTED")) {
+                chatParticipantRepository.save(new ChatParticipant(room, currentUser, "ACCEPTED"));
+            }
         }
     }
 

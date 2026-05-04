@@ -6,6 +6,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -13,7 +14,13 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "chat_messages")
+@Table(
+        name = "chat_messages",
+        indexes = {
+                @Index(name = "idx_chat_messages_room_created_at", columnList = "room_id, created_at"),
+                @Index(name = "idx_chat_messages_room_id_id", columnList = "room_id, id")
+        }
+)
 public class ChatMessage {
 
     @Id

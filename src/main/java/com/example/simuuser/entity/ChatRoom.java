@@ -6,6 +6,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -13,7 +14,12 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "chat_rooms")
+@Table(
+        name = "chat_rooms",
+        indexes = {
+                @Index(name = "idx_chat_rooms_project_id", columnList = "project_id")
+        }
+)
 public class ChatRoom {
 
     @Id

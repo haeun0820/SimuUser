@@ -31,10 +31,10 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         Authentication authentication = requireAuthentication(session.getPrincipal());
-        Long roomId = extractRoomId(session.getUri());
+        Long requestedRoomId = extractRoomId(session.getUri());
 
-        chatService.findRoomDetail(roomId, authentication);
-        broadcaster.register(roomId, session);
+        Long actualRoomId = chatService.findRoomDetail(requestedRoomId, authentication).getId();
+        broadcaster.register(actualRoomId, session);
     }
 
     @Override

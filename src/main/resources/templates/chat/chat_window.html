@@ -60,6 +60,74 @@
             outline: none;
         }
 
+        .search-results {
+            display: none;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            max-height: 180px;
+            overflow-y: auto;
+            background: #fff;
+        }
+
+        .search-option {
+            width: 100%;
+            border: none;
+            background: #fff;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .search-option + .search-option {
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .search-option:hover {
+            background: #f8fafc;
+        }
+
+        .search-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            color: #475569;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .search-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .search-text {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .search-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .search-email {
+            font-size: 12px;
+            color: #64748b;
+        }
+
         .modal-btns { display: flex; justify-content: flex-end; gap: 10px; }
         .modal-btns button { padding: 8px 15px; border-radius: 6px; cursor: pointer; border: none; }
         .btn-cancel { background: #e2e8f0; }
@@ -154,6 +222,7 @@
         <div class="modal-content">
             <h3 style="font-size: 16px;">새 채팅 시작</h3>
             <input type="email" id="targetEmail" placeholder="상대방 이메일 주소 입력">
+            <div id="targetEmailSearchResults" class="search-results"></div>
             <div class="modal-btns">
                 <button class="btn-cancel" id="cancelNewChat" type="button">취소</button>
                 <button class="btn-start" id="submitNewChat" type="button">시작</button>
@@ -183,6 +252,7 @@
         let messageRequests = [];
         let currentFilter = 'ALL';
         let selectedRequest = null;
+        let userSearchTimer = null;
 
         function csrfHeaders() {
             return csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {};
@@ -204,6 +274,14 @@
                 return `<div class="profile-img"><img src="${profileImage}" alt=""></div>`;
             }
             return `<div class="profile-img">${(name || '?').trim().slice(0, 2).toUpperCase()}</div>`;
+        }
+
+        function escHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
         }
 
         function renderList(filterType = 'ALL') {
@@ -274,11 +352,83 @@
 
         function openNewChatModal() {
             document.getElementById('newChatModal').classList.add('active');
+            setTimeout(() => document.getElementById('targetEmail')?.focus(), 0);
         }
 
         function closeNewChatModal() {
+            const input = document.getElementById('targetEmail');
             document.getElementById('newChatModal').classList.remove('active');
-            document.getElementById('targetEmail').value = '';
+            input.value = '';
+            input.dataset.name = '';
+            input.dataset.profileImage = '';
+            hideUserSearchResults();
+        }
+
+        function searchUsersForChat() {
+            const input = document.getElementById('targetEmail');
+            input.dataset.name = '';
+            input.dataset.profileImage = '';
+            clearTimeout(userSearchTimer);
+            userSearchTimer = setTimeout(fetchUsersForChat, 250);
+        }
+
+        async function fetchUsersForChat() {
+            const input = document.getElementById('targetEmail');
+            const results = document.getElementById('targetEmailSearchResults');
+            const keyword = input.value.trim();
+
+            if (keyword.length < 2) {
+                hideUserSearchResults();
+                return;
+            }
+
+            const response = await fetch(`/api/users/search?email=${encodeURIComponent(keyword)}`);
+            if (!response.ok) {
+                hideUserSearchResults();
+                return;
+            }
+
+            const users = await response.json();
+            if (!users.length) {
+                hideUserSearchResults();
+                return;
+            }
+
+            results.innerHTML = users.map(user => {
+                const displayName = user.name || user.userId || user.email;
+                const avatar = user.profileImage
+                    ? `<img src="${escHtml(user.profileImage)}" alt="">`
+                    : escHtml(displayName.trim().slice(0, 2).toUpperCase());
+
+                return `
+                    <button type="button" class="search-option"
+                            data-email="${escHtml(user.email)}"
+                            data-name="${escHtml(displayName)}"
+                            data-profile-image="${escHtml(user.profileImage || '')}">
+                        <span class="search-avatar">${avatar}</span>
+                        <span class="search-text">
+                            <span class="search-name">${escHtml(displayName)}</span>
+                            <span class="search-email">${escHtml(user.email)}</span>
+                        </span>
+                    </button>
+                `;
+            }).join('');
+            results.style.display = 'block';
+
+            results.querySelectorAll('.search-option').forEach(button => {
+                button.addEventListener('click', () => {
+                    input.value = button.dataset.email;
+                    input.dataset.name = button.dataset.name || '';
+                    input.dataset.profileImage = button.dataset.profileImage || '';
+                    hideUserSearchResults();
+                });
+            });
+        }
+
+        function hideUserSearchResults() {
+            const results = document.getElementById('targetEmailSearchResults');
+            results.style.display = 'none';
+            results.innerHTML = '';
         }
 
         async function startNewChat() {
@@ -371,6 +521,13 @@
         document.getElementById('newChatButton').addEventListener('click', openNewChatModal);
         document.getElementById('cancelNewChat').addEventListener('click', closeNewChatModal);
         document.getElementById('submitNewChat').addEventListener('click', startNewChat);
+        document.getElementById('targetEmail').addEventListener('input', searchUsersForChat);
+        document.getElementById('targetEmail').addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                startNewChat();
+            }
+        });
         document.getElementById('requestBar').addEventListener('click', () => {
             if (messageRequests.length > 0) {
                 openRequestModal(messageRequests[0]);
@@ -382,7 +539,11 @@
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', event => {
                 if (event.target === modal) {
-                    modal.classList.remove('active');
+                    if (modal.id === 'newChatModal') {
+                        closeNewChatModal();
+                    } else {
+                        modal.classList.remove('active');
+                    }
                 }
             });
         });
