@@ -16,6 +16,7 @@ public class AiSimulationResultResponse {
     private final String overallReaction;
     private final Map<String, Object> result;
     private final String createdAt;
+    private final boolean starred;
 
     public AiSimulationResultResponse(AiSimulationResult savedResult, Map<String, Object> result) {
         this.id = savedResult.getId();
@@ -28,6 +29,7 @@ public class AiSimulationResultResponse {
         this.overallReaction = savedResult.getOverallReaction();
         this.result = result;
         this.createdAt = savedResult.getCreatedAt() == null ? null : savedResult.getCreatedAt().toString();
+        this.starred = savedResult.isStarred();
     }
 
     public Long getId() {
@@ -68,5 +70,9 @@ public class AiSimulationResultResponse {
 
     public String getCreatedAt() {
         return createdAt;
+    }
+
+    public boolean isStarred() {
+        return starred;
     }
 }

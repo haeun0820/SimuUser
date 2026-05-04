@@ -93,6 +93,20 @@ public class MarketAnalysisResultService {
                 .toList();
     }
 
+    @Transactional
+    public boolean toggleStarred(Long resultId, Authentication authentication) {
+        if (resultId == null) {
+            throw new IllegalArgumentException("resultId is required.");
+        }
+
+        AppUser currentUser = projectService.getCurrentUser(authentication);
+        MarketAnalysisResult result = marketAnalysisResultRepository.findById(resultId)
+                .orElseThrow(() -> new IllegalArgumentException("Market analysis result not found."));
+        findAccessibleProject(result.getProject().getId(), currentUser);
+
+        return result.toggleStarred();
+    }
+
     private Project findAccessibleProject(Long projectId, AppUser currentUser) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found."));

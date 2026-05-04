@@ -95,6 +95,20 @@ public class AiSimulationResultService {
                 .toList();
     }
 
+    @Transactional
+    public boolean toggleStarred(Long resultId, Authentication authentication) {
+        if (resultId == null) {
+            throw new IllegalArgumentException("resultId is required.");
+        }
+
+        AppUser currentUser = projectService.getCurrentUser(authentication);
+        AiSimulationResult result = aiSimulationResultRepository.findById(resultId)
+                .orElseThrow(() -> new IllegalArgumentException("AI simulation result not found."));
+        findAccessibleProject(result.getProject().getId(), currentUser);
+
+        return result.toggleStarred();
+    }
+
     private Project findAccessibleProject(Long projectId, AppUser currentUser) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found."));

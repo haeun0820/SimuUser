@@ -42,6 +42,9 @@ public class ScenarioComparisonResult {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean starred = false;
+
     protected ScenarioComparisonResult() {
     }
 
@@ -86,5 +89,14 @@ public class ScenarioComparisonResult {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public boolean isStarred() {
+        return starred;
+    }
+
+    public boolean toggleStarred() {
+        this.starred = !this.starred;
+        return this.starred;
     }
 }

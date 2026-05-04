@@ -88,6 +88,16 @@ public class FeedbackAnalysisResultService {
         return new FeedbackAnalysisResultResponse(result, fromJson(result.getResultJson()));
     }
 
+    @Transactional
+    public boolean toggleStarred(Long resultId, Authentication authentication) {
+        AppUser currentUser = projectService.getCurrentUser(authentication);
+        FeedbackAnalysisResult result = feedbackAnalysisResultRepository.findById(resultId)
+                .orElseThrow(() -> new IllegalArgumentException("Feedback result not found."));
+
+        findAccessibleProject(result.getProject().getId(), currentUser);
+        return result.toggleStarred();
+    }
+
     private Project findAccessibleProject(Long projectId, AppUser currentUser) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found."));

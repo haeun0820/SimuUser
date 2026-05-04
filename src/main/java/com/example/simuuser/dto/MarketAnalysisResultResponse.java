@@ -14,6 +14,7 @@ public class MarketAnalysisResultResponse {
     private final Integer competitorCount;
     private final Map<String, Object> result;
     private final String createdAt;
+    private final boolean starred;
 
     public MarketAnalysisResultResponse(MarketAnalysisResult savedResult, Map<String, Object> result) {
         this.id = savedResult.getId();
@@ -24,6 +25,7 @@ public class MarketAnalysisResultResponse {
         this.competitorCount = savedResult.getCompetitorCount();
         this.result = result;
         this.createdAt = savedResult.getCreatedAt() == null ? null : savedResult.getCreatedAt().toString();
+        this.starred = savedResult.isStarred();
     }
 
     public Long getId() {
@@ -56,5 +58,9 @@ public class MarketAnalysisResultResponse {
 
     public String getCreatedAt() {
         return createdAt;
+    }
+
+    public boolean isStarred() {
+        return starred;
     }
 }

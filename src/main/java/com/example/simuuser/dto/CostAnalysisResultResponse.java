@@ -21,6 +21,7 @@ public class CostAnalysisResultResponse {
     private final Map<String, Object> formData;
     private final Map<String, Object> result;
     private final LocalDateTime createdAt;
+    private final boolean starred;
 
     public CostAnalysisResultResponse(CostAnalysisResult entity, Map<String, Object> resultData) {
         this.id = entity.getId();
@@ -29,6 +30,7 @@ public class CostAnalysisResultResponse {
         this.formData = buildFormData(entity);
         this.result = resultData;
         this.createdAt = entity.getCreatedAt();
+        this.starred = entity.isStarred();
     }
 
     public CostAnalysisResultResponse(CostAnalysisResult entity, String formJson, String resultJson) {
@@ -38,6 +40,7 @@ public class CostAnalysisResultResponse {
         this.formData = fromJson(formJson);
         this.result = fromJson(resultJson);
         this.createdAt = entity.getCreatedAt();
+        this.starred = entity.isStarred();
     }
 
     public Long getId() { return id; }
@@ -46,6 +49,7 @@ public class CostAnalysisResultResponse {
     public Map<String, Object> getFormData() { return formData; }
     public Map<String, Object> getResult() { return result; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public boolean isStarred() { return starred; }
 
     private Map<String, Object> buildFormData(CostAnalysisResult entity) {
         Map<String, Object> data = new LinkedHashMap<>();

@@ -127,6 +127,16 @@ public class ScenarioComparisonService {
         return new ScenarioComparisonResultResponse(result, fromJson(result.getResultJson()));
     }
 
+    @Transactional
+    public boolean toggleStarred(Long resultId, Authentication authentication) {
+        AppUser currentUser = projectService.getCurrentUser(authentication);
+        ScenarioComparisonResult result = scenarioComparisonResultRepository.findById(resultId)
+                .orElseThrow(() -> new IllegalArgumentException("Scenario result not found."));
+
+        findAccessibleProject(result.getProject().getId(), currentUser);
+        return result.toggleStarred();
+    }
+
     private Project findAccessibleProject(Long projectId, AppUser currentUser) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found."));

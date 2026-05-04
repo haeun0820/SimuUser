@@ -57,6 +57,10 @@ public class Document {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean starred = false;
+
     // [중요] 새 문서를 만들 때 사용할 생성자
     public Document(ProjectTab projectTab, String title, String description, String content) {
         this.projectTab = projectTab;
@@ -72,5 +76,10 @@ public class Document {
         this.title = title;
         this.content = content;
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public boolean toggleStarred() {
+        this.starred = !this.starred;
+        return this.starred;
     }
 }

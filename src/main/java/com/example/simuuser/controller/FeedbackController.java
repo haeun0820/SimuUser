@@ -14,6 +14,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -132,6 +133,16 @@ public class FeedbackController {
             Authentication authentication
     ) {
         return feedbackAnalysisResultService.findByProject(projectId, authentication);
+    }
+
+    @PatchMapping("/feedback/results/{resultId}/star")
+    @ResponseBody
+    public Map<String, Object> toggleFeedbackStar(@PathVariable Long resultId, Authentication authentication) {
+        try {
+            return Map.of("starred", feedbackAnalysisResultService.toggleStarred(resultId, authentication));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
     }
 
     private void applyResultModel(Model model, Map<String, Object> result, Long projectId, String sourceType, String sourceContent) {

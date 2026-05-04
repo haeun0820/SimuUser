@@ -13,6 +13,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -106,6 +107,16 @@ public class ScenarioController {
             Authentication authentication
     ) {
         return scenarioComparisonService.findByProject(projectId, authentication);
+    }
+
+    @PatchMapping("/scenario/results/{resultId}/star")
+    @ResponseBody
+    public Map<String, Object> toggleScenarioStar(@PathVariable Long resultId, Authentication authentication) {
+        try {
+            return Map.of("starred", scenarioComparisonService.toggleStarred(resultId, authentication));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
     }
 
     private Map<String, Object> buildRequestModel(Long projectId, String compareTitle, List<ScenarioComparisonInput> scenarios, Long savedResultId) {

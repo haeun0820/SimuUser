@@ -14,6 +14,7 @@ public class DocumentResponse {
     private LocalDateTime updatedAt;
     private String type; 
     private LocalDateTime createdAt;
+    private boolean starred;
 
     public DocumentResponse(Document doc) {
         this.id = doc.getId();
@@ -23,6 +24,7 @@ public class DocumentResponse {
         this.updatedAt = doc.getUpdatedAt();
         this.type = doc.getType();
         this.createdAt = doc.getCreatedAt();
+        this.starred = doc.isStarred();
     }
 
     // Getter들 (반드시 있어야 JSON으로 변환됩니다)

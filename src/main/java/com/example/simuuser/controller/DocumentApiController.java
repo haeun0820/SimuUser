@@ -1,6 +1,7 @@
 package com.example.simuuser.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import com.example.simuuser.dto.DocumentRequest;
 import com.example.simuuser.dto.DocumentResponse;
@@ -9,6 +10,7 @@ import com.example.simuuser.service.AiDocumentService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController // JSON 데이터를 주고받는 API 컨트롤러임을 명시
@@ -33,5 +35,10 @@ public class DocumentApiController {
         // AI 서비스 쪽에 메서드를 하나 더 만들어서 호출 (또는 레포지토리 직접 호출)
         List<DocumentResponse> docs = aiDocumentService.getDocumentsByProjectId(projectId);
         return ResponseEntity.ok(docs);
+    }
+
+    @PatchMapping("/{documentId}/star")
+    public ResponseEntity<?> toggleDocumentStar(@PathVariable Long documentId, Authentication authentication) {
+        return ResponseEntity.ok(Map.of("starred", aiDocumentService.toggleStarred(documentId, authentication)));
     }
 }

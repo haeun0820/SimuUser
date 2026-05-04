@@ -13,6 +13,7 @@ public class FeedbackAnalysisResultResponse {
     private final String sourceContent;
     private final LocalDateTime createdAt;
     private final Map<String, Object> result;
+    private final boolean starred;
 
     public FeedbackAnalysisResultResponse(FeedbackAnalysisResult resultEntity, Map<String, Object> result) {
         this.id = resultEntity.getId();
@@ -21,6 +22,7 @@ public class FeedbackAnalysisResultResponse {
         this.sourceContent = resultEntity.getSourceContent();
         this.createdAt = resultEntity.getCreatedAt();
         this.result = result;
+        this.starred = resultEntity.isStarred();
     }
 
     public Long getId() {
@@ -45,5 +47,9 @@ public class FeedbackAnalysisResultResponse {
 
     public Map<String, Object> getResult() {
         return result;
+    }
+
+    public boolean isStarred() {
+        return starred;
     }
 }

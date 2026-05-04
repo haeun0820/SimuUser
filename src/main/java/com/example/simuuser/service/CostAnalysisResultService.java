@@ -127,6 +127,20 @@ public class CostAnalysisResultService {
                 .toList();
     }
 
+    @Transactional
+    public boolean toggleStarred(Long resultId, Authentication authentication) {
+        if (resultId == null) {
+            throw new IllegalArgumentException("resultId is required.");
+        }
+
+        AppUser currentUser = projectService.getCurrentUser(authentication);
+        CostAnalysisResult result = costAnalysisResultRepository.findById(resultId)
+                .orElseThrow(() -> new IllegalArgumentException("Cost analysis result not found."));
+        findAccessibleProject(result.getProject().getId(), currentUser);
+
+        return result.toggleStarred();
+    }
+
     private Map<String, Object> buildFormulaResult(CostAnalysisResultSaveRequest request, Project project) {
         List<String> revenueModels = normalizeRevenueModels(request.getRevenueModels());
         int expectedUsers = normalizedUsers(request.getExpectedUsers());

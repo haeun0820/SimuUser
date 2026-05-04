@@ -13,6 +13,7 @@ public class ScenarioComparisonResultResponse {
     private final String recommendedScenarioTitle;
     private final LocalDateTime createdAt;
     private final Map<String, Object> result;
+    private final boolean starred;
 
     public ScenarioComparisonResultResponse(ScenarioComparisonResult entity, Map<String, Object> result) {
         this.id = entity.getId();
@@ -21,6 +22,7 @@ public class ScenarioComparisonResultResponse {
         this.recommendedScenarioTitle = entity.getRecommendedScenarioTitle();
         this.createdAt = entity.getCreatedAt();
         this.result = result;
+        this.starred = entity.isStarred();
     }
 
     public Long getId() {
@@ -45,5 +47,9 @@ public class ScenarioComparisonResultResponse {
 
     public Map<String, Object> getResult() {
         return result;
+    }
+
+    public boolean isStarred() {
+        return starred;
     }
 }

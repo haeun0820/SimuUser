@@ -4,12 +4,14 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.simuuser.dto.DocumentRequest;
 import com.example.simuuser.dto.DocumentResponse;
 import com.example.simuuser.entity.AiSimulationResult;
+import com.example.simuuser.entity.AppUser;
 import com.example.simuuser.entity.CostAnalysisResult;
 import com.example.simuuser.entity.Document;
 import com.example.simuuser.entity.FeedbackAnalysisResult;
@@ -21,6 +23,7 @@ import com.example.simuuser.repository.CostAnalysisResultRepository;
 import com.example.simuuser.repository.DocumentRepository;
 import com.example.simuuser.repository.FeedbackAnalysisResultRepository;
 import com.example.simuuser.repository.MarketAnalysisResultRepository;
+import com.example.simuuser.repository.ProjectMemberRepository;
 import com.example.simuuser.repository.ProjectRepository;
 import com.example.simuuser.repository.ScenarioComparisonResultRepository;
 
@@ -31,7 +34,9 @@ import lombok.RequiredArgsConstructor;
 public class AiDocumentService {
 
     private final ProjectRepository projectRepository;
+    private final ProjectMemberRepository projectMemberRepository;
     private final DocumentRepository documentRepository;
+    private final ProjectService projectService;
     private final LlmApiService llmApiService; // 방금 만든 Gemini API 통신 서비스
 
     // 4개의 분석 결과 레포지토리 모두 주입
@@ -145,5 +150,21 @@ public class AiDocumentService {
         return documents.stream()
                 .map(DocumentResponse::new) // Document -> DocumentResponse 변환
                 .toList();
+    }
+
+    @Transactional
+    public boolean toggleStarred(Long documentId, Authentication authentication) {
+        AppUser currentUser = projectService.getCurrentUser(authentication);
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new IllegalArgumentException("Document not found."));
+        Project project = document.getProject();
+        if (project == null && document.getProjectTab() != null) {
+            project = document.getProjectTab().getProject();
+        }
+        if (project == null || !projectMemberRepository.existsByProjectAndUserAndStatus(project, currentUser, "ACCEPTED")) {
+            throw new IllegalArgumentException("You do not have access to this document.");
+        }
+
+        return document.toggleStarred();
     }
 }
