@@ -355,8 +355,8 @@ function renderDocuments(filter = 'all') {
     container.innerHTML = filtered.map(doc => `
         <div class="doc-item">
             <div class="doc-info">
-                <h4>${doc.title}</h4>
-                <p style="font-size:13px; color:#6b7280; margin-bottom:8px;">${doc.description || '설명이 없습니다.'}</p>
+                <h4>${escHtml(doc.title)}</h4>
+                <p style="font-size:13px; color:#6b7280; margin-bottom:8px;">${escHtml(doc.description)}</p>
                 <div class="doc-meta">
                     <span class="type-tag ${getTypeClass(doc.type)}">${doc.type}</span>
                     <span>${doc.date}</span>
@@ -366,7 +366,8 @@ function renderDocuments(filter = 'all') {
             <div class="doc-actions">
                 <button class="btn-view" onclick="showDetail(${doc.id})">상세보기</button>
                 <button class="btn-view" onclick="editDoc(${doc.id})">편집</button>
-                <button class="btn-icon">📥</button>
+                <!-- 💡 여기 onclick="downloadDoc(${doc.id})"가 추가되어야 합니다! -->
+                <button class="btn-icon" onclick="downloadDoc(${doc.id}, event)">📥</button> 
                 <button class="btn-icon" onclick="deleteDoc(${doc.id})">🗑️</button>
             </div>
         </div>
@@ -429,4 +430,72 @@ function deleteDoc(id) {
         generatedDocs = generatedDocs.filter(d => d.id !== id);
         renderDocuments();
     }
+}
+
+function downloadDoc(id, event) { 
+    if (event) event.stopPropagation();
+
+    selectedDocIdForDownload = id;
+    const dropdown = document.getElementById('downloadDropdown');
+    
+    // 요소가 있는지 먼저 확인 (방어 코드)
+    if (!dropdown) {
+        console.error("downloadDropdown 요소를 찾을 수 없습니다.");
+        return;
+    }
+
+    const rect = event.target.getBoundingClientRect();
+    dropdown.style.top = `${rect.bottom + window.scrollY + 5}px`;
+    dropdown.style.left = `${rect.left + window.scrollX - 100}px`;
+    dropdown.style.display = 'block';
+
+    setTimeout(() => {
+        window.onclick = function(e) {
+            if (!dropdown.contains(e.target)) {
+                dropdown.style.display = 'none';
+                window.onclick = null;
+            }
+        };
+    }, 10);
+}
+
+/* ── 다운로드 통합 관리 ── */
+async function startDownload(format) {
+    if (!selectedDocIdForDownload) return;
+    
+    // 1. 문서 상세 데이터 가져오기 (내용이 있어야 하므로)
+    const response = await fetch(`/api/documents/${selectedDocIdForDownload}`);
+    if (!response.ok) return alert("문서 데이터를 가져오지 못했습니다.");
+    const doc = await response.json();
+
+    if (format === 'pdf') {
+        // [PDF 방식] 이전에 성공했던 html2pdf 방식 사용 (가장 이쁘고 안 깨짐)
+        const element = document.createElement('div');
+        element.innerHTML = `
+            <div style="padding: 40px; font-family: 'malgun gothic', sans-serif;">
+                <h1 style="text-align:center; color: #111827;">${doc.title}</h1>
+                <div style="text-align:right; color: #6b7280; font-size: 12px;">작성일: ${new Date().toLocaleDateString()}</div>
+                <hr style="margin: 20px 0;">
+                <div style="line-height: 1.6; color: #374151;">${doc.content || '내용이 없습니다.'}</div>
+            </div>
+        `;
+
+        const opt = {
+            margin: 10,
+            filename: `${doc.title}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save();
+
+    } else if (format === 'hwp') {
+        // [HWP 방식] 서버에 요청 (단, 한글 깨짐 방지를 위해 window.location 대신 fetch 사용 권장되나 일단 기존 경로 유지)
+        // 백엔드 컨트롤러에서 <html> 태그로 감싸서 보내야 한글이 안 깨집니다.
+        const downloadUrl = `/api/documents/download/${selectedDocIdForDownload}?format=hwp`;
+        window.location.href = downloadUrl;
+    }
+    
+    document.getElementById('downloadDropdown').style.display = 'none';
 }
