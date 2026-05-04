@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SimuUser</title>
     <link rel="stylesheet" th:href="@{/css/main/main.css}">
+    <link rel="stylesheet" th:href="@{/css/header/header.css}" th:if="${isLoggedIn}">
 </head>
 <body>
 
@@ -24,6 +25,8 @@
 </header>
 
 <header class="site-header auth-header" th:if="${isLoggedIn}">
+    <input type="hidden" id="csrfToken" th:value="${_csrf.token}">
+    <input type="hidden" id="csrfHeader" th:value="${_csrf.headerName}">
 
     <!-- 왼쪽 (로고) -->
     <div class="header-left">
@@ -61,12 +64,24 @@
     <div class="header-right auth-actions">
 
         <!-- 알림 (SVG) -->
-        <button class="icon-btn" aria-label="notification">
+        <div class="notification-menu">
+        <button class="icon-btn" id="notiBtn" aria-label="notification">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                 <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zM18 16v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
                     fill="#333"/>
             </svg>
+            <span class="noti-badge"></span>
         </button>
+
+        <div class="noti-dropdown" id="notiDropdown">
+            <div class="noti-header">
+                <button class="clear-all" type="button">전체 삭제</button>
+            </div>
+            <div class="noti-list">
+                <p class="noti-empty">알림 없음</p>
+            </div>
+        </div>
+        </div>
 
         <div class="profile-menu">
 
@@ -305,5 +320,6 @@
   </div>
 </div>
 <script th:src="@{/js/chatbot_script.js}"></script>
+<script th:src="@{/js/header.js}" th:if="${isLoggedIn}"></script>
 </body>
 </html>
