@@ -10,6 +10,7 @@
   <title>SimuUser</title>
   <link rel="stylesheet" th:href="@{/css/document/document.css?v=2026050204}">
   <link rel="stylesheet" th:href="@{/css/header/header.css}">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 <div class="app-layout">
@@ -112,7 +113,7 @@
                 <span id="viewTypeTag" class="type-tag tag-blue">기획서</span>
             </div>
             <div class="detail-actions">
-                <button class="btn-sub">다운로드</button>
+                <button class="btn-sub" id="btnDetailDownload" onclick="downloadDoc(currentDocId, event)">다운로드</button>
                 <button class="btn-sub" id="btnOpenEditor">문서 열기</button>
             </div>
         </div>
@@ -122,6 +123,11 @@
         </div>
         <button class="modal-close-btn" id="closeDetailModal">✕</button>
     </div>
+</div>
+
+<div id="downloadDropdown" class="download-dropdown" style="display: none;">
+    <button type="button" onclick="startDownload('pdf')">PDF 파일 (.pdf)</button>
+    <button type="button" onclick="startDownload('hwp')">한글 파일 (.hwp)</button>
 </div>
 
 <!-- 사이드바 -->

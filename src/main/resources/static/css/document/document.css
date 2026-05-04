@@ -450,3 +450,32 @@ textarea.form-input {
     background: #d1d5db;
     border-radius: 4px;
 }
+
+/* 다운로드 드롭다운 스타일 */
+.download-dropdown {
+    position: absolute;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    overflow: hidden;
+    min-width: 140px;
+}
+
+.download-dropdown button {
+    display: block;
+    width: 100%;
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 13px;
+    color: #374151;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.download-dropdown button:hover {
+    background-color: #f3f4f6;
+    color: #8b5cf6;
+}
