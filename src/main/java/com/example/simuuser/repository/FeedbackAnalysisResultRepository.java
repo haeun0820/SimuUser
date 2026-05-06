@@ -11,5 +11,7 @@ public interface FeedbackAnalysisResultRepository extends JpaRepository<Feedback
 
     List<FeedbackAnalysisResult> findByProjectOrderByCreatedAtDesc(Project project);
 
+    List<FeedbackAnalysisResult> findByProjectIn(List<Project> projects);
+
     List<FeedbackAnalysisResult> findByProject(Project project);
 }

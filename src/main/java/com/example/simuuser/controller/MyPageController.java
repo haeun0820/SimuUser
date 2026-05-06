@@ -4,6 +4,7 @@ import com.example.simuuser.dto.ProfileResponse;
 import com.example.simuuser.dto.ProfileUpdateRequest;
 import com.example.simuuser.entity.AppUser;
 import com.example.simuuser.service.AppUserService;
+import com.example.simuuser.service.MyPageAnalysisService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,10 +36,16 @@ public class MyPageController {
 
     private final PasswordEncoder passwordEncoder;
     private final AppUserService appUserService;
+    private final MyPageAnalysisService myPageAnalysisService;
 
-    public MyPageController(PasswordEncoder passwordEncoder, AppUserService appUserService) {
+    public MyPageController(
+            PasswordEncoder passwordEncoder,
+            AppUserService appUserService,
+            MyPageAnalysisService myPageAnalysisService
+    ) {
         this.passwordEncoder = passwordEncoder;
         this.appUserService = appUserService;
+        this.myPageAnalysisService = myPageAnalysisService;
     }
 
     @GetMapping("/mypage")
@@ -50,6 +57,26 @@ public class MyPageController {
     @GetMapping("/api/me")
     public ProfileResponse me(Authentication authentication) {
         return new ProfileResponse(appUserService.getCurrentUser(authentication));
+    }
+
+    @ResponseBody
+    @GetMapping("/api/mypage/analysis-summary")
+    public ResponseEntity<?> analysisSummary(Authentication authentication) {
+        try {
+            return ResponseEntity.ok(myPageAnalysisService.getSummary(authentication));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @ResponseBody
+    @GetMapping("/api/mypage/analysis-history")
+    public ResponseEntity<?> analysisHistory(Authentication authentication) {
+        try {
+            return ResponseEntity.ok(myPageAnalysisService.getHistories(authentication));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     @ResponseBody

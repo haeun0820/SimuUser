@@ -166,14 +166,35 @@
       .replace(/"/g, '&quot;');
   }
 
+  function memberDisplayName(member) {
+    if (!member) {
+      return '';
+    }
+    if (typeof member === 'string') {
+      return member;
+    }
+    return member.name || member.email || member.userName || member.userId || '';
+  }
+
+  function projectCollaboratorNames(members) {
+    if (!Array.isArray(members)) {
+      return [];
+    }
+    return members
+      .filter(member => !member.currentUser && (!member.status || member.status === 'ACCEPTED'))
+      .map(memberDisplayName)
+      .filter(Boolean);
+  }
+
   function renderCard(project) {
     const isCollab = project.type === 'collab';
     const badge = isCollab
       ? '<span class="badge badge-collab">협업</span>'
       : '<span class="badge badge-personal">개인</span>';
 
-    const memberInfo = isCollab && project.members && project.members.length > 0
-      ? `<span class="meta-team">With. ${project.members.map(escHtml).join(', ')}</span>`
+    const collaboratorNames = projectCollaboratorNames(project.members);
+    const memberInfo = isCollab && collaboratorNames.length > 0
+      ? `<span class="meta-team">With. ${collaboratorNames.map(escHtml).join(', ')}</span>`
       : '';
 
     return `
@@ -293,8 +314,15 @@
         },
         y: {
           grid: { color: 'rgba(0,0,0,0.05)' },
-          ticks: { color: '#9ca3af', font: { size: 11 } },
-          min: 0
+          beginAtZero: true,
+          min: 0,
+          ticks: {
+            color: '#9ca3af',
+            font: { size: 11 },
+            precision: 0,
+            stepSize: 1,
+            callback: value => Number.isInteger(Number(value)) ? `${Number(value)}회` : ''
+          }
         }
       }
     }
@@ -319,8 +347,10 @@
 
   function applyLineSeries(period) {
     const series = dashboardAnalytics[period] || { labels: [], data: [] };
+    const maxValue = Math.max(0, ...series.data.map(value => Number(value) || 0));
     lineChart.data.labels = series.labels;
     lineChart.data.datasets[0].data = series.data;
+    lineChart.options.scales.y.suggestedMax = Math.max(1, maxValue);
     lineChart.update();
   }
 

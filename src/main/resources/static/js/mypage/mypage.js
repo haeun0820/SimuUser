@@ -121,6 +121,26 @@ document.addEventListener("DOMContentLoaded", function () {
         return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
+    function memberDisplayName(member) {
+        if (!member) {
+            return '';
+        }
+        if (typeof member === 'string') {
+            return member;
+        }
+        return member.name || member.email || member.userName || member.userId || '';
+    }
+
+    function projectCollaboratorNames(members) {
+        if (!Array.isArray(members)) {
+            return [];
+        }
+        return members
+            .filter(member => !member.currentUser && (!member.status || member.status === 'ACCEPTED'))
+            .map(memberDisplayName)
+            .filter(Boolean);
+    }
+
     async function loadProjects() {
         try {
             const response = await fetch('/api/projects');
@@ -151,8 +171,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 ? '<span class="badge-collab">협업</span>'
                 : '<span class="badge-personal">개인</span>';
 
-            const memberInfo = isCollab && p.members && p.members.length > 0
-                ? `<span class="item-meta-badge">With. ${p.members.map(escHtml).join(', ')}</span>`
+            const collaboratorNames = projectCollaboratorNames(p.members);
+            const memberInfo = isCollab && collaboratorNames.length > 0
+                ? `<span class="item-meta-badge">With. ${collaboratorNames.map(escHtml).join(', ')}</span>`
                 : '';
 
             return `
@@ -186,25 +207,66 @@ document.addEventListener("DOMContentLoaded", function () {
 
     loadProjects();
 
-    const mockHistory = [
-        { title: "AI 시뮬레이션", date: "2026. 4. 2." },
-        { title: "AI 시뮬레이션", date: "2026. 4. 1." },
-        { title: "AI 시뮬레이션", date: "2026. 4. 1." },
-        { title: "시장 분석", date: "2026. 4. 1." }
-    ];
+    async function loadAnalysisHistory() {
+        let histories = [];
+        try {
+            const response = await fetch('/api/mypage/analysis-summary');
+            if (!response.ok) {
+                throw new Error('분석 기록을 불러오지 못했습니다.');
+            }
+            const summary = await response.json();
+            histories = Array.isArray(summary.histories) ? summary.histories : [];
+            document.getElementById('analysisCountLabel').textContent = `${summary.analysisCount || histories.length}개 분석`;
+        } catch (error) {
+            console.error(error);
+            document.getElementById('analysisCountLabel').textContent = '0개 분석';
+        }
 
-    function renderHistoryList() {
+        renderHistoryList(histories);
+    }
+
+    function formatDate(value) {
+        if (!value) {
+            return '';
+        }
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            return '';
+        }
+        return date.toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric'
+        });
+    }
+
+    function typeColor(type) {
+        return {
+            aiuser: '#6366f1',
+            market: '#10b981',
+            cost: '#f59e0b',
+            feedback: '#0ea5e9',
+            scenario: '#8b5cf6'
+        }[type] || '#10b981';
+    }
+
+    function renderHistoryList(histories) {
         const container = document.getElementById('myHistoryList');
-        container.innerHTML = mockHistory.map(h => `
-            <div class="list-item">
+        if (!histories.length) {
+            container.innerHTML = `<p style="color:#94a3b8; text-align:center; padding: 20px;">분석 기록이 없습니다.</p>`;
+            return;
+        }
+
+        container.innerHTML = histories.map(h => `
+            <div class="list-item" onclick="location.href='${escHtml(h.detailUrl || '#')}'">
                 <div class="item-title-row" style="gap: 16px;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${typeColor(h.type)}" stroke-width="2">
                         <circle cx="12" cy="12" r="10"></circle>
                         <path d="M9 12l2 2 4-4"></path>
                     </svg>
                     <div style="display:flex; flex-direction:column; gap:4px;">
-                        <span style="font-size:14px; font-weight:600; color:#1e293b;">${h.title}</span>
-                        <span style="font-size:12px; color:#94a3b8;">${h.date}</span>
+                        <span style="font-size:14px; font-weight:600; color:#1e293b;">${escHtml(h.title || '분석 결과')}</span>
+                        <span style="font-size:12px; color:#94a3b8;">${escHtml(h.projectTitle || '')} · ${formatDate(h.createdAt)}</span>
                     </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:16px;">
@@ -219,7 +281,7 @@ document.addEventListener("DOMContentLoaded", function () {
         `).join('');
     }
 
-    renderHistoryList();
+    loadAnalysisHistory();
 
     changeImageButton.addEventListener("click", function () {
         if (changeImageButton.disabled) {
