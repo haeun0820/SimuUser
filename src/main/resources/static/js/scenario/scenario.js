@@ -30,7 +30,7 @@
   function applyDetailContext(project) {
     if (!fromDetail || !initialProjectId) return;
 
-    document.querySelector('.unified-project-picker')?.classList.add('detail-project-picker');
+    document.querySelector('.project-select-card')?.classList.add('detail-project-picker');
     document.querySelector('.project-filter-tabs')?.style.setProperty('display', 'none', 'important');
     document.getElementById('btnNewProject')?.style.setProperty('display', 'none', 'important');
 
@@ -79,31 +79,16 @@
       return;
     }
 
-    container.innerHTML = filtered.map(project => {
-      const isSelected = String(project.id) === String(selectedProjectId);
-      return `
-      <div class="project-item ${isSelected ? 'selected' : ''}" data-id="${project.id}" role="button" tabindex="0">
+    container.innerHTML = filtered.map(project => `
+      <div class="project-item ${String(project.id) === String(selectedProjectId) ? 'selected' : ''}" data-id="${project.id}" style="margin-bottom:10px;cursor:pointer;">
         <div class="project-item-head">
-          <span class="project-item-title">${escHtml(project.title)}</span>
+          <span class="project-item-title" style="font-weight:700;">${escHtml(project.title)}</span>
           <span class="type-badge badge-${project.type === 'collab' ? 'collab' : 'personal'}">${project.type === 'collab' ? '협업' : '개인'}</span>
-          <div class="check-icon" style="${isSelected ? 'display:flex' : 'display:none'}">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-          </div>
         </div>
-        <p class="project-item-desc">${escHtml(project.description || '')}</p>
-        <div class="project-item-footer">
-          <span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:3px;">
-              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
-              <path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
-            </svg>${timeAgo(project.createdAt)}
-          </span>
-        </div>
+        <p class="project-item-desc" style="font-size:13px;color:#6b7280;margin:4px 0;">${escHtml(project.description || '')}</p>
+        <div class="project-item-footer" style="font-size:12px;color:#9ca3af;">${timeAgo(project.createdAt)}</div>
       </div>
-    `;
-    }).join('');
+    `).join('');
 
     container.querySelectorAll('.project-item').forEach(item => {
       item.addEventListener('click', () => {
@@ -115,16 +100,15 @@
 
   function updateSelection() {
     document.querySelectorAll('.project-item').forEach(item => {
-      const isTarget = String(item.dataset.id) === String(selectedProjectId);
-      item.classList.toggle('selected', isTarget);
-      const check = item.querySelector('.check-icon');
-      if (check) check.style.display = isTarget ? 'flex' : 'none';
+      item.classList.toggle('selected', String(item.dataset.id) === String(selectedProjectId));
     });
 
     const projectInput = document.getElementById('selectedProjectIdInput');
     if (projectInput) {
       projectInput.value = selectedProjectId || '';
     }
+
+    refreshProjectDocumentPanels();
   }
 
   function restoreDraft() {
@@ -169,13 +153,94 @@
   function getProjectTreeUI(index) {
     return `
       <div class="project-tree-view">
-        <p class="tree-guide">프로젝트 문서 모드는 현재 프로젝트 설명 기반 비교로 처리됩니다.</p>
-        <div class="form-group">
-          <label class="form-label">비교 메모</label>
-          <textarea class="form-input scenario-summary" rows="4" placeholder="이 시나리오에서 강조할 포인트를 적어주세요."></textarea>
+        <p class="tree-guide">분석할 문서를 선택하세요</p>
+        <div class="project-doc-tree" id="project-doc-tree-${index}">
+          ${selectedProjectId ? '<div class="tree-guide">문서를 불러오는 중입니다.</div>' : '<div class="tree-guide">프로젝트를 먼저 선택해주세요.</div>'}
         </div>
       </div>
     `;
+  }
+
+  async function loadProjectDocuments(index) {
+    const tree = document.getElementById(`project-doc-tree-${index}`);
+    if (!tree) return;
+
+    if (!selectedProjectId) {
+      tree.innerHTML = '<div class="tree-guide">프로젝트를 먼저 선택해주세요.</div>';
+      return;
+    }
+
+    tree.innerHTML = '<div class="tree-guide">문서를 불러오는 중입니다.</div>';
+
+    try {
+      const tabResponse = await fetch(`/api/projects/${encodeURIComponent(selectedProjectId)}/tabs`);
+      const tabs = tabResponse.ok ? await tabResponse.json() : [];
+
+      if (!Array.isArray(tabs) || !tabs.length) {
+        tree.innerHTML = '<div class="tree-guide">프로젝트에 생성된 탭이 없습니다.</div>';
+        return;
+      }
+
+      const tabEntries = await Promise.all(tabs.map(async tab => {
+        try {
+          const docResponse = await fetch(`/api/tabs/${encodeURIComponent(tab.id)}/documents`);
+          const documents = docResponse.ok ? await docResponse.json() : [];
+          return { tab, documents: Array.isArray(documents) ? documents : [] };
+        } catch (error) {
+          console.error(error);
+          return { tab, documents: [] };
+        }
+      }));
+
+      renderProjectDocumentTree(index, tabEntries);
+    } catch (error) {
+      console.error(error);
+      tree.innerHTML = '<div class="tree-guide">문서를 불러오지 못했습니다.</div>';
+    }
+  }
+
+  function renderProjectDocumentTree(index, tabEntries) {
+    const tree = document.getElementById(`project-doc-tree-${index}`);
+    if (!tree) return;
+
+    const pending = window.pendingProjectReferences?.[index] || [];
+    tree.innerHTML = tabEntries.map(({ tab, documents }) => {
+      const docsHtml = documents.length
+        ? documents.map(doc => {
+          const title = doc.title || doc.name || '문서';
+          const checked = pending.includes(title) ? ' checked' : '';
+          return `
+            <li>
+              <label>
+                <input type="checkbox" class="project-doc-checkbox" data-doc-id="${escHtml(doc.id || '')}" data-doc-title="${escHtml(title)}"${checked}>
+                📄 ${escHtml(title)}
+              </label>
+            </li>
+          `;
+        }).join('')
+        : '<li class="tree-empty">문서가 없습니다.</li>';
+
+      return `
+        <details>
+          <summary>📁 ${escHtml(tab.name || '탭')}</summary>
+          <ul>${docsHtml}</ul>
+        </details>
+      `;
+    }).join('');
+
+    if (window.pendingProjectReferences) {
+      delete window.pendingProjectReferences[index];
+    }
+  }
+
+  function refreshProjectDocumentPanels() {
+    document.querySelectorAll('.scenario-card').forEach(card => {
+      const index = Number(card.dataset.index);
+      const mode = card.querySelector(`input[name="mode-${index}"]:checked`)?.value;
+      if (mode === 'project') {
+        loadProjectDocuments(index);
+      }
+    });
   }
 
   function getDirectInputUI() {
@@ -200,6 +265,7 @@
     container.innerHTML = '';
     container.className = `scenario-grid grid-${scenarioCount}`;
     window.scenarioFiles = {};
+    window.pendingProjectReferences = {};
 
     for (let index = 1; index <= scenarioCount; index++) {
       const card = document.createElement('div');
@@ -249,6 +315,9 @@
         const modeRadio = document.querySelector(`input[name="mode-${cardIndex}"][value="${mode}"]`);
         if (modeRadio) {
           modeRadio.checked = true;
+          if (mode === 'project' && Array.isArray(scenario.references)) {
+            window.pendingProjectReferences[cardIndex] = scenario.references;
+          }
           window.toggleInputMode(cardIndex, mode);
         }
 
@@ -289,7 +358,9 @@
         .filter(Boolean);
       const references = mode === 'upload'
         ? (window.scenarioFiles[index] || []).map(file => file.name)
-        : [];
+        : Array.from(card.querySelectorAll('.project-doc-checkbox:checked'))
+          .map(input => input.dataset.docTitle || '')
+          .filter(Boolean);
 
       return { title, mode, summary, features, references };
     });
@@ -343,12 +414,14 @@
       container.innerHTML = getUploadUI(index);
     } else if (mode === 'project') {
       container.innerHTML = getProjectTreeUI(index);
+      loadProjectDocuments(index);
     } else {
       container.innerHTML = getDirectInputUI(index);
     }
   };
 
   window.scenarioFiles = {};
+  window.pendingProjectReferences = {};
 
   window.handleMultiFiles = function (event, index) {
     const newFiles = Array.from(event.target.files || []);
