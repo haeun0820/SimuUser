@@ -224,7 +224,7 @@ public class MarketController {
 
                 Return this exact JSON shape:
                 {
-                  "competitionLevel": "Low | Medium | High",
+                  "competitionLevel": "낮음 | 중간 | 높음",
                   "saturation": 0,
                   "competitorCount": 0,
                   "marketSize": {
@@ -234,7 +234,7 @@ public class MarketController {
                   },
                   "keywords": ["#keyword"],
                   "competitors": [
-                    { "name": "string", "tags": ["string"], "weakness": "string" }
+                    { "name": "string", "tags": ["string"], "strength": "string", "weakness": "string" }
                   ],
                   "differentiation": ["string"],
                   "risks": ["string"],
@@ -248,6 +248,9 @@ public class MarketController {
                 - competitorCount must match the competitors array length.
                 - Include exactly 3 to 5 keywords.
                 - Include exactly 3 to 5 competitors.
+                - For each competitor, include one concise strength and one concise weakness.
+                - Competitor strength should describe what the competitor does well in the market.
+                - Competitor weakness should describe the gap or limitation compared with the product.
                 - Include exactly 4 differentiation points and 4 risks.
                 - Use realistic but clearly estimated TAM/SAM/SOM values when live market data is not available.
                 """.formatted(
@@ -317,6 +320,7 @@ public class MarketController {
                 .map(competitor -> Map.of(
                         "name", text(competitor.get("name"), "Unknown"),
                         "tags", asStringList(competitor.get("tags")).stream().limit(4).toList(),
+                        "strength", text(competitor.get("strength"), defaultCompetitorStrength(competitor)),
                         "weakness", text(competitor.get("weakness"), "")
                 ))
                 .limit(5)
@@ -341,6 +345,15 @@ public class MarketController {
                 "risks", asStringList(result.get("risks")).stream().limit(4).toList(),
                 "opportunity", text(result.get("opportunity"), "")
         );
+    }
+
+    private String defaultCompetitorStrength(Map<String, Object> competitor) {
+        String name = text(competitor.get("name"), "해당 경쟁사");
+        List<String> tags = asStringList(competitor.get("tags"));
+        if (!tags.isEmpty()) {
+            return name + "는 " + String.join(", ", tags.stream().limit(2).toList()) + " 영역에서 강점이 있습니다.";
+        }
+        return name + "는 기존 시장 인지도와 운영 경험이 강점입니다.";
     }
 
     @SuppressWarnings("unchecked")

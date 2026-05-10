@@ -21,6 +21,10 @@
       .replace(/"/g, '&quot;');
   }
 
+  function getCompetitorStrength(competitor) {
+    return competitor.strength || '기존 분석 결과에는 강점 정보가 없습니다.';
+  }
+
   async function callMarketAnalyzeAPI(project) {
     if (!project?.id) {
       throw new Error('Project information is missing.');
@@ -221,14 +225,27 @@
     if (competitorList) {
       competitorList.innerHTML = result.competitors.map(c => `
         <div class="competitor-item">
-          <div class="competitor-name">${escHtml(c.name)}</div>
           <div class="competitor-body">
-            <div class="competitor-tags">
-              ${c.tags.map(t => `<span class="comp-tag">${escHtml(t)}</span>`).join('')}
+            <div class="competitor-profile">
+              <div class="competitor-profile-top">
+                <div>
+                  <div class="competitor-name">${escHtml(c.name)}</div>
+                  <div class="competitor-meta">경쟁 포지션</div>
+                </div>
+              </div>
+              <div class="competitor-tags">
+                ${c.tags.map(t => `<span class="comp-tag">${escHtml(t)}</span>`).join('')}
+              </div>
             </div>
+            <div class="competitor-insights">
+              <div class="competitor-strength">
+                <div class="strength-label">강점</div>
+                ${escHtml(getCompetitorStrength(c))}
+              </div>
             <div class="competitor-weakness">
               <div class="weakness-label">약점</div>
               ${escHtml(c.weakness)}
+            </div>
             </div>
           </div>
         </div>`).join('');
