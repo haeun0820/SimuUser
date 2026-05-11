@@ -1,5 +1,6 @@
 package com.example.simuuser;
 
+import com.example.simuuser.config.DatabaseUrlNormalizer;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -7,7 +8,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class SimuuserApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(SimuuserApplication.class, args);
+		SpringApplication application = new SpringApplication(SimuuserApplication.class);
+		application.addListeners(new DatabaseUrlNormalizer());
+		application.run(args);
 	}
 
 }
