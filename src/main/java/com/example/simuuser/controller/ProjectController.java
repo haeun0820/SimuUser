@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.example.simuuser.dto.ProjectCreateRequest;
 import com.example.simuuser.dto.ProjectResponse;
+import com.example.simuuser.dto.ProjectTabResponse;
 import com.example.simuuser.dto.TabRequest;
 import com.example.simuuser.dto.UserSearchResponse;
 import com.example.simuuser.entity.ProjectTab;
@@ -162,7 +163,7 @@ public class ProjectController {
     public ResponseEntity<?> addTab(@PathVariable Long projectId, @RequestBody TabRequest request) {
         try {
             ProjectTab savedTab = projectTabService.addTab(projectId, request);
-            return ResponseEntity.ok(savedTab);
+            return ResponseEntity.ok(new ProjectTabResponse(savedTab));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
@@ -170,8 +171,10 @@ public class ProjectController {
 
     @ResponseBody
     @GetMapping("/api/projects/{projectId}/tabs")
-    public List<ProjectTab> getProjectTabs(@PathVariable Long projectId) {
-        return projectTabService.getTabs(projectId);
+    public List<ProjectTabResponse> getProjectTabs(@PathVariable Long projectId) {
+        return projectTabService.getTabs(projectId).stream()
+                .map(ProjectTabResponse::new)
+                .toList();
     }
 
     @ResponseBody

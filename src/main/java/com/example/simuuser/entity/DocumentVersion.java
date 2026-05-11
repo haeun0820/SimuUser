@@ -34,7 +34,7 @@ public class DocumentVersion {
     private Document document;
 
     @Lob // TEXT보다 더 큰 용량을 담을 수 있게 설정
-    @Column(columnDefinition = "LONGTEXT")
+    @Column
     private String content;
 
     private LocalDateTime createdAt;

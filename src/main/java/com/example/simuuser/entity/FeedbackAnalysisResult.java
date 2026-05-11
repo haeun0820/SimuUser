@@ -33,7 +33,7 @@ public class FeedbackAnalysisResult {
     private String sourceType;
 
     @Lob
-    @Column(columnDefinition = "LONGTEXT")
+    @Column
     private String sourceContent;
 
     @Column(nullable = false)
@@ -49,13 +49,13 @@ public class FeedbackAnalysisResult {
     private Integer feasibilityScore;
 
     @Lob
-    @Column(nullable = false, columnDefinition = "LONGTEXT")
+    @Column(nullable = false)
     private String resultJson;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Column(nullable = false)
     private boolean starred = false;
 
     protected FeedbackAnalysisResult() {

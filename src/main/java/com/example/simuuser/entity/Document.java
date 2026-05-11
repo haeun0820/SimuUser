@@ -42,7 +42,7 @@ public class Document {
     private String description; // 문서에 대한 짧은 설명 (필요 시)
 
     @Lob
-    @Column(columnDefinition = "LONGTEXT")
+    @Column
     private String content;
 
     // Document.java 내부 추가/수정
@@ -58,7 +58,7 @@ public class Document {
     private LocalDateTime updatedAt;
 
     @Builder.Default
-    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Column(nullable = false)
     private boolean starred = false;
 
     // [중요] 새 문서를 만들 때 사용할 생성자

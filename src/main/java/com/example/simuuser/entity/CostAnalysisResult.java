@@ -33,7 +33,7 @@ public class CostAnalysisResult {
     private String title;
 
     @Lob
-    @Column(nullable = false, columnDefinition = "LONGTEXT")
+    @Column(nullable = false)
     private String revenueModels;
 
     @Column(nullable = false)
@@ -43,17 +43,17 @@ public class CostAnalysisResult {
     private Integer pricePerUser;
 
     @Lob
-    @Column(nullable = false, columnDefinition = "LONGTEXT")
+    @Column(nullable = false)
     private String formJson;
 
     @Lob
-    @Column(nullable = false, columnDefinition = "LONGTEXT")
+    @Column(nullable = false)
     private String resultJson;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Column(nullable = false)
     private boolean starred = false;
 
     protected CostAnalysisResult() {
