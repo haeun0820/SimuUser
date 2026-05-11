@@ -7,6 +7,9 @@ import com.example.simuuser.service.FeedbackAnalysisResultService;
 import com.example.simuuser.service.ProjectService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -25,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
@@ -174,7 +178,7 @@ public class FeedbackController {
         }
 
         if (file != null && !file.isEmpty()) {
-            return new String(file.getBytes(), StandardCharsets.UTF_8).trim();
+            return extractTextFromUpload(file);
         }
 
         if (project != null) {
@@ -192,6 +196,35 @@ public class FeedbackController {
         }
 
         throw new IllegalArgumentException("분석할 기획 내용이 필요합니다.");
+    }
+
+    private String extractTextFromUpload(MultipartFile file) throws IOException {
+        String filename = text(file.getOriginalFilename(), "").toLowerCase();
+        String contentType = text(file.getContentType(), "").toLowerCase();
+
+        if (contentType.contains("pdf") || filename.endsWith(".pdf")) {
+            return extractPdfText(file);
+        }
+
+        if (contentType.startsWith("text/") || filename.endsWith(".txt") || filename.endsWith(".md")) {
+            String content = new String(file.getBytes(), StandardCharsets.UTF_8).trim();
+            if (content.isBlank()) {
+                throw new IllegalArgumentException("Uploaded text file is empty.");
+            }
+            return content;
+        }
+
+        throw new IllegalArgumentException("Only PDF, TXT, and MD files are supported.");
+    }
+
+    private String extractPdfText(MultipartFile file) throws IOException {
+        try (PDDocument document = Loader.loadPDF(file.getBytes())) {
+            String content = new PDFTextStripper().getText(document).trim();
+            if (content.isBlank()) {
+                throw new IllegalArgumentException("No readable text was found in the PDF.");
+            }
+            return content;
+        }
     }
 
     private String resolveSourceType(MultipartFile file, String textContent) {

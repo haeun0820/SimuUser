@@ -8,7 +8,7 @@ import com.example.simuuser.entity.Document;
 
 public interface DocumentRepository extends JpaRepository<Document, Long> {
     // 특정 탭에 속한 모든 문서 찾기
-    List<Document> findByProjectTabId(Long tabId);
+    List<Document> findByProjectTabIdOrderByUpdatedAtDesc(Long tabId);
 
-    List<Document> findByProjectId(Long projectId);
+    List<Document> findByProjectIdOrderByUpdatedAtDesc(Long projectId);
 }
