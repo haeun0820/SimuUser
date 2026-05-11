@@ -1,74 +1,111 @@
 package com.example.simuuser.service;
 
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class LlmApiService {
 
-    @Value("${gemini.api.key}")
+    private static final String GEMINI_FALLBACK_MODEL = "gemini-2.5-flash-lite";
+    private static final int MAX_RETRIES_PER_MODEL = 2;
+
+    @Value("${gemini.api.key:}")
     private String apiKey;
 
-    // JSON 데이터를 파싱하기 위한 Jackson 라이브러리 객체 (Spring Boot 기본 내장)
+    @Value("${gemini.model:gemini-2.5-flash}")
+    private String geminiModel;
+
     private final ObjectMapper objectMapper;
+    private final RestTemplate restTemplate = new RestTemplate();
 
     public String generateText(String prompt) {
-        // 최신 빠르고 가벼운 모델인 gemini-2.5-flash 사용
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + apiKey;
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalStateException("GEMINI_API_KEY is not configured.");
+        }
 
-        // HTTP 헤더 설정
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        RestClientException lastException = null;
+        List<String> models = GEMINI_FALLBACK_MODEL.equals(geminiModel)
+                ? List.of(geminiModel)
+                : List.of(geminiModel, GEMINI_FALLBACK_MODEL);
 
-        // Gemini API가 요구하는 JSON 구조에 맞게 데이터 구성
-        // { "contents": [ { "parts": [ { "text": "프롬프트 내용" } ] } ] }
-        Map<String, Object> textPart = new HashMap<>();
-        textPart.put("text", prompt);
+        for (String model : models) {
+            for (int attempt = 1; attempt <= MAX_RETRIES_PER_MODEL; attempt++) {
+                try {
+                    return callGemini(model, prompt);
+                } catch (RestClientException e) {
+                    lastException = e;
+                    if (!isTemporaryGeminiUnavailable(e) || attempt == MAX_RETRIES_PER_MODEL) {
+                        break;
+                    }
+                    sleepBeforeRetry(attempt);
+                }
+            }
+        }
 
-        Map<String, Object> parts = new HashMap<>();
-        parts.put("parts", List.of(textPart));
+        if (lastException != null && isTemporaryGeminiUnavailable(lastException)) {
+            throw new IllegalStateException("Gemini is currently busy. Please try again shortly.", lastException);
+        }
 
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("contents", List.of(parts));
+        throw new IllegalStateException(
+                lastException == null ? "Gemini request failed." : "Gemini request failed: " + lastException.getMessage(),
+                lastException
+        );
+    }
 
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-        RestTemplate restTemplate = new RestTemplate();
+    private String callGemini(String model, String prompt) {
+        String url = UriComponentsBuilder
+                .fromUriString("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent")
+                .queryParam("key", apiKey)
+                .toUriString();
 
+        Map<String, Object> requestBody = Map.of(
+                "contents", List.of(
+                        Map.of("parts", List.of(Map.of("text", prompt)))
+                )
+        );
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> response = restTemplate.postForObject(url, requestBody, Map.class);
+        if (response == null) {
+            throw new IllegalStateException("Gemini response is empty.");
+        }
+
+        JsonNode rootNode = objectMapper.valueToTree(response);
+        JsonNode textNode = rootNode.path("candidates").path(0).path("content").path("parts").path(0).path("text");
+        String generatedText = textNode.asText("");
+        if (generatedText.isBlank()) {
+            throw new IllegalStateException("Gemini response text is empty.");
+        }
+
+        return generatedText;
+    }
+
+    private boolean isTemporaryGeminiUnavailable(RestClientException e) {
+        String message = e.getMessage();
+        return message != null
+                && (message.contains("503")
+                || message.contains("UNAVAILABLE")
+                || message.contains("Service Unavailable")
+                || message.contains("high demand"));
+    }
+
+    private void sleepBeforeRetry(int attempt) {
         try {
-            // API로 POST 요청 전송
-            ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
-
-            // 반환된 JSON에서 생성된 텍스트 부분만 추출
-            JsonNode rootNode = objectMapper.readTree(response.getBody());
-            
-            // 주의: 이 아래부분이 끊기지 않고 .asText(); 까지 잘 연결되어야 합니다!
-            String generatedText = rootNode.path("candidates")
-                                           .get(0)
-                                           .path("content")
-                                           .path("parts")
-                                           .get(0)
-                                           .path("text")
-                                           .asText();
-            
-            return generatedText;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "AI 문서 생성에 실패했습니다. 오류 내용: " + e.getMessage();
+            Thread.sleep(500L * attempt);
+        } catch (InterruptedException interruptedException) {
+            Thread.currentThread().interrupt();
         }
     }
 }
