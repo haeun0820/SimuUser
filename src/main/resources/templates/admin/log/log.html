@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시스템 로그 - SimuUser</title>
+    <link rel="stylesheet" th:href="@{/css/admin/dashboard/dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/admin/log/log.css}">
+</head>
+<body>
+<div class="app-layout">
+    <div class="main-area">
+        <header class="top-header" style="height: 70px; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0;">
+            <div>
+                <div class="dashboard-title" style="font-size: 22px; font-weight: 800;">시스템 로그</div>
+                <div class="dashboard-sub" style="font-size: 13px; color: #64748b; margin-top: 4px;">오류 로그 및 시스템 이벤트 모니터링</div>
+            </div>
+            
+            <form class="logout-form" th:action="@{/logout}" method="post" style="margin: 0;">
+                <button class="btn-logout" type="submit">로그아웃</button>
+            </form>
+        </header>
+
+        <main class="page-content" style="overflow-y: auto;">
+            
+            <div class="log-controls-section">
+                <button class="btn-back" onclick="history.back()">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+
+                <div class="log-filter-group">
+                    <button class="log-filter-btn active" data-filter="all">전체</button>
+                    <button class="log-filter-btn" data-filter="analysis">분석 실행</button>
+                    <button class="log-filter-btn" data-filter="api-error">API 오류</button>
+                    <button class="log-filter-btn" data-filter="sys-error">시스템 오류</button>
+                    <button class="log-filter-btn" data-filter="user-activity">사용자 활동</button>
+                </div>
+
+                <div class="search-wrapper">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <input type="text" id="logSearchInput" placeholder="로그 검색..">
+                </div>
+            </div>
+
+            <div class="log-card">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>타입</th>
+                            <th>메시지</th>
+                            <th>시간</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logTableBody">
+                        <tr class="log-row" data-type="analysis">
+                            <td class="log-type-col">분석 실행</td>
+                            <td>'1인 가구 반찬 배달' 시뮬레이션 성공</td>
+                            <td>2026-04-10 23:55:01</td>
+                        </tr>
+                        <tr class="log-row" data-type="api-error">
+                            <td class="log-type-col">API 오류</td>
+                            <td>OpenAI API 호출 중 인증 오류 발생 (401)</td>
+                            <td>2026-04-10 23:50:22</td>
+                        </tr>
+                        <tr class="log-row" data-type="sys-error">
+                            <td class="log-type-col">시스템 오류</td>
+                            <td>사용자 업로드 이미지 처리 서버 연결 끊김</td>
+                            <td>2026-04-10 23:42:15</td>
+                        </tr>
+                        <tr class="log-row" data-type="user-activity">
+                            <td class="log-type-col">사용자 활동</td>
+                            <td>사용자 'admin'이 AI 프롬프트 설정을 변경함</td>
+                            <td>2026-04-10 23:30:10</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script th:src="@{/js/admin/log.js}"></script>
+</body>
+</html>
