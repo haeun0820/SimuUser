@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 프롬프트 관리 - SimuUser</title>
+        <link rel="stylesheet" th:href="@{/css/admin/dashboard/dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/admin/aiprompt/prompt_management.css}">
+</head>
+<body>
+<div class="app-layout">
+    <div class="main-area">
+        <header class="top-header">
+            <div>
+                <div class="dashboard-title" style="font-size: 20px; font-weight: 700;">AI 프롬프트 관리</div>
+                <div class="dashboard-sub" style="font-size: 12px; color: #64748b;">LLM 모델 및 프롬프트 설정 관리</div>
+            </div>
+            <form class="logout-form" th:action="@{/logout}" method="post">
+                <button class="btn-logout" type="submit">로그아웃</button>
+            </form>
+        </header>
+
+        <main class="page-content" style="overflow-y: auto;"> <div class="page-nav-row">
+                <button class="btn-back" onclick="history.back()" title="뒤로가기">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+                
+                <div class="prompt-tabs">
+                    <button class="prompt-tab active" data-filter="all">전체</button>
+                    <button class="prompt-tab" data-filter="simulation">AI 시뮬레이션</button>
+                    <button class="prompt-tab" data-filter="market">시장 분석</button>
+                    <button class="prompt-tab" data-filter="profit">수익성 분석</button>
+                    <button class="prompt-tab" data-filter="feedback">기획 피드백</button>
+                    <button class="prompt-tab" data-filter="scenario">시나리오 비교</button>
+                    <button class="prompt-tab" data-filter="document">자동 문서화</button>
+                </div>
+            </div>
+
+            <div class="prompt-toolbar">
+                <div class="search-wrapper">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <input type="text" id="promptSearchInput" placeholder="프롬프트 검색..">
+                </div>
+                <button class="btn-create">새 프롬프트 생성</button>
+            </div>
+
+            <div class="prompt-list" id="promptList">
+                
+                <div class="prompt-card" data-category="simulation">
+                    <div class="card-header">
+                        <div class="card-title-group">
+                            <h3 class="card-title">이름</h3>
+                            <span class="card-model">gpt 4</span>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn-edit">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                수정
+                            </button>
+                            <span class="badge badge-green">페르소나 생성</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div>
+                            <div class="prompt-section-title">시스템 프롬프트</div>
+                            <p>프롬프트 내용 입력한 거 들어가는 칸.</p>
+                        </div>
+                        <div>
+                            <div class="prompt-section-title">사용자 프롬프트 템플릿</div>
+                            <p>사용자 프롬프트 템플릿 입력한 거 들어가는 칸.</p>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        2024.03.24
+                    </div>
+                </div>
+
+                <div class="prompt-card" data-category="market">
+                    <div class="card-header">
+                        <div class="card-title-group">
+                            <h3 class="card-title">이름</h3>
+                            <span class="card-model">gpt 4</span>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn-edit">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                수정
+                            </button>
+                            <span class="badge badge-blue">시장 분석</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div>
+                            <div class="prompt-section-title">시스템 프롬프트</div>
+                            <p>프롬프트 내용 입력한 거 들어가는 칸.</p>
+                        </div>
+                        <div>
+                            <div class="prompt-section-title">사용자 프롬프트 템플릿</div>
+                            <p>사용자 프롬프트 템플릿 입력한 거 들어가는 칸.</p>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        2024.03.24
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+</div>
+
+<div id="promptModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div>
+                <h2 class="modal-title">AI 프롬프트 생성</h2>
+                <p class="modal-sub">새로운 AI 프롬프트를 생성합니다</p>
+            </div>
+            <button class="modal-close" id="closePromptModal">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">프롬프트 이름</label>
+                <input type="text" class="form-input" placeholder="예: 페르소나 생성 v2">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">카테고리</label>
+                <div class="select-wrapper">
+                    <select class="form-select">
+                        <option value="simulation">AI 시뮬레이션</option>
+                        <option value="market">시장 분석</option>
+                        <option value="profit">수익성 분석</option>
+                        <option value="feedback">기획 피드백</option>
+                        <option value="scenario">시나리오 비교</option>
+                        <option value="document">자동 문서화</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">시스템 프롬프트</label>
+                <textarea class="form-textarea" placeholder="AI의 역할과 지침을 정의합니다"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">사용자 프롬프트 템플릿</label>
+                <textarea class="form-textarea" placeholder="사용자 입력을 처리하는 템플릿"></textarea>
+            </div>
+            
+            <button class="btn-submit-full">생성</button>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/admin/prompt_management.js}"></script>
+</body>
+</html>
