@@ -152,3 +152,57 @@ body, html {
     cursor: pointer; 
     font-weight: 600;
 }
+
+/* AI 프롬프트 설정 버튼 스타일 (누락된 부분 추가) */
+.btn-primary {
+    padding: 12px 32px;
+    background: #2563eb; /* 메인 파란색 */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+    background: #1d4ed8;
+    box-shadow: 0 4px 12px rgba(37,99,235,0.25);
+}
+
+/* 관리 기능 리스트 박스 (너비 넓히고 높이 줄이기) */
+.ai-features-box {
+    background: #f8fafc; 
+    border: 1px solid #e2e8f0; 
+    border-radius: 12px; 
+    padding: 20px 30px; /* 상하 패딩 24px -> 20px로 축소 */
+    width: 100%; 
+    max-width: 800px; /* 650px -> 800px로 가로 너비 대폭 확장 */
+}
+
+.ai-features-box p {
+    font-weight: 700; 
+    margin: 0 0 10px 0; /* 아래쪽 여백 살짝 줌 */
+    color: #1e293b; 
+    font-size: 15px;
+}
+
+.ai-features-box ul {
+    color: #475569; 
+    font-size: 14px; 
+    line-height: 1.6; /* 2.0 -> 1.6으로 줄여서 세로 높이 축소 */
+    padding-left: 24px;
+    margin: 0; 
+}
+
+/* 탭 컨텐츠 전환용 클래스 */
+.tab-pane {
+    display: none; 
+    flex: 1; 
+    flex-direction: column; 
+    min-height: 0;
+}
+.tab-pane.active {
+    display: flex; 
+}

@@ -17,23 +17,22 @@
             <form class="logout-form" th:action="@{/logout}" method="post">
                     <button class="btn-logout" type="submit">로그아웃</button>
                 </form>
-
         </header>
 
         <main class="page-content">
             <div class="admin-stat-grid">
                 <div class="dashboard-card">
-                    <span style="color:var(--primary); font-weight:600;">👤 전체 사용자</span>
+                    <span style="color:var(--primary); font-weight:600; font-size:14px;">👤 전체 사용자</span>
                     <div class="page-subtitle" id="totalUsers">2</div>
                     <span class="section-sub-title" style="font-size:12px; color:#94a3b8;">활성 사용자 포함</span>
                 </div>
                 <div class="dashboard-card">
-                    <span style="color:var(--success); font-weight:600;">📊 프로젝트</span>
+                    <span style="color:var(--success); font-weight:600; font-size:14px;">📊 프로젝트</span>
                     <div class="page-subtitle" id="totalProjects">5</div>
                     <span class="section-sub-title" style="font-size:12px; color:#94a3b8;">생성된 프로젝트</span>
                 </div>
                 <div class="dashboard-card">
-                    <span style="color:#f97316; font-weight:600;">⚡ 분석 실행</span>
+                    <span style="color:#f97316; font-weight:600; font-size:14px;">⚡ 분석 실행</span>
                     <div class="page-subtitle" id="totalAnalyses">23</div>
                     <span class="section-sub-title" style="font-size:12px; color:#94a3b8;">완료된 분석</span>
                 </div>
@@ -41,45 +40,94 @@
 
             <nav class="admin-tab-nav">
                 <div class="admin-tab active" onclick="switchTab(this, 'overview')">↗ 개요</div>
-                <div class="admin-tab" onclick="switchTab(this, 'ai-management')">⚡ AI 관리</div>
+                <div class="admin-tab" onclick="switchTab(this, 'ai')">⚡ AI 관리</div>
                 <div class="admin-tab" onclick="switchTab(this, 'users')">👥 사용자</div>
                 <div class="admin-tab" onclick="switchTab(this, 'logs')">📄 로그</div>
             </nav>
 
-            <div class="card">
-                <div class="chart-header">
-                    <div>
-                        <h3 style="margin:0; font-size:16px;">성장 추이</h3>
-                        <span style="font-size:12px; color:#94a3b8;">사용자, 프로젝트, 분석 현황</span>
+            <div id="tab-overview" class="tab-pane active">
+                <div class="card">
+                    <div class="chart-header">
+                        <div>
+                            <h3 style="margin:0; font-size:16px; color:#1e293b;">성장 추이</h3>
+                            <span style="font-size:12px; color:#94a3b8;">사용자, 프로젝트, 분석 현황</span>
+                        </div>
+                        <div class="period-btns">
+                            <button class="period-btn" onclick="updateChart('year', this)">년</button>
+                            <button class="period-btn active" onclick="updateChart('month', this)">월</button>
+                            <button class="period-btn" onclick="updateChart('day', this)">일</button>
+                        </div>
                     </div>
-                    <div class="period-btns">
-                        <button class="period-btn" onclick="updateChart('year', this)">년</button>
-                        <button class="period-btn active" onclick="updateChart('month', this)">월</button>
-                        <button class="period-btn" onclick="updateChart('day', this)">일</button>
+                    <div class="growth-chart-wrap">
+                        <canvas id="adminGrowthChart"></canvas>
                     </div>
-                </div>
-                <div class="growth-chart-wrap">
-                    <canvas id="adminGrowthChart"></canvas>
                 </div>
             </div>
-        </main>
+
+            <div id="tab-ai" class="tab-pane">
+                <div class="card">
+                    <div style="margin-bottom: 30px;">
+                        <h3 style="margin:0; font-size:18px; font-weight:800; color:#1e293b;">AI 관리</h3>
+                        <span style="font-size:13px; color:#64748b;">LLM 모델 및 프롬프트 설정 관리</span>
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 24px;">
+                        <button class="btn-primary">AI 프롬프트 설정</button>
+                        
+                        <div class="ai-features-box">
+                            <p>관리 기능:</p>
+                            <ul>
+                                <li>페르소나 생성 프롬프트 튜닝</li>
+                                <li>시장 분석 알고리즘 설정</li>
+                                <li>수익성 분석 로직 조정</li>
+                                <li>기획 피드백 AI 설정</li>
+                                <li>모델 및 온도 파라미터 관리</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-users" class="tab-pane">
+                <div class="card"><div style="padding: 20px;">사용자 관리 화면 준비 중...</div></div>
+            </div>
+            <div id="tab-logs" class="tab-pane">
+                <div class="card"><div style="padding: 20px;">시스템 로그 화면 준비 중...</div></div>
+            </div>
+            
+            </main>
     </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-    /* 1. 탭 전환 스크립트 */
-    function switchTab(element, tabName) {
-        document.querySelectorAll('.admin-tab').forEach(tab => tab.classList.remove('active'));
-        element.classList.add('active');
-        console.log("선택된 탭:", tabName);
-        // 실제 페이지 이동이 필요하다면: location.href = '/admin/' + tabName;
+    // ==========================================
+    // 1. 탭 전환 스크립트 (핵심 로직)
+    // ==========================================
+    function switchTab(clickedTab, targetTabId) {
+        // 1) 모든 탭 버튼에서 'active' 클래스 제거
+        document.querySelectorAll('.admin-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        // 2) 클릭된 탭 버튼에만 'active' 클래스 추가
+        clickedTab.classList.add('active');
+
+        // 3) 모든 탭 컨텐츠(.tab-pane)를 숨김 처리
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.classList.remove('active');
+        });
+        // 4) 목표 탭 컨텐츠만 보이게 처리
+        const targetPane = document.getElementById('tab-' + targetTabId);
+        if(targetPane) {
+            targetPane.classList.add('active');
+        }
     }
 
-    /* 2. 차트 데이터 업데이트 스크립트 */
+    // ==========================================
+    // 2. 차트 로직 (기존과 동일)
+    // ==========================================
     const ctx = document.getElementById('adminGrowthChart').getContext('2d');
     
-    // 기간별 더미 데이터
     const dataByPeriod = {
         month: {
             labels: ['1월', '2월', '3월', '4월'],
@@ -101,7 +149,6 @@
         }
     };
 
-    // 차트 초기 설정 (월간 데이터 기준)
     let growthChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -125,20 +172,17 @@
         }
     });
 
-    // 년/월/일 클릭 시 호출되는 함수 [cite: 200]
     function updateChart(period, btn) {
-        // 버튼 활성화 토글
         document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
 
-        // 차트 데이터 업데이트
         const newData = dataByPeriod[period];
         growthChart.data.labels = newData.labels;
         growthChart.data.datasets[0].data = newData.analyses;
         growthChart.data.datasets[1].data = newData.users;
         growthChart.data.datasets[2].data = newData.projects;
         
-        growthChart.update(); // 애니메이션과 함께 그래프 갱신
+        growthChart.update(); 
     }
 </script>
 </body>
