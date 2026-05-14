@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimuUser 관리자 대시보드</title>
+    <link rel="stylesheet" th:href="@{/css/admin/dashboard/dashboard.css}">
+</head>
+<body>
+<div class="app-layout">
+    <div class="main-area">
+        <header class="top-header">
+            <div>
+                <div class="dashboard-title" style="font-size: 20px; font-weight: 700;">관리자 대시보드</div>
+                <div class="dashboard-sub" style="font-size: 12px; color: #64748b;">SimuUser 플랫폼 운영 및 시스템 관리</div>
+            </div>
+            <form class="logout-form" th:action="@{/logout}" method="post">
+                    <button class="btn-logout" type="submit">로그아웃</button>
+                </form>
+
+        </header>
+
+        <main class="page-content">
+            <div class="admin-stat-grid">
+                <div class="dashboard-card">
+                    <span style="color:var(--primary); font-weight:600;">👤 전체 사용자</span>
+                    <div class="page-subtitle" id="totalUsers">2</div>
+                    <span class="section-sub-title" style="font-size:12px; color:#94a3b8;">활성 사용자 포함</span>
+                </div>
+                <div class="dashboard-card">
+                    <span style="color:var(--success); font-weight:600;">📊 프로젝트</span>
+                    <div class="page-subtitle" id="totalProjects">5</div>
+                    <span class="section-sub-title" style="font-size:12px; color:#94a3b8;">생성된 프로젝트</span>
+                </div>
+                <div class="dashboard-card">
+                    <span style="color:#f97316; font-weight:600;">⚡ 분석 실행</span>
+                    <div class="page-subtitle" id="totalAnalyses">23</div>
+                    <span class="section-sub-title" style="font-size:12px; color:#94a3b8;">완료된 분석</span>
+                </div>
+            </div>
+
+            <nav class="admin-tab-nav">
+                <div class="admin-tab active" onclick="switchTab(this, 'overview')">↗ 개요</div>
+                <div class="admin-tab" onclick="switchTab(this, 'ai-management')">⚡ AI 관리</div>
+                <div class="admin-tab" onclick="switchTab(this, 'users')">👥 사용자</div>
+                <div class="admin-tab" onclick="switchTab(this, 'logs')">📄 로그</div>
+            </nav>
+
+            <div class="card">
+                <div class="chart-header">
+                    <div>
+                        <h3 style="margin:0; font-size:16px;">성장 추이</h3>
+                        <span style="font-size:12px; color:#94a3b8;">사용자, 프로젝트, 분석 현황</span>
+                    </div>
+                    <div class="period-btns">
+                        <button class="period-btn" onclick="updateChart('year', this)">년</button>
+                        <button class="period-btn active" onclick="updateChart('month', this)">월</button>
+                        <button class="period-btn" onclick="updateChart('day', this)">일</button>
+                    </div>
+                </div>
+                <div class="growth-chart-wrap">
+                    <canvas id="adminGrowthChart"></canvas>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+    /* 1. 탭 전환 스크립트 */
+    function switchTab(element, tabName) {
+        document.querySelectorAll('.admin-tab').forEach(tab => tab.classList.remove('active'));
+        element.classList.add('active');
+        console.log("선택된 탭:", tabName);
+        // 실제 페이지 이동이 필요하다면: location.href = '/admin/' + tabName;
+    }
+
+    /* 2. 차트 데이터 업데이트 스크립트 */
+    const ctx = document.getElementById('adminGrowthChart').getContext('2d');
+    
+    // 기간별 더미 데이터
+    const dataByPeriod = {
+        month: {
+            labels: ['1월', '2월', '3월', '4월'],
+            analyses: [180, 240, 320, 420],
+            users: [120, 150, 200, 280],
+            projects: [40, 60, 85, 110]
+        },
+        year: {
+            labels: ['2023년', '2024년', '2025년', '2026년'],
+            analyses: [1200, 2500, 3800, 5000],
+            users: [800, 1500, 2400, 3200],
+            projects: [300, 600, 900, 1200]
+        },
+        day: {
+            labels: ['월', '화', '수', '목', '금', '토', '일'],
+            analyses: [40, 55, 30, 80, 95, 20, 15],
+            users: [20, 35, 15, 45, 60, 10, 5],
+            projects: [5, 10, 8, 15, 20, 2, 1]
+        }
+    };
+
+    // 차트 초기 설정 (월간 데이터 기준)
+    let growthChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dataByPeriod.month.labels,
+            datasets: [
+                { label: 'analyses', data: dataByPeriod.month.analyses, borderColor: '#f59e0b', tension: 0.3 },
+                { label: 'users', data: dataByPeriod.month.users, borderColor: '#3b82f6', tension: 0.3 },
+                { label: 'projects', data: dataByPeriod.month.projects, borderColor: '#10b981', tension: 0.3 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } }
+            },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // 년/월/일 클릭 시 호출되는 함수 [cite: 200]
+    function updateChart(period, btn) {
+        // 버튼 활성화 토글
+        document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // 차트 데이터 업데이트
+        const newData = dataByPeriod[period];
+        growthChart.data.labels = newData.labels;
+        growthChart.data.datasets[0].data = newData.analyses;
+        growthChart.data.datasets[1].data = newData.users;
+        growthChart.data.datasets[2].data = newData.projects;
+        
+        growthChart.update(); // 애니메이션과 함께 그래프 갱신
+    }
+</script>
+</body>
+</html>

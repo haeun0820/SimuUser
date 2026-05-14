@@ -1,0 +1,154 @@
+/* 관리자 대시보드 전용 스타일 */
+:root {
+    --primary: #2563eb;
+    --success: #22c55e;
+    --bg: #f4f6f9;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --text: #111827;
+    --text-sub: #6b7280;
+    --radius: 14px;
+}
+
+/* 1. 스크롤 제거 및 전체 화면 고정 */
+body, html { 
+    margin: 0; 
+    padding: 0; 
+    height: 100vh; 
+    overflow: hidden; /* 전체 페이지 스크롤 방지 */
+    font-family: 'Pretendard', sans-serif; 
+    background: var(--bg); 
+}
+
+.app-layout { 
+    display: flex; 
+    height: 100vh; 
+    width: 100vw; 
+}
+
+.main-area { 
+    flex: 1; 
+    display: flex; 
+    flex-direction: column; 
+    overflow: hidden; 
+}
+
+/* 2. 헤더 영역 */
+.top-header {
+    background: var(--surface); 
+    padding: 15px 32px;
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    border-bottom: 1px solid var(--border); 
+    flex-shrink: 0; /* 높이 고정 */
+}
+
+/* 3. 컨텐츠 영역 레이아웃 (한눈에 보이게 배분) */
+.page-content { 
+    padding: 20px 32px; 
+    flex: 1; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 15px; /* 요소 간 간격 축소 */
+    min-height: 0; /* 자식 요소의 높이 계산을 위해 필수 */
+}
+
+/* 상단 통계 카드 그리드 */
+.admin-stat-grid { 
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 15px; 
+    flex-shrink: 0; 
+}
+
+.dashboard-card { 
+    background: var(--surface); 
+    border-radius: var(--radius); 
+    padding: 15px 20px; 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+}
+
+.page-subtitle { 
+    font-size: 28px; 
+    font-weight: 800; 
+    margin: 2px 0; 
+}
+
+/* 탭 네비게이션 */
+.admin-tab-nav { 
+    display: flex; 
+    background: #eef2f6; 
+    padding: 5px; 
+    border-radius: 12px; 
+    gap: 5px; 
+    flex-shrink: 0; 
+}
+
+.admin-tab { 
+    flex: 1; 
+    padding: 10px; 
+    text-align: center; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    font-weight: 600; 
+    color: #64748b; 
+    transition: 0.2s; 
+}
+
+.admin-tab.active { 
+    background: #fff; 
+    color: var(--primary); 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+}
+
+/* 4. 그래프 영역 (남은 공간을 모두 차지) */
+.card { 
+    background: var(--surface); 
+    border-radius: var(--radius); 
+    padding: 20px; 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+    flex: 1; /* 매우 중요: 남은 세로 공간을 다 채움 */
+    display: flex; 
+    flex-direction: column; 
+    min-height: 0; 
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.growth-chart-wrap { 
+    flex: 1; 
+    min-height: 0; 
+    width: 100%; 
+    position: relative; 
+}
+
+/* 버튼 스타일 */
+.period-btns { display: flex; gap: 4px; }
+.period-btn { 
+    padding: 4px 12px; 
+    border-radius: 6px; 
+    border: 1px solid var(--border); 
+    background: white; 
+    cursor: pointer; 
+    font-size: 12px; 
+}
+.period-btn.active { 
+    background: #333; 
+    color: white; 
+    border-color: #333; 
+}
+
+.btn-logout { 
+    padding: 8px 16px; 
+    border-radius: 8px; 
+    border: 1px solid var(--border); 
+    background: white; 
+    cursor: pointer; 
+    font-weight: 600;
+}

@@ -19,4 +19,8 @@ public class TestController {
         return "project/exact_project";
     }
 
+    @GetMapping("/admin/dashboard")
+    public String adminDashboard() {
+        return "admin/dashboard/dashboard";
+    }
 }
