@@ -23,9 +23,14 @@ public class TestController {
     public String adminDashboard() {
         return "admin/dashboard/dashboard";
     }
-
+    
     @GetMapping("/admin/prompt")
     public String adminPrompt() {
         return "admin/aiprompt/prompt_management";
+    }
+
+    @GetMapping("/admin/user")
+    public String adminUser() {
+        return "admin/user/user";
     }
 }

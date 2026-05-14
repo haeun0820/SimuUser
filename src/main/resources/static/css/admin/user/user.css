@@ -1,0 +1,205 @@
+/* =========================================
+   사용자 관리 페이지 전용 스타일
+========================================= */
+
+/* 상단 타이틀 및 툴바 컨테이너 */
+.user-header-section {
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+}
+
+.user-page-title {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--text);
+    margin: 0 0 6px 0;
+}
+
+.user-page-sub {
+    font-size: 14px;
+    color: var(--text-sub);
+    margin: 0;
+}
+
+/* 툴바 (뒤로가기, 검색, 라디오 버튼) */
+.user-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* 뒤로가기 버튼 */
+.btn-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text);
+    transition: background 0.2s;
+}
+.btn-back:hover {
+    background: #e2e8f0;
+}
+
+/* 검색창 */
+.search-wrapper {
+    position: relative;
+    width: 300px;
+}
+.search-wrapper svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    width: 18px;
+    height: 18px;
+}
+.search-wrapper input {
+    width: 100%;
+    padding: 10px 16px 10px 38px;
+    border: 1px solid var(--border);
+    border-radius: 20px; /* 둥근 검색창 디자인 */
+    font-size: 14px;
+    outline: none;
+    background: var(--surface);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-wrapper input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+
+/* 라디오 버튼 그룹 (필터) */
+.radio-filter-group {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text);
+}
+.radio-label input[type="radio"] {
+    display: none;
+}
+.radio-custom {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #cbd5e1;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+.radio-label input[type="radio"]:checked + .radio-custom {
+    border-color: var(--primary);
+}
+.radio-label input[type="radio"]:checked + .radio-custom::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: var(--primary);
+    border-radius: 50%;
+}
+
+/* 사용자 목록 카드 및 테이블 */
+.user-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 32px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+}
+
+.user-card-header {
+    margin-bottom: 20px;
+}
+.user-card-title {
+    font-size: 16px;
+    font-weight: 800;
+    margin: 0 0 4px 0;
+    color: var(--text);
+}
+.user-card-sub {
+    font-size: 13px;
+    color: var(--text-sub);
+    margin: 0;
+}
+
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+.user-table th {
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    padding: 12px 8px;
+    border-bottom: 1px solid var(--border);
+}
+.user-table td {
+    padding: 16px 8px;
+    font-size: 14px;
+    color: var(--text);
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+.user-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* 권한 뱃지 */
+.role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.role-user {
+    background: #eff6ff;
+    color: #3b82f6;
+}
+.role-admin {
+    background: #f5f3ff;
+    color: #a855f7;
+}
+
+/* 작업 버튼 */
+.btn-action {
+    padding: 6px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-action:hover {
+    background: #f1f5f9;
+    color: var(--text);
+}

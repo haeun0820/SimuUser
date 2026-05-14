@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사용자 관리 - SimuUser</title>
+    <link rel="stylesheet" th:href="@{/css/admin/dashboard/dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/admin/user/user.css}">
+</head>
+<body>
+<div class="app-layout">
+    <div class="main-area">
+        <header class="top-header" style="height: 60px; justify-content: space-between;">
+            <div>
+                <div class="dashboard-title" style="font-size: 20px; font-weight: 700;">사용자 관리</div>
+                <div class="dashboard-sub" style="font-size: 12px; color: #64748b;">전체 사용자 계정 및 권한 관리</div>
+            </div>
+            
+            <form class="logout-form" th:action="@{/logout}" method="post">
+                <button class="btn-logout" type="submit">로그아웃</button>
+            </form>
+        </header>
+
+        <main class="page-content" style="overflow-y: auto;">
+            <div class="user-toolbar">
+                <div class="toolbar-left">
+                    <button class="btn-back" onclick="history.back()">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="search-wrapper">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <input type="text" id="userSearchInput" placeholder="사용자 검색..">
+                    </div>
+                </div>
+
+                <div class="radio-filter-group">
+                    <label class="radio-label">
+                        <input type="radio" name="roleFilter" value="all" checked>
+                        <span class="radio-custom"></span> 전체
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="roleFilter" value="USER">
+                        <span class="radio-custom"></span> 사용자
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="roleFilter" value="ADMIN">
+                        <span class="radio-custom"></span> 관리자
+                    </label>
+                </div>
+            </div>
+
+            <div class="user-card">
+                <div class="user-card-header">
+                    <h3 class="user-card-title">사용자 목록</h3>
+                    <p class="user-card-sub" id="userCountText">총 2명의 사용자</p>
+                </div>
+                
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>이름</th>
+                            <th>이메일</th>
+                            <th>권한</th>
+                            <th>로그인 방식</th>
+                            <th>가입일</th>
+                            <th>작업</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody">
+                        <tr class="user-row" data-role="USER">
+                            <td style="font-weight: 600;">연주 최</td>
+                            <td>duswndi1106@gmail.com</td>
+                            <td>
+                                <span class="role-badge role-user">
+                                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                    사용자
+                                </span>
+                            </td>
+                            <td>google</td>
+                            <td>2026. 4. 1.</td>
+                            <td><button class="btn-action">관리자 부여</button></td>
+                        </tr>
+                        <tr class="user-row" data-role="ADMIN">
+                            <td style="font-weight: 600;">윤냥 나는</td>
+                            <td>wannaturi@gmail.com</td>
+                            <td>
+                                <span class="role-badge role-admin">
+                                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    관리자
+                                </span>
+                            </td>
+                            <td>google</td>
+                            <td>2026. 3. 31.</td>
+                            <td><button class="btn-action">관리자 제거</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script th:src="@{/js/admin/user.js}"></script>
+</body>
+</html>
