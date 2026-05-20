@@ -206,3 +206,70 @@ body, html {
 .tab-pane.active {
     display: flex; 
 }
+
+/* =========================================
+   그래프 커스텀 필터링 패널 스타일
+========================================= */
+.chart-filter-container {
+    margin-bottom: 20px;
+    padding: 16px 20px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.filter-group + .filter-group {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed #cbd5e1;
+}
+
+.filter-label {
+    font-size: 13px;
+    font-weight: 800;
+    color: #475569;
+    width: 65px; /* 라벨 너비 고정으로 줄 맞춤 */
+}
+
+/* 필터 버튼 스타일 */
+.custom-legend {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: white;
+    border: 1px solid #cbd5e1;
+    transition: all 0.2s;
+    user-select: none; /* 드래그 방지 */
+}
+
+.custom-legend:hover {
+    border-color: #94a3b8;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* 비활성화 되었을 때의 스타일 */
+.custom-legend.inactive {
+    opacity: 0.4;
+    background: #f1f5f9;
+    text-decoration: line-through;
+}
+
+.legend-color {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}

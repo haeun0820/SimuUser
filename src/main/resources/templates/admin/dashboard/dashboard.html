@@ -59,6 +59,40 @@
                             <button class="period-btn" onclick="updateChart('day', this)">일</button>
                         </div>
                     </div>
+
+                    <div class="chart-filter-container">
+                        <div class="filter-group">
+                            <span class="filter-label">기본 지표</span>
+                            <div class="custom-legend" data-index="0" onclick="toggleDataset(this)">
+                                <span class="legend-color" style="background: #3b82f6;"></span> 사용자
+                            </div>
+                            <div class="custom-legend" data-index="1" onclick="toggleDataset(this)">
+                                <span class="legend-color" style="background: #10b981;"></span> 프로젝트
+                            </div>
+                        </div>
+                        <div class="filter-group">
+                            <span class="filter-label">분석 도구</span>
+                            <div class="custom-legend" data-index="2" onclick="toggleDataset(this)">
+                                <span class="legend-color" style="background: #f59e0b;"></span> AI 가상 유저 시뮬레이션
+                            </div>
+                            <div class="custom-legend" data-index="3" onclick="toggleDataset(this)">
+                                <span class="legend-color" style="background: #8b5cf6;"></span> 시장 및 경쟁 분석
+                            </div>
+                            <div class="custom-legend" data-index="4" onclick="toggleDataset(this)">
+                                <span class="legend-color" style="background: #ec4899;"></span> 비용 및 수익성 분석
+                            </div>
+                            <div class="custom-legend" data-index="5" onclick="toggleDataset(this)">
+                                <span class="legend-color" style="background: #f97316;"></span> 기획 피드백
+                            </div>
+                            <div class="custom-legend" data-index="6" onclick="toggleDataset(this)">
+                                <span class="legend-color" style="background: #06b6d4;"></span> 자동 문서화
+                            </div>
+                            <div class="custom-legend" data-index="7" onclick="toggleDataset(this)">
+                                <span class="legend-color" style="background: #ef4444;"></span> 시나리오 비교
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="growth-chart-wrap">
                         <canvas id="adminGrowthChart"></canvas>
                     </div>
@@ -189,46 +223,69 @@
     }
 
     // ==========================================
-    // 2. 차트 로직 (기존과 동일)
+    // 2. 차트 로직 (데이터 세분화 및 커스텀 필터 연동)
     // ==========================================
     const ctx = document.getElementById('adminGrowthChart').getContext('2d');
     
+    // 데이터 구조를 분석 6종으로 세분화
     const dataByPeriod = {
         month: {
             labels: ['1월', '2월', '3월', '4월'],
-            analyses: [180, 240, 320, 420],
             users: [120, 150, 200, 280],
-            projects: [40, 60, 85, 110]
+            projects: [40, 60, 85, 110],
+            sim: [50, 80, 110, 150],      // AI 시뮬레이션
+            market: [40, 60, 80, 100],    // 시장 분석
+            cost: [30, 40, 50, 70],       // 비용 분석
+            feedback: [20, 30, 40, 50],   // 기획 피드백
+            doc: [30, 20, 25, 30],        // 자동 문서화
+            scenario: [10, 10, 15, 20]    // 시나리오 비교
         },
         year: {
             labels: ['2023년', '2024년', '2025년', '2026년'],
-            analyses: [1200, 2500, 3800, 5000],
             users: [800, 1500, 2400, 3200],
-            projects: [300, 600, 900, 1200]
+            projects: [300, 600, 900, 1200],
+            sim: [300, 700, 1100, 1500],
+            market: [250, 500, 800, 1100],
+            cost: [200, 400, 600, 850],
+            feedback: [150, 350, 550, 700],
+            doc: [200, 300, 450, 550],
+            scenario: [100, 250, 300, 300]
         },
         day: {
             labels: ['월', '화', '수', '목', '금', '토', '일'],
-            analyses: [40, 55, 30, 80, 95, 20, 15],
             users: [20, 35, 15, 45, 60, 10, 5],
-            projects: [5, 10, 8, 15, 20, 2, 1]
+            projects: [5, 10, 8, 15, 20, 2, 1],
+            sim: [15, 20, 10, 25, 30, 5, 2],
+            market: [10, 15, 5, 20, 25, 3, 2],
+            cost: [5, 10, 8, 15, 20, 4, 3],
+            feedback: [4, 6, 2, 10, 12, 5, 4],
+            doc: [5, 2, 4, 8, 5, 2, 1],
+            scenario: [1, 2, 1, 2, 3, 1, 3]
         }
     };
 
+    // 8개의 데이터셋 배열 생성
     let growthChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: dataByPeriod.month.labels,
             datasets: [
-                { label: 'analyses', data: dataByPeriod.month.analyses, borderColor: '#f59e0b', tension: 0.3 },
-                { label: 'users', data: dataByPeriod.month.users, borderColor: '#3b82f6', tension: 0.3 },
-                { label: 'projects', data: dataByPeriod.month.projects, borderColor: '#10b981', tension: 0.3 }
+                { label: '사용자', data: dataByPeriod.month.users, borderColor: '#3b82f6', tension: 0.3 }, // index 0
+                { label: '프로젝트', data: dataByPeriod.month.projects, borderColor: '#10b981', tension: 0.3 }, // index 1
+                { label: 'AI 시뮬레이션', data: dataByPeriod.month.sim, borderColor: '#f59e0b', tension: 0.3 }, // index 2
+                { label: '시장 및 경쟁 분석', data: dataByPeriod.month.market, borderColor: '#8b5cf6', tension: 0.3 }, // index 3
+                { label: '비용 및 수익성 분석', data: dataByPeriod.month.cost, borderColor: '#ec4899', tension: 0.3 }, // index 4
+                { label: '기획 피드백', data: dataByPeriod.month.feedback, borderColor: '#f97316', tension: 0.3 }, // index 5
+                { label: '자동 문서화', data: dataByPeriod.month.doc, borderColor: '#06b6d4', tension: 0.3 }, // index 6
+                { label: '시나리오 비교', data: dataByPeriod.month.scenario, borderColor: '#ef4444', tension: 0.3 } // index 7
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } }
+                // 기본 범례(Legend) 숨김 (우리가 만든 커스텀 버튼을 사용하기 위해)
+                legend: { display: false }
             },
             scales: {
                 y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
@@ -237,17 +294,42 @@
         }
     });
 
+    // 년/월/일 데이터 업데이트
     function updateChart(period, btn) {
         document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
 
         const newData = dataByPeriod[period];
         growthChart.data.labels = newData.labels;
-        growthChart.data.datasets[0].data = newData.analyses;
-        growthChart.data.datasets[1].data = newData.users;
-        growthChart.data.datasets[2].data = newData.projects;
+        
+        // 8개 데이터 모두 업데이트
+        growthChart.data.datasets[0].data = newData.users;
+        growthChart.data.datasets[1].data = newData.projects;
+        growthChart.data.datasets[2].data = newData.sim;
+        growthChart.data.datasets[3].data = newData.market;
+        growthChart.data.datasets[4].data = newData.cost;
+        growthChart.data.datasets[5].data = newData.feedback;
+        growthChart.data.datasets[6].data = newData.doc;
+        growthChart.data.datasets[7].data = newData.scenario;
         
         growthChart.update(); 
+    }
+
+    // 💡 범례(버튼) 클릭 시 해당 그래프 켜고 끄기 기능
+    function toggleDataset(element) {
+        // data-index 속성으로 몇 번째 그래프인지 식별
+        const datasetIndex = element.getAttribute('data-index');
+        
+        // 차트 인스턴스에서 해당 데이터가 현재 보여지고 있는지 확인
+        const isVisible = growthChart.isDatasetVisible(datasetIndex);
+
+        if (isVisible) {
+            growthChart.hide(datasetIndex); // 그래프 숨기기
+            element.classList.add('inactive'); // 버튼 반투명 및 취소선 처리
+        } else {
+            growthChart.show(datasetIndex); // 그래프 보이기
+            element.classList.remove('inactive'); // 버튼 원래대로 복구
+        }
     }
 </script>
 </body>
