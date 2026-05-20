@@ -48,4 +48,9 @@ public class TestController {
     public String inquiryDetail(Model model) {
         return "admin/inquiry/inquiry_detail";
     }
+
+    @GetMapping("/inquiry")
+    public String userInquiry() {
+        return "inquiry/inquiry";
+    }
 }
