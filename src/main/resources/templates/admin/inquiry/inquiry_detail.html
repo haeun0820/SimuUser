@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>문의 상세 및 답변 - SimuUser</title>
+    <link rel="stylesheet" th:href="@{/css/admin/dashboard/dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/admin/inquiry/inquiry_detail.css}">
+</head>
+<body>
+<div class="app-layout">
+    <div class="main-area">
+        <header class="top-header" style="height: 70px; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0;">
+            <div>
+                <div class="dashboard-title" style="font-size: 22px; font-weight: 800;">문의 상세</div>
+                <div class="dashboard-sub" style="font-size: 13px; color: #64748b; margin-top: 4px;">사용자 문의 확인 및 답변 등록</div>
+            </div>
+            
+            <form class="logout-form" th:action="@{/logout}" method="post" style="margin: 0;">
+                <button class="btn-logout" type="submit">로그아웃</button>
+            </form>
+        </header>
+
+        <main class="page-content" style="overflow-y: auto;">
+            
+            <div class="detail-toolbar">
+                <button class="btn-back" onclick="history.back()" title="목록으로 돌아가기">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="detail-card">
+                <div class="detail-header">
+                    <div class="detail-status">
+                        <span class="status-badge status-unread">미답변</span>
+                    </div>
+                    <h2 class="detail-title">AI 시뮬레이션 결과가 이상하게 나옵니다. 확인 부탁드립니다.</h2>
+                    <div class="detail-meta">
+                        <div class="meta-item">
+                            <span style="font-weight: 600; color: #475569;">작성자:</span> 연주 최 (duswndi1106@gmail.com)
+                        </div>
+                        <span class="meta-divider">|</span>
+                        <div class="meta-item">
+                            <span style="font-weight: 600; color: #475569;">등록일시:</span> 2026. 4. 12. 14:30
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="detail-body">안녕하세요. 
+어제부터 '1인 가구 반찬 배달' 관련하여 페르소나 생성 후 시뮬레이션을 돌렸는데, 
+응답 결과가 계속 반복되는 문장만 출력되고 있습니다. 
+
+토큰 한도 문제인지, 아니면 프롬프트 설정 오류인지 확인 부탁드립니다.
+프로젝트 ID는 #10294 입니다. 감사합니다.</div>
+            </div>
+
+            <div class="reply-card">
+                <div class="reply-header">
+                    <svg width="20" height="20" fill="none" stroke="var(--primary)" viewBox="0 0 24 24" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                    </svg>
+                    <h3>관리자 답변 등록</h3>
+                </div>
+
+                <textarea class="reply-textarea" id="replyContent" placeholder="사용자에게 전달할 답변 내용을 상세히 입력해주세요."></textarea>
+
+                <div class="reply-actions">
+                    <button class="btn-cancel" onclick="history.back()">목록으로</button>
+                    <button class="btn-submit" id="submitReplyBtn">답변 등록</button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<script th:src="@{/js/admin/inquiry_detail.js}"></script>
+</body>
+</html>

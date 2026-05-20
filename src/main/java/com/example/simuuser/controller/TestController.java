@@ -38,4 +38,14 @@ public class TestController {
     public String adminLog() {
         return "admin/log/log";
     }
+
+    @GetMapping("/admin/inquiry")
+    public String adminInquiry() {
+        return "admin/inquiry/inquiry";
+    }
+
+    @GetMapping("/admin/inquiry/detail")
+    public String inquiryDetail(Model model) {
+        return "admin/inquiry/inquiry_detail";
+    }
 }

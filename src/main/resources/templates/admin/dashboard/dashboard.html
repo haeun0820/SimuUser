@@ -43,6 +43,7 @@
                 <div class="admin-tab" onclick="switchTab(this, 'ai')">⚡ AI 관리</div>
                 <div class="admin-tab" onclick="switchTab(this, 'users')">👥 사용자</div>
                 <div class="admin-tab" onclick="switchTab(this, 'logs')">📄 로그</div>
+                <div class="admin-tab" onclick="switchTab(this, 'inquiry')">❓ 문의</div>
             </nav>
 
             <div id="tab-overview" class="tab-pane active">
@@ -136,6 +137,29 @@
                 </div>
             </div>
             
+            <div id="tab-inquiry" class="tab-pane">
+                <div class="card">
+                    <div style="margin-bottom: 30px;">
+                        <h3 style="margin:0; font-size:18px; font-weight:800; color:#1e293b;">문의 관리</h3>
+                        <span style="font-size:13px; color:#64748b;">사용자 문의 사항 관리</span>
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 24px;">
+                        <a th:href="@{/admin/inquiry}" class="btn-primary" style="display: inline-block; text-decoration: none; text-align: center;">문의 사항 조회</a>
+                        
+                        <div class="ai-features-box">
+                            <p>모니터링 항목:</p>
+                            <ul>
+                                <li>문의 사항 등록</li>
+                                <li>문의 사항 답변</li>
+                                <li>문의 사항 상태 관리</li>
+                                <li>문의 사항 통계</li>
+                                <li>사용자 피드백 수집</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
             </main>
     </div>
 </div>
