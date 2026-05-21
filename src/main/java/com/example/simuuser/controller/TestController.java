@@ -48,4 +48,10 @@ public class TestController {
     public String inquiryDetail(Model model) {
         return "admin/inquiry/inquiry_detail";
     }
+
+    @GetMapping("/admin/user/detail")
+    public String userDetail(Model model) {
+        // 실제 개발 시에는 @PathVariable로 userId를 받아와서 DB에서 유저 정보를 조회한 후 넘겨줍니다.
+        return "admin/user/user_detail";
+    }
 }

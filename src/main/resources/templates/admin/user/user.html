@@ -37,19 +37,22 @@
                     </div>
                 </div>
 
-                <div class="radio-filter-group">
-                    <label class="radio-label">
-                        <input type="radio" name="roleFilter" value="all" checked>
-                        <span class="radio-custom"></span> 전체
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="roleFilter" value="USER">
-                        <span class="radio-custom"></span> 사용자
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="roleFilter" value="ADMIN">
-                        <span class="radio-custom"></span> 관리자
-                    </label>
+                <div class="toolbar-right">
+                    <div class="radio-filter-group">
+                        <label class="radio-label"><input type="radio" name="loginMethodFilter" value="all" checked><span class="radio-custom"></span> 전체</label>
+                        <label class="radio-label"><input type="radio" name="loginMethodFilter" value="google"><span class="radio-custom"></span> 구글</label>
+                        <label class="radio-label"><input type="radio" name="loginMethodFilter" value="naver"><span class="radio-custom"></span> 네이버</label>
+                        <label class="radio-label"><input type="radio" name="loginMethodFilter" value="kakao"><span class="radio-custom"></span> 카카오</label>
+                        <label class="radio-label"><input type="radio" name="loginMethodFilter" value="apple"><span class="radio-custom"></span> 애플</label>
+                        <label class="radio-label"><input type="radio" name="loginMethodFilter" value="site"><span class="radio-custom"></span> 일반 ID</label>
+                    </div>
+                    
+                    <button type="button" class="btn-export" onclick="exportUserData()">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        데이터 내보내기
+                    </button>
                 </div>
             </div>
 
@@ -71,7 +74,7 @@
                         </tr>
                     </thead>
                     <tbody id="userTableBody">
-                        <tr class="user-row" data-role="USER">
+                        <tr class="user-row" data-login-method="google">
                             <td style="font-weight: 600;">연주 최</td>
                             <td>duswndi1106@gmail.com</td>
                             <td>
@@ -82,9 +85,9 @@
                             </td>
                             <td>google</td>
                             <td>2026. 4. 1.</td>
-                            <td><button class="btn-action">관리자 부여</button></td>
+                            <td><button class="btn-action" th:onclick="|location.href='@{/admin/user/detail}'|">상세보기</button></td>
                         </tr>
-                        <tr class="user-row" data-role="ADMIN">
+                        <tr class="user-row" data-login-method="google">
                             <td style="font-weight: 600;">윤냥 나는</td>
                             <td>wannaturi@gmail.com</td>
                             <td>
@@ -95,7 +98,7 @@
                             </td>
                             <td>google</td>
                             <td>2026. 3. 31.</td>
-                            <td><button class="btn-action">관리자 제거</button></td>
+                            <td><button class="btn-action" th:onclick="|location.href='@{/admin/user/detail}'|">상세보기</button></td>
                         </tr>
                     </tbody>
                 </table>
@@ -103,7 +106,6 @@
         </main>
     </div>
 </div>
-
 <script th:src="@{/js/admin/user.js}"></script>
 </body>
 </html>
