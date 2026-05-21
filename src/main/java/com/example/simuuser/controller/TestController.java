@@ -49,6 +49,12 @@ public class TestController {
         return "admin/inquiry/inquiry_detail";
     }
 
+    @GetMapping("/admin/inquiry/detail/{inquiryId}")
+    public String inquiryDetail(@PathVariable("inquiryId") Long inquiryId, Model model) {
+        model.addAttribute("inquiryId", inquiryId);
+        return "admin/inquiry/inquiry_detail";
+    }
+
     @GetMapping("/inquiry")
     public String userInquiry() {
         return "inquiry/inquiry";

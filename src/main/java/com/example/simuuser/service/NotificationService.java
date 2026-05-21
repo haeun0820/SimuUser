@@ -2,6 +2,7 @@ package com.example.simuuser.service;
 
 import com.example.simuuser.dto.NotificationResponse;
 import com.example.simuuser.entity.AppUser;
+import com.example.simuuser.entity.Inquiry;
 import com.example.simuuser.entity.Notification;
 import com.example.simuuser.entity.ProjectMember;
 import com.example.simuuser.repository.NotificationRepository;
@@ -16,6 +17,7 @@ import java.util.List;
 public class NotificationService {
 
     public static final String TYPE_PROJECT_INVITE = "PROJECT_INVITE";
+    public static final String TYPE_INQUIRY_ANSWER = "INQUIRY_ANSWER";
 
     private final NotificationRepository notificationRepository;
     private final ProjectMemberRepository projectMemberRepository;
@@ -41,6 +43,19 @@ public class NotificationService {
                         invite.getId(),
                         "프로젝트 초대 요청",
                         invite.getProject().getOwner().getName() + "님이 " + invite.getProject().getTitle() + " 프로젝트에 초대했습니다."
+                )));
+    }
+
+    @Transactional
+    public void createInquiryAnswerNotification(Inquiry inquiry) {
+        notificationRepository
+                .findByRecipientAndTypeAndReferenceIdAndDeletedAtIsNull(inquiry.getUser(), TYPE_INQUIRY_ANSWER, inquiry.getId())
+                .orElseGet(() -> notificationRepository.save(new Notification(
+                        inquiry.getUser(),
+                        TYPE_INQUIRY_ANSWER,
+                        inquiry.getId(),
+                        "문의 답변 완료",
+                        "'" + inquiry.getTitle() + "' 문의에 관리자 답변이 등록되었습니다."
                 )));
     }
 

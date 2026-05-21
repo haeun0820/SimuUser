@@ -1,49 +1,97 @@
-document.addEventListener("DOMContentLoaded", function() {
-    
+document.addEventListener("DOMContentLoaded", function () {
     const searchInput = document.getElementById('inquirySearchInput');
     const filterUnreadCheckbox = document.getElementById('filterUnread');
-    const inquiryRows = document.querySelectorAll('.inquiry-row');
+    const tableBody = document.getElementById('inquiryTableBody');
     const countDisplay = document.getElementById('inquiryCount');
 
+    let inquiries = [];
     let searchQuery = '';
     let showOnlyUnread = false;
 
-    // 1. 체크박스 변경 이벤트
-    filterUnreadCheckbox.addEventListener('change', function(e) {
-        showOnlyUnread = e.target.checked;
-        applyFilters();
-    });
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
 
-    // 2. 검색창 입력 이벤트
-    searchInput.addEventListener('input', function(e) {
-        searchQuery = e.target.value.toLowerCase().trim();
-        applyFilters();
-    });
+    function formatDate(value) {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            return '';
+        }
+        return new Intl.DateTimeFormat('ko-KR', {
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        }).format(date);
+    }
 
-    // 3. 필터 적용 로직
-    function applyFilters() {
-        let visibleCount = 0;
+    function statusLabel(status) {
+        return status === 'answered' ? '답변완료' : '미답변';
+    }
 
-        inquiryRows.forEach(row => {
-            const status = row.getAttribute('data-status'); // unread 또는 answered
-            // 제목과 작성자 텍스트를 가져옴
-            const title = row.querySelector('.col-title').innerText.toLowerCase();
-            const author = row.querySelector('.col-author').innerText.toLowerCase();
-            
-            // 조건 검사
-            const matchesSearch = (searchQuery === '' || title.includes(searchQuery) || author.includes(searchQuery));
-            const matchesStatus = (!showOnlyUnread || status === 'unread');
-
-            // 두 조건을 모두 만족하면 표시
-            if (matchesSearch && matchesStatus) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
+    function render() {
+        const filtered = inquiries.filter(item => {
+            const title = (item.title || '').toLowerCase();
+            const author = `${item.authorName || ''} ${item.authorEmail || ''}`.toLowerCase();
+            const matchesSearch = !searchQuery || title.includes(searchQuery) || author.includes(searchQuery);
+            const matchesStatus = !showOnlyUnread || item.status !== 'answered';
+            return matchesSearch && matchesStatus;
         });
 
-        // 결과 개수 텍스트 업데이트
-        countDisplay.textContent = visibleCount;
+        countDisplay.textContent = filtered.length;
+        tableBody.innerHTML = filtered.map((item, index) => {
+            const statusClass = item.status === 'answered' ? 'status-answered' : 'status-unread';
+            const author = item.authorEmail
+                ? `${escapeHtml(item.authorName)}<br><span style="font-size:12px;color:#94a3b8;">${escapeHtml(item.authorEmail)}</span>`
+                : escapeHtml(item.authorName);
+
+            return `
+                <tr class="inquiry-row" data-status="${escapeHtml(item.status)}" data-id="${item.id}" style="cursor: pointer;">
+                    <td class="col-no">${filtered.length - index}</td>
+                    <td class="col-title">${escapeHtml(item.title)}</td>
+                    <td class="col-author">${author}</td>
+                    <td class="col-date">${formatDate(item.createdAt)}</td>
+                    <td class="col-status"><span class="status-badge ${statusClass}">${statusLabel(item.status)}</span></td>
+                </tr>`;
+        }).join('');
     }
+
+    async function loadInquiries() {
+        try {
+            const response = await fetch('/api/admin/inquiries');
+            if (!response.ok) {
+                throw new Error('문의 목록을 불러오지 못했습니다.');
+            }
+            inquiries = await response.json();
+        } catch (error) {
+            console.error(error);
+            inquiries = [];
+        }
+        render();
+    }
+
+    filterUnreadCheckbox.addEventListener('change', function (e) {
+        showOnlyUnread = e.target.checked;
+        render();
+    });
+
+    searchInput.addEventListener('input', function (e) {
+        searchQuery = e.target.value.toLowerCase().trim();
+        render();
+    });
+
+    tableBody.addEventListener('click', function (event) {
+        const row = event.target.closest('.inquiry-row');
+        if (!row) {
+            return;
+        }
+        window.location.href = `/admin/inquiry/detail/${row.dataset.id}`;
+    });
+
+    loadInquiries();
 });

@@ -47,7 +47,7 @@
 
             <div class="inquiry-card">
                 <div class="result-count">
-                    검색결과 <span id="inquiryCount">3</span> 개
+                    검색결과 <span id="inquiryCount">0</span> 개
                 </div>
 
                 <table class="inquiry-table">
@@ -60,31 +60,7 @@
                             <th class="col-status">상태</th>
                         </tr>
                     </thead>
-                    <tbody id="inquiryTableBody">
-                        <tr class="inquiry-row" data-status="unread" style="cursor: pointer;" th:onclick="|location.href='@{/admin/inquiry/detail}'|">
-                            <td class="col-no">3</td>
-                            <td class="col-title">AI 시뮬레이션 결과가 이상하게 나옵니다. 확인 부탁드립니다.</td>
-                            <td class="col-author">연주 최</td>
-                            <td class="col-date">2026. 4. 12.</td>
-                            <td class="col-status"><span class="status-badge status-unread">미답변</span></td>
-                        </tr>
-                        
-                        <tr class="inquiry-row" data-status="answered" style="cursor: pointer;" th:onclick="|location.href='@{/admin/inquiry/detail}'|">
-                            <td class="col-no">2</td>
-                            <td class="col-title">결제 내역 영수증 발급은 어디서 하나요?</td>
-                            <td class="col-author">김유저</td>
-                            <td class="col-date">2026. 4. 10.</td>
-                            <td class="col-status"><span class="status-badge status-answered">답변완료</span></td>
-                        </tr>
-                        
-                        <tr class="inquiry-row" data-status="answered" style="cursor: pointer;" th:onclick="|location.href='@{/admin/inquiry/detail}'|">
-                            <td class="col-no">1</td>
-                            <td class="col-title">프로젝트 삭제 후 복구가 가능한지 문의드립니다.</td>
-                            <td class="col-author">윤냥 나는</td>
-                            <td class="col-date">2026. 4. 05.</td>
-                            <td class="col-status"><span class="status-badge status-answered">답변완료</span></td>
-                        </tr>
-                    </tbody>
+                    <tbody id="inquiryTableBody"></tbody>
                 </table>
 
                 <div class="pagination">

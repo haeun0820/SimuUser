@@ -92,6 +92,7 @@
 
 .filter-tabs {
   display: flex;
+  align-items: center;
   gap: 4px;
   padding: 4px;
   border: 1px solid #e2e8f0;
@@ -100,6 +101,9 @@
 }
 
 .filter-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 72px;
   height: 32px;
   border: 0;
@@ -118,11 +122,14 @@
 }
 
 .inquiry-card {
+  height: 460px;
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+  display: flex;
+  flex-direction: column;
 }
 
 .result-count {
@@ -138,11 +145,13 @@
 
 .inquiry-table-wrap {
   overflow-x: auto;
+  flex: 0 0 auto;
 }
 
 .inquiry-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
   text-align: left;
 }
 
@@ -178,7 +187,7 @@
 }
 
 .col-title {
-  min-width: 260px;
+  width: auto;
   font-weight: 700;
 }
 
@@ -187,6 +196,10 @@
   width: 132px;
   color: #64748b;
   white-space: nowrap;
+}
+
+.col-date {
+  width: 180px;
 }
 
 .col-status {
@@ -218,9 +231,14 @@
 
 .empty-state {
   display: none;
+  flex: 1;
+  min-height: 230px;
   padding: 54px 16px;
   text-align: center;
   color: #64748b;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
 }
 
 .empty-state svg {
@@ -238,6 +256,47 @@
 .empty-state span {
   color: #94a3b8;
   font-size: 13px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 34px;
+  margin-top: auto;
+  padding-top: 18px;
+}
+
+.pagination:empty {
+  display: none;
+}
+
+.page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  background: #fff;
+  color: #475569;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.page-btn:hover {
+  background: #f8fafc;
+}
+
+.page-btn.active {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #fff;
 }
 
 .modal-overlay {
@@ -352,7 +411,8 @@
 }
 
 .btn-cancel,
-.btn-submit {
+.btn-submit,
+.btn-danger {
   min-width: 92px;
   height: 40px;
   padding: 0 18px;
@@ -371,6 +431,21 @@
 
 .btn-cancel:hover {
   background: #f8fafc;
+}
+
+.btn-danger {
+  border: 0;
+  border-radius: 8px;
+  background: #ef4444;
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
 }
 
 .detail-modal .modal-header {
@@ -398,6 +473,13 @@
   font-size: 14px;
   line-height: 1.7;
   white-space: pre-wrap;
+}
+
+.detail-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 0 24px 24px;
 }
 
 @media (max-width: 760px) {

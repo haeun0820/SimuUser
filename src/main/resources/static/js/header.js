@@ -102,15 +102,28 @@ function renderProjectInvitations(notifications) {
   const notiList = document.querySelector('.noti-list');
   if (!notiList) return;
 
-  const inviteNotifications = (notifications || []).filter(notification => notification.type === 'PROJECT_INVITE' && notification.invite);
+  const visibleNotifications = (notifications || []).filter(notification =>
+    (notification.type === 'PROJECT_INVITE' && notification.invite) ||
+    notification.type === 'INQUIRY_ANSWER'
+  );
 
-  if (inviteNotifications.length === 0) {
+  if (visibleNotifications.length === 0) {
     notiList.innerHTML = '<p class="noti-empty">새로운 알림이 없습니다.</p>';
     updateNotificationBadge(0);
     return;
   }
 
-  notiList.innerHTML = inviteNotifications.map(notification => {
+  notiList.innerHTML = visibleNotifications.map(notification => {
+    if (notification.type === 'INQUIRY_ANSWER') {
+      return `
+    <article class="noti-item" data-notification-id="${notification.id}" onclick="location.href='/inquiry'">
+      <span class="noti-title">${escapeHtml(notification.title || '문의 답변 완료')}</span>
+      <p class="noti-text">${escapeHtml(notification.message || '문의에 답변이 등록되었습니다.')}</p>
+      <span class="noti-time">${formatRelativeTime(notification.createdAt)}</span>
+    </article>
+  `;
+    }
+
     const invite = notification.invite;
     return `
     <article class="noti-item project-invite" data-notification-id="${notification.id}" data-invite-id="${invite.id}">
@@ -131,7 +144,7 @@ function renderProjectInvitations(notifications) {
   `;
   }).join('');
 
-  updateNotificationBadge(inviteNotifications.length);
+  updateNotificationBadge(visibleNotifications.length);
 }
 
 async function respondProjectInvite(inviteId, action) {
