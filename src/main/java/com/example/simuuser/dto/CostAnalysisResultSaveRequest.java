@@ -6,6 +6,7 @@ import java.util.Map;
 public class CostAnalysisResultSaveRequest {
 
     private Long projectId;
+    private Long promptId;
     private List<String> revenueModels;
     private Integer expectedUsers;
     private Integer pricePerUser;
@@ -17,6 +18,14 @@ public class CostAnalysisResultSaveRequest {
 
     public void setProjectId(Long projectId) {
         this.projectId = projectId;
+    }
+
+    public Long getPromptId() {
+        return promptId;
+    }
+
+    public void setPromptId(Long promptId) {
+        this.promptId = promptId;
     }
 
     public List<String> getRevenueModels() {

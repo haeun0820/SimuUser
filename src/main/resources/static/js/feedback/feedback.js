@@ -170,11 +170,14 @@
 
     const projectIdInput = document.getElementById('selectedProjectIdInput');
     if (projectIdInput) projectIdInput.value = selectedProjectId;
+    const promptIdInput = document.getElementById('selectedPromptIdInput');
+    if (promptIdInput) promptIdInput.value = window.getSelectedPromptId ? window.getSelectedPromptId() : '';
 
     const selectedMethod = document.querySelector('input[name="inputMethod"]:checked')?.value || 'file';
     const textContent = document.querySelector('textarea[name="textContent"]')?.value || '';
     sessionStorage.setItem(draftKey, JSON.stringify({
       projectId: selectedProjectId,
+      promptId: window.getSelectedPromptId ? window.getSelectedPromptId() : '',
       sourceType: selectedMethod,
       textContent
     }));

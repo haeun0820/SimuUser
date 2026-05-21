@@ -5,6 +5,7 @@ import java.util.List;
 public class ScenarioComparisonRequest {
 
     private Long projectId;
+    private Long promptId;
     private String compareTitle;
     private List<ScenarioComparisonInput> scenarios;
 
@@ -14,6 +15,14 @@ public class ScenarioComparisonRequest {
 
     public void setProjectId(Long projectId) {
         this.projectId = projectId;
+    }
+
+    public Long getPromptId() {
+        return promptId;
+    }
+
+    public void setPromptId(Long promptId) {
+        this.promptId = promptId;
     }
 
     public String getCompareTitle() {

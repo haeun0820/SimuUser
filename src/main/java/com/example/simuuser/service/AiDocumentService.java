@@ -52,6 +52,7 @@ public class AiDocumentService {
     private final MarketAnalysisResultRepository marketRepo;
     private final ScenarioComparisonResultRepository scenarioRepo;
     private final ObjectMapper objectMapper;
+    private final AiPromptService aiPromptService;
 
     @Transactional
     public DocumentResponse generateDocument(DocumentRequest request, Authentication authentication) {
@@ -66,9 +67,11 @@ public class AiDocumentService {
         ProjectTab projectTab = resolveProjectTab(request.getTabId(), project);
         String todayDate = LocalDateTime.now().format(DATE_FORMATTER);
 
-        String prompt = isAnalysisDocumentType(request.getDocumentType())
+        String defaultPrompt = isAnalysisDocumentType(request.getDocumentType())
                 ? buildAnalysisPrompt(project, request, todayDate)
                 : buildGeneralPrompt(project, request, todayDate);
+        String customPrompt = aiPromptService.renderPrompt(request.getPromptId(), documentPromptValues(project, request, todayDate));
+        String prompt = customPrompt == null ? defaultPrompt : customPrompt;
 
         String generatedContent = llmApiService.generateText(prompt);
 
@@ -133,6 +136,19 @@ public class AiDocumentService {
                 text(project.getDescription(), "No description"),
                 text(request.getTitle(), "document"),
                 text(request.getDescription(), "No additional requirements")
+        );
+    }
+
+    private Map<String, Object> documentPromptValues(Project project, DocumentRequest request, String todayDate) {
+        return Map.of(
+                "projectTitle", text(project.getTitle(), ""),
+                "projectDescription", text(project.getDescription(), ""),
+                "targetUser", text(project.getTargetUser(), ""),
+                "industry", text(project.getIndustry(), ""),
+                "documentType", text(request.getDocumentType(), ""),
+                "title", text(request.getTitle(), ""),
+                "description", text(request.getDescription(), ""),
+                "date", todayDate
         );
     }
 

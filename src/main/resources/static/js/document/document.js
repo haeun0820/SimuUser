@@ -72,6 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const requestData = {
                 projectId: selectedProjectId, 
+                promptId: window.getSelectedPromptId ? window.getSelectedPromptId() : '',
                 documentType: currentDocType,
                 title: title,
                 description: desc

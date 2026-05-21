@@ -386,10 +386,12 @@
     }
 
     document.getElementById('selectedProjectIdInput').value = selectedProjectId;
+    document.getElementById('selectedPromptIdInput').value = window.getSelectedPromptId ? window.getSelectedPromptId() : '';
     document.getElementById('compareTitleHiddenInput').value = compareTitle;
     document.getElementById('scenarioPayloadInput').value = JSON.stringify(scenarios);
     sessionStorage.setItem(draftKey, JSON.stringify({
       projectId: selectedProjectId,
+      promptId: window.getSelectedPromptId ? window.getSelectedPromptId() : '',
       compareTitle,
       scenarioCount: scenarios.length
     }));

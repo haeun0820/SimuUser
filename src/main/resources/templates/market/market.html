@@ -33,6 +33,16 @@
           <p class="tool-subtitle">시장 포화도, 경쟁 강도, TAM/SAM/SOM을 분석합니다</p>
         </div>
       </div>
+      <section class="prompt-select-card unified-prompt-picker" data-prompt-category="market">
+        <div class="prompt-select-header">
+          <div>
+            <h2 class="prompt-title">프롬프트 선택</h2>
+            <p class="prompt-helper">프롬프트를 불러오는 중입니다.</p>
+          </div>
+          <select class="prompt-select" name="promptId" aria-label="프롬프트 선택"></select>
+        </div>
+      </section>
+
 <div class="selection-section unified-project-picker roomy-project-picker">
       <div class="selection-header">
         <h2 class="selection-title">프로젝트 선택</h2>
@@ -78,6 +88,7 @@
 
 <script th:src="@{/js/sidebar.js}"></script>
 <script th:src="@{/js/header.js}"></script>
+<script th:src="@{/js/common/prompt-picker.js}"></script>
 <script th:src="@{/js/market/market.js}"></script>
 </body>
 </html>

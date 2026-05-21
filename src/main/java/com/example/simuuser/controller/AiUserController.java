@@ -3,6 +3,7 @@ package com.example.simuuser.controller;
 import com.example.simuuser.dto.AiSimulationResultSaveRequest;
 import com.example.simuuser.dto.ProjectResponse;
 import com.example.simuuser.service.AiSimulationResultService;
+import com.example.simuuser.service.AiPromptService;
 import com.example.simuuser.service.ProjectService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,6 +34,7 @@ public class AiUserController {
     private final ObjectMapper objectMapper;
     private final ProjectService projectService;
     private final AiSimulationResultService aiSimulationResultService;
+    private final AiPromptService aiPromptService;
     private final RestTemplate restTemplate;
     private final String geminiApiKey;
     private final String geminiModel;
@@ -41,12 +43,14 @@ public class AiUserController {
     public AiUserController(
             ProjectService projectService,
             AiSimulationResultService aiSimulationResultService,
+            AiPromptService aiPromptService,
             @Value("${gemini.api.key:}") String geminiApiKey,
             @Value("${gemini.model:gemini-2.5-flash}") String geminiModel
     ) {
         this.objectMapper = new ObjectMapper();
         this.projectService = projectService;
         this.aiSimulationResultService = aiSimulationResultService;
+        this.aiPromptService = aiPromptService;
         this.restTemplate = new RestTemplate();
         this.geminiApiKey = geminiApiKey;
         this.geminiModel = geminiModel;
@@ -75,7 +79,9 @@ public class AiUserController {
         }
 
         try {
-            Map<String, Object> requestBody = buildGeminiRequest(buildPrompt(body, personaCount));
+            Long promptId = longValue(body.get("promptId"));
+            String customPrompt = aiPromptService.renderPrompt(promptId, promptValues(body, personaCount));
+            Map<String, Object> requestBody = buildGeminiRequest(customPrompt == null ? buildPrompt(body, personaCount) : customPrompt);
             Map<String, Object> geminiResponse = callGemini(requestBody);
             String resultText = extractText(geminiResponse);
             Map<String, Object> result = parseJsonResult(resultText);
@@ -371,6 +377,32 @@ public class AiUserController {
                 personaCount,
                 gender
         );
+    }
+
+    private Map<String, Object> promptValues(Map<String, Object> body, int personaCount) {
+        return Map.of(
+                "serviceIdea", text(body.get("serviceIdea"), "미입력"),
+                "projectTitle", text(body.get("serviceIdea"), "미입력"),
+                "description", text(body.get("description"), "없음"),
+                "projectDescription", text(body.get("description"), "없음"),
+                "targetUser", text(body.get("targetUser"), "없음"),
+                "industry", text(body.get("industry"), "미지정"),
+                "personaCount", personaCount,
+                "gender", text(body.get("gender"), "전체"),
+                "ages", text(body.get("ages"), "전체"),
+                "job", text(body.get("job"), "미입력")
+        );
+    }
+
+    private Long longValue(Object value) {
+        if (value == null || value.toString().isBlank()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(value.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private String text(Object value, String fallback) {
