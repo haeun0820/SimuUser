@@ -69,32 +69,26 @@
                             <div class="custom-legend" data-index="1" onclick="toggleDataset(this)">
                                 <span class="legend-color" style="background: #10b981;"></span> 프로젝트
                             </div>
-                            <div class="custom-legend" data-index="2" onclick="toggleDataset(this)">
-                                <span class="legend-color" style="background: #f59e0b;"></span> 분석 (통합)
-                            </div>
                         </div>
                         <div class="filter-group">
                             <span class="filter-label">분석 도구</span>
-                            <div class="custom-legend" id="selectAllBtn" onclick="toggleAllTools(this)" style="background: #f1f5f9; border-color: #cbd5e1;">
-                                <span class="legend-color" style="background: #64748b;"></span> <span id="selectAllText">전체 해제</span>
+                            <div class="custom-legend" data-index="2" onclick="toggleDataset(this)">
+                                <span class="legend-color" style="background: #f59e0b;"></span> AI 가상 유저 시뮬레이션
                             </div>
-                            <div class="custom-legend tool-legend" data-index="3" onclick="toggleDataset(this)">
-                                <span class="legend-color" style="background: #8b5cf6;"></span> AI 가상 유저 시뮬레이션
+                            <div class="custom-legend" data-index="3" onclick="toggleDataset(this)">
+                                <span class="legend-color" style="background: #8b5cf6;"></span> 시장 및 경쟁 분석
                             </div>
-                            <div class="custom-legend tool-legend" data-index="4" onclick="toggleDataset(this)">
-                                <span class="legend-color" style="background: #ec4899;"></span> 시장 및 경쟁 분석
+                            <div class="custom-legend" data-index="4" onclick="toggleDataset(this)">
+                                <span class="legend-color" style="background: #ec4899;"></span> 비용 및 수익성 분석
                             </div>
-                            <div class="custom-legend tool-legend" data-index="5" onclick="toggleDataset(this)">
-                                <span class="legend-color" style="background: #f97316;"></span> 비용 및 수익성 분석
+                            <div class="custom-legend" data-index="5" onclick="toggleDataset(this)">
+                                <span class="legend-color" style="background: #f97316;"></span> 기획 피드백
                             </div>
-                            <div class="custom-legend tool-legend" data-index="6" onclick="toggleDataset(this)">
-                                <span class="legend-color" style="background: #06b6d4;"></span> 기획 피드백
+                            <div class="custom-legend" data-index="6" onclick="toggleDataset(this)">
+                                <span class="legend-color" style="background: #06b6d4;"></span> 자동 문서화
                             </div>
-                            <div class="custom-legend tool-legend" data-index="7" onclick="toggleDataset(this)">
-                                <span class="legend-color" style="background: #ef4444;"></span> 자동 문서화
-                            </div>
-                            <div class="custom-legend tool-legend" data-index="8" onclick="toggleDataset(this)">
-                                <span class="legend-color" style="background: #eab308;"></span> 시나리오 비교
+                            <div class="custom-legend" data-index="7" onclick="toggleDataset(this)">
+                                <span class="legend-color" style="background: #ef4444;"></span> 시나리오 비교
                             </div>
                         </div>
                     </div>
@@ -229,29 +223,27 @@
     }
 
     // ==========================================
-    // 2. 차트 로직 (통합 분석 및 전체선택 기능 추가)
+    // 2. 차트 로직 (데이터 세분화 및 커스텀 필터 연동)
     // ==========================================
     const ctx = document.getElementById('adminGrowthChart').getContext('2d');
     
-    // 데이터 구조 (기존 분석 총합인 'analyses' 포함)
+    // 데이터 구조를 분석 6종으로 세분화
     const dataByPeriod = {
         month: {
             labels: ['1월', '2월', '3월', '4월'],
             users: [120, 150, 200, 280],
             projects: [40, 60, 85, 110],
-            analyses: [180, 240, 320, 420], // 분석 전체 통합 데이터
-            sim: [50, 80, 110, 150],      
-            market: [40, 60, 80, 100],    
-            cost: [30, 40, 50, 70],       
-            feedback: [20, 30, 40, 50],   
-            doc: [30, 20, 25, 30],        
-            scenario: [10, 10, 15, 20]    
+            sim: [50, 80, 110, 150],      // AI 시뮬레이션
+            market: [40, 60, 80, 100],    // 시장 분석
+            cost: [30, 40, 50, 70],       // 비용 분석
+            feedback: [20, 30, 40, 50],   // 기획 피드백
+            doc: [30, 20, 25, 30],        // 자동 문서화
+            scenario: [10, 10, 15, 20]    // 시나리오 비교
         },
         year: {
             labels: ['2023년', '2024년', '2025년', '2026년'],
             users: [800, 1500, 2400, 3200],
             projects: [300, 600, 900, 1200],
-            analyses: [1200, 2500, 3800, 5000],
             sim: [300, 700, 1100, 1500],
             market: [250, 500, 800, 1100],
             cost: [200, 400, 600, 850],
@@ -263,7 +255,6 @@
             labels: ['월', '화', '수', '목', '금', '토', '일'],
             users: [20, 35, 15, 45, 60, 10, 5],
             projects: [5, 10, 8, 15, 20, 2, 1],
-            analyses: [40, 55, 30, 80, 95, 20, 15],
             sim: [15, 20, 10, 25, 30, 5, 2],
             market: [10, 15, 5, 20, 25, 3, 2],
             cost: [5, 10, 8, 15, 20, 4, 3],
@@ -273,28 +264,28 @@
         }
     };
 
-    // 9개의 데이터셋 배열 생성 (index 0 ~ 8)
+    // 8개의 데이터셋 배열 생성
     let growthChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: dataByPeriod.month.labels,
             datasets: [
-                { label: '사용자', data: dataByPeriod.month.users, borderColor: '#3b82f6', tension: 0.3 }, // 0
-                { label: '프로젝트', data: dataByPeriod.month.projects, borderColor: '#10b981', tension: 0.3 }, // 1
-                { label: '분석 (통합)', data: dataByPeriod.month.analyses, borderColor: '#f59e0b', tension: 0.3 }, // 2
-                { label: 'AI 시뮬레이션', data: dataByPeriod.month.sim, borderColor: '#8b5cf6', tension: 0.3 }, // 3
-                { label: '시장 및 경쟁 분석', data: dataByPeriod.month.market, borderColor: '#ec4899', tension: 0.3 }, // 4
-                { label: '비용 및 수익성 분석', data: dataByPeriod.month.cost, borderColor: '#f97316', tension: 0.3 }, // 5
-                { label: '기획 피드백', data: dataByPeriod.month.feedback, borderColor: '#06b6d4', tension: 0.3 }, // 6
-                { label: '자동 문서화', data: dataByPeriod.month.doc, borderColor: '#ef4444', tension: 0.3 }, // 7
-                { label: '시나리오 비교', data: dataByPeriod.month.scenario, borderColor: '#eab308', tension: 0.3 } // 8
+                { label: '사용자', data: dataByPeriod.month.users, borderColor: '#3b82f6', tension: 0.3 }, // index 0
+                { label: '프로젝트', data: dataByPeriod.month.projects, borderColor: '#10b981', tension: 0.3 }, // index 1
+                { label: 'AI 시뮬레이션', data: dataByPeriod.month.sim, borderColor: '#f59e0b', tension: 0.3 }, // index 2
+                { label: '시장 및 경쟁 분석', data: dataByPeriod.month.market, borderColor: '#8b5cf6', tension: 0.3 }, // index 3
+                { label: '비용 및 수익성 분석', data: dataByPeriod.month.cost, borderColor: '#ec4899', tension: 0.3 }, // index 4
+                { label: '기획 피드백', data: dataByPeriod.month.feedback, borderColor: '#f97316', tension: 0.3 }, // index 5
+                { label: '자동 문서화', data: dataByPeriod.month.doc, borderColor: '#06b6d4', tension: 0.3 }, // index 6
+                { label: '시나리오 비교', data: dataByPeriod.month.scenario, borderColor: '#ef4444', tension: 0.3 } // index 7
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false } // 기본 범례 숨김
+                // 기본 범례(Legend) 숨김 (우리가 만든 커스텀 버튼을 사용하기 위해)
+                legend: { display: false }
             },
             scales: {
                 y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
@@ -303,7 +294,7 @@
         }
     });
 
-    // 기간 버튼(년/월/일) 클릭 시 차트 업데이트
+    // 년/월/일 데이터 업데이트
     function updateChart(period, btn) {
         document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
@@ -311,60 +302,34 @@
         const newData = dataByPeriod[period];
         growthChart.data.labels = newData.labels;
         
-        // 9개 데이터 모두 매핑
+        // 8개 데이터 모두 업데이트
         growthChart.data.datasets[0].data = newData.users;
         growthChart.data.datasets[1].data = newData.projects;
-        growthChart.data.datasets[2].data = newData.analyses;
-        growthChart.data.datasets[3].data = newData.sim;
-        growthChart.data.datasets[4].data = newData.market;
-        growthChart.data.datasets[5].data = newData.cost;
-        growthChart.data.datasets[6].data = newData.feedback;
-        growthChart.data.datasets[7].data = newData.doc;
-        growthChart.data.datasets[8].data = newData.scenario;
+        growthChart.data.datasets[2].data = newData.sim;
+        growthChart.data.datasets[3].data = newData.market;
+        growthChart.data.datasets[4].data = newData.cost;
+        growthChart.data.datasets[5].data = newData.feedback;
+        growthChart.data.datasets[6].data = newData.doc;
+        growthChart.data.datasets[7].data = newData.scenario;
         
         growthChart.update(); 
     }
 
-    // 💡 개별 범례(버튼) 클릭 시 해당 그래프 켜고 끄기 기능
+    // 💡 범례(버튼) 클릭 시 해당 그래프 켜고 끄기 기능
     function toggleDataset(element) {
+        // data-index 속성으로 몇 번째 그래프인지 식별
         const datasetIndex = element.getAttribute('data-index');
+        
+        // 차트 인스턴스에서 해당 데이터가 현재 보여지고 있는지 확인
         const isVisible = growthChart.isDatasetVisible(datasetIndex);
 
         if (isVisible) {
-            growthChart.hide(datasetIndex);
-            element.classList.add('inactive');
+            growthChart.hide(datasetIndex); // 그래프 숨기기
+            element.classList.add('inactive'); // 버튼 반투명 및 취소선 처리
         } else {
-            growthChart.show(datasetIndex);
-            element.classList.remove('inactive');
+            growthChart.show(datasetIndex); // 그래프 보이기
+            element.classList.remove('inactive'); // 버튼 원래대로 복구
         }
-    }
-
-    // 💡 분석 도구 전체 선택 / 해제 기능
-    let allToolsSelected = true; // 초기 상태는 모두 켜져있음
-
-    function toggleAllTools(btn) {
-        const toolLegends = document.querySelectorAll('.tool-legend');
-        const textSpan = document.getElementById('selectAllText');
-        
-        allToolsSelected = !allToolsSelected; // 상태 반전
-
-        toolLegends.forEach(legend => {
-            const idx = legend.getAttribute('data-index');
-            
-            if (allToolsSelected) {
-                // 전체 켜기
-                growthChart.show(idx);
-                legend.classList.remove('inactive');
-                textSpan.innerText = "전체 해제";
-                btn.classList.remove('inactive');
-            } else {
-                // 전체 끄기
-                growthChart.hide(idx);
-                legend.classList.add('inactive');
-                textSpan.innerText = "전체 선택";
-                btn.classList.add('inactive');
-            }
-        });
     }
 </script>
 </body>
