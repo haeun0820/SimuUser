@@ -203,3 +203,46 @@
     background: #f1f5f9;
     color: var(--text);
 }
+
+/* user.css 최하단에 추가할 스타일 */
+
+.user-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap; /* 화면 너비가 좁아지면 자연스럽게 떨어지도록 유연성 확보 */
+}
+
+.toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+/* 데이터 내보내기 버튼 스타일 */
+.btn-export {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 18px;
+    background: #10b981; /* 데이터 처리/엑셀을 상징하는 안정적인 Emerald Green */
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-export:hover {
+    background: #059669;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.btn-export svg {
+    display: inline-block;
+    vertical-align: middle;
+}
