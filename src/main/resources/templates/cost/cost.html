@@ -31,6 +31,16 @@
         </div>
       </div>
 
+      <section class="prompt-select-card unified-prompt-picker" data-prompt-category="profit">
+        <div class="prompt-select-header">
+          <div>
+            <h2 class="prompt-title">프롬프트 선택</h2>
+            <p class="prompt-helper">프롬프트를 불러오는 중입니다.</p>
+          </div>
+          <select class="prompt-select" name="promptId" aria-label="프롬프트 선택"></select>
+        </div>
+      </section>
+
       <section class="cost-card unified-project-picker">
         <div class="project-select-header">
           <h2 class="section-title">프로젝트 선택</h2>
@@ -127,6 +137,7 @@
 
 <script th:src="@{/js/sidebar.js}"></script>
 <script th:src="@{/js/header.js}"></script>
+<script th:src="@{/js/common/prompt-picker.js}"></script>
 <script th:src="@{/js/cost/cost.js}"></script>
 </body>
 </html>

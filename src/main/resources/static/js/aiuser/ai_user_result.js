@@ -116,7 +116,8 @@
         personaCount,
         gender: genderText,
         ages: ageText,
-        job: job || ''
+        job: job || '',
+        promptId: params.promptId || ''
       })
     });
 

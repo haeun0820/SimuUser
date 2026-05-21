@@ -3,6 +3,7 @@ package com.example.simuuser.controller;
 import com.example.simuuser.dto.FeedbackAnalysisResultResponse;
 import com.example.simuuser.dto.FeedbackAnalysisResultSaveRequest;
 import com.example.simuuser.dto.ProjectResponse;
+import com.example.simuuser.service.AiPromptService;
 import com.example.simuuser.service.FeedbackAnalysisResultService;
 import com.example.simuuser.service.ProjectService;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -38,6 +39,7 @@ import java.util.Map;
 public class FeedbackController {
 
     private final ProjectService projectService;
+    private final AiPromptService aiPromptService;
     private final FeedbackAnalysisResultService feedbackAnalysisResultService;
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
@@ -47,11 +49,13 @@ public class FeedbackController {
 
     public FeedbackController(
             ProjectService projectService,
+            AiPromptService aiPromptService,
             FeedbackAnalysisResultService feedbackAnalysisResultService,
             @Value("${gemini.api.key:}") String geminiApiKey,
             @Value("${gemini.model:gemini-2.5-flash}") String geminiModel
     ) {
         this.projectService = projectService;
+        this.aiPromptService = aiPromptService;
         this.feedbackAnalysisResultService = feedbackAnalysisResultService;
         this.objectMapper = new ObjectMapper();
         this.restTemplate = new RestTemplate();
@@ -97,6 +101,7 @@ public class FeedbackController {
     @PostMapping("/feedbackresult")
     public String getFeedbackResult(
             @RequestParam(value = "projectId", required = false) Long projectId,
+            @RequestParam(value = "promptId", required = false) Long promptId,
             @RequestParam(value = "file", required = false) MultipartFile file,
             @RequestParam(value = "textContent", required = false) String textContent,
             Model model,
@@ -108,7 +113,8 @@ public class FeedbackController {
         try {
             ProjectResponse project = findProject(projectId, authentication);
             sourceContent = readPlanText(file, textContent, project);
-            Map<String, Object> geminiResponse = callGemini(buildGeminiRequest(buildPrompt(project, sourceContent)));
+            String customPrompt = aiPromptService.renderPrompt(promptId, feedbackPromptValues(project, sourceContent));
+            Map<String, Object> geminiResponse = callGemini(buildGeminiRequest(customPrompt == null ? buildPrompt(project, sourceContent) : customPrompt));
             Map<String, Object> result = normalizeResult(parseJsonResult(extractText(geminiResponse)));
             applyResultModel(model, result, projectId, sourceType, sourceContent);
         } catch (RestClientException e) {
@@ -342,6 +348,16 @@ public class FeedbackController {
                 - risks는 3~5개로 작성하세요.
                 - 입력 내용이 부족하면 낮은 점수를 주고, 어떤 정보가 부족한지 구체적으로 지적하세요.
                 """.formatted(projectContext, planText);
+    }
+
+    private Map<String, Object> feedbackPromptValues(ProjectResponse project, String planText) {
+        return Map.of(
+                "projectTitle", text(project.getTitle(), ""),
+                "projectDescription", text(project.getDescription(), ""),
+                "targetUser", text(project.getTargetUser(), ""),
+                "industry", text(project.getIndustry(), ""),
+                "planText", text(planText, "")
+        );
     }
 
     private String extractText(Map<String, Object> geminiResponse) {

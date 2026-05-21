@@ -2,6 +2,7 @@ package com.example.simuuser.controller;
 
 import com.example.simuuser.dto.MarketAnalysisResultSaveRequest;
 import com.example.simuuser.dto.ProjectResponse;
+import com.example.simuuser.service.AiPromptService;
 import com.example.simuuser.service.MarketAnalysisResultService;
 import com.example.simuuser.service.ProjectService;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -28,6 +29,7 @@ import java.util.Map;
 public class MarketController {
 
     private final ProjectService projectService;
+    private final AiPromptService aiPromptService;
     private final MarketAnalysisResultService marketAnalysisResultService;
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
@@ -37,11 +39,13 @@ public class MarketController {
 
     public MarketController(
             ProjectService projectService,
+            AiPromptService aiPromptService,
             MarketAnalysisResultService marketAnalysisResultService,
             @Value("${gemini.api.key:}") String geminiApiKey,
             @Value("${gemini.model:gemini-2.5-flash}") String geminiModel
     ) {
         this.projectService = projectService;
+        this.aiPromptService = aiPromptService;
         this.marketAnalysisResultService = marketAnalysisResultService;
         this.objectMapper = new ObjectMapper();
         this.restTemplate = new RestTemplate();
@@ -70,7 +74,9 @@ public class MarketController {
         try {
             Long projectId = number(body.get("projectId"));
             ProjectResponse project = findProject(projectId, authentication);
-            Map<String, Object> geminiResponse = callGemini(buildGeminiRequest(buildPrompt(project)));
+            Long promptId = number(body.get("promptId"));
+            String customPrompt = aiPromptService.renderPrompt(promptId, projectPromptValues(project));
+            Map<String, Object> geminiResponse = callGemini(buildGeminiRequest(customPrompt == null ? buildPrompt(project) : appendMarketJsonContract(customPrompt)));
             Map<String, Object> result = parseJsonResult(extractText(geminiResponse));
 
             return ResponseEntity.ok(normalizeResult(result));
@@ -258,6 +264,51 @@ public class MarketController {
                 text(project.getDescription(), "No description"),
                 text(project.getTargetUser(), "Not specified"),
                 text(project.getIndustry(), "Not specified")
+        );
+    }
+
+    private String appendMarketJsonContract(String prompt) {
+        return prompt + """
+
+                반드시 아래 JSON 형식만 반환하세요. 설명 문장, 마크다운, 코드블록은 넣지 마세요.
+                화면 표시를 위해 모든 필드를 채워야 합니다.
+                {
+                  "competitionLevel": "낮음 | 중간 | 높음",
+                  "saturation": 0,
+                  "competitorCount": 0,
+                  "marketSize": {
+                    "tam": { "value": "string", "desc": "string" },
+                    "sam": { "value": "string", "desc": "string" },
+                    "som": { "value": "string", "desc": "string" }
+                  },
+                  "keywords": ["#keyword"],
+                  "competitors": [
+                    { "name": "string", "tags": ["string"], "strength": "string", "weakness": "string" }
+                  ],
+                  "differentiation": ["string"],
+                  "risks": ["string"],
+                  "opportunity": "string"
+                }
+
+                규칙:
+                - 모든 내용은 한국어로 작성하세요.
+                - competitionLevel은 "낮음", "중간", "높음" 중 하나여야 합니다.
+                - saturation은 0~100 사이 정수여야 합니다.
+                - competitorCount는 competitors 배열 길이와 같아야 합니다.
+                - keywords는 3~5개 작성하세요.
+                - competitors는 3~5개 작성하세요.
+                - differentiation과 risks는 각각 3~5개 작성하세요.
+                """;
+    }
+
+    private Map<String, Object> projectPromptValues(ProjectResponse project) {
+        return Map.of(
+                "projectTitle", text(project.getTitle(), ""),
+                "title", text(project.getTitle(), ""),
+                "projectDescription", text(project.getDescription(), ""),
+                "description", text(project.getDescription(), ""),
+                "targetUser", text(project.getTargetUser(), ""),
+                "industry", text(project.getIndustry(), "")
         );
     }
 

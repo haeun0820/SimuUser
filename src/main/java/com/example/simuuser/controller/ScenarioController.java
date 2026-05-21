@@ -64,6 +64,7 @@ public class ScenarioController {
     @PostMapping("/scenario/result")
     public String scenarioResultPost(
             @RequestParam("projectId") Long projectId,
+            @RequestParam(value = "promptId", required = false) Long promptId,
             @RequestParam("compareTitle") String compareTitle,
             @RequestParam("scenarioPayload") String scenarioPayload,
             Model model,
@@ -73,6 +74,7 @@ public class ScenarioController {
             List<ScenarioComparisonInput> scenarios = objectMapper.readValue(scenarioPayload, new TypeReference<>() {});
             ScenarioComparisonRequest request = new ScenarioComparisonRequest();
             request.setProjectId(projectId);
+            request.setPromptId(promptId);
             request.setCompareTitle(compareTitle);
             request.setScenarios(scenarios);
 

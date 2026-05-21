@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:if="${_csrf}" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:if="${_csrf}" th:content="${_csrf.headerName}">
     <title>AI 프롬프트 관리 - SimuUser</title>
         <link rel="stylesheet" th:href="@{/css/admin/dashboard/dashboard.css}">
     <link rel="stylesheet" th:href="@{/css/admin/aiprompt/prompt_management.css}">
@@ -48,67 +50,7 @@
                 <button class="btn-create">새 프롬프트 생성</button>
             </div>
 
-            <div class="prompt-list" id="promptList">
-                
-                <div class="prompt-card" data-category="simulation">
-                    <div class="card-header">
-                        <div class="card-title-group">
-                            <h3 class="card-title">이름</h3>
-                            <span class="card-model">gpt 4</span>
-                        </div>
-                        <div class="card-actions">
-                            <button class="btn-edit">
-                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                수정
-                            </button>
-                            <span class="badge badge-green">페르소나 생성</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div>
-                            <div class="prompt-section-title">시스템 프롬프트</div>
-                            <p>프롬프트 내용 입력한 거 들어가는 칸.</p>
-                        </div>
-                        <div>
-                            <div class="prompt-section-title">사용자 프롬프트 템플릿</div>
-                            <p>사용자 프롬프트 템플릿 입력한 거 들어가는 칸.</p>
-                        </div>
-                    </div>
-                    <div class="card-footer">
-                        2024.03.24
-                    </div>
-                </div>
-
-                <div class="prompt-card" data-category="market">
-                    <div class="card-header">
-                        <div class="card-title-group">
-                            <h3 class="card-title">이름</h3>
-                            <span class="card-model">gpt 4</span>
-                        </div>
-                        <div class="card-actions">
-                            <button class="btn-edit">
-                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                수정
-                            </button>
-                            <span class="badge badge-blue">시장 분석</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div>
-                            <div class="prompt-section-title">시스템 프롬프트</div>
-                            <p>프롬프트 내용 입력한 거 들어가는 칸.</p>
-                        </div>
-                        <div>
-                            <div class="prompt-section-title">사용자 프롬프트 템플릿</div>
-                            <p>사용자 프롬프트 템플릿 입력한 거 들어가는 칸.</p>
-                        </div>
-                    </div>
-                    <div class="card-footer">
-                        2024.03.24
-                    </div>
-                </div>
-
-            </div>
+            <div class="prompt-list" id="promptList"></div>
         </main>
     </div>
 </div>
@@ -126,13 +68,13 @@
         <div class="modal-body">
             <div class="form-group">
                 <label class="form-label">프롬프트 이름</label>
-                <input type="text" class="form-input" placeholder="예: 페르소나 생성 v2">
+                <input type="text" class="form-input" id="promptNameInput" placeholder="예: 페르소나 생성 v2">
             </div>
             
             <div class="form-group">
                 <label class="form-label">카테고리</label>
                 <div class="select-wrapper">
-                    <select class="form-select">
+                    <select class="form-select" id="promptCategoryInput">
                         <option value="simulation">AI 시뮬레이션</option>
                         <option value="market">시장 분석</option>
                         <option value="profit">수익성 분석</option>
@@ -145,15 +87,15 @@
             
             <div class="form-group">
                 <label class="form-label">시스템 프롬프트</label>
-                <textarea class="form-textarea" placeholder="AI의 역할과 지침을 정의합니다"></textarea>
+                <textarea class="form-textarea" id="systemPromptInput" placeholder="AI의 역할과 지침을 정의합니다"></textarea>
             </div>
             
             <div class="form-group">
                 <label class="form-label">사용자 프롬프트 템플릿</label>
-                <textarea class="form-textarea" placeholder="사용자 입력을 처리하는 템플릿"></textarea>
+                <textarea class="form-textarea" id="userPromptTemplateInput" placeholder="사용자 입력을 처리하는 템플릿"></textarea>
             </div>
             
-            <button class="btn-submit-full">생성</button>
+            <button class="btn-submit-full" id="submitPromptBtn">생성</button>
         </div>
     </div>
 </div>

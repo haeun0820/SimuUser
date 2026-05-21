@@ -233,7 +233,8 @@
       personaCount: Number(document.getElementById('personaCount').value),
       gender: document.getElementById('genderSelect').value,
       ages: selectedAges,
-      job: (document.getElementById('jobInput')?.value || '').trim()
+      job: (document.getElementById('jobInput')?.value || '').trim(),
+      promptId: window.getSelectedPromptId ? window.getSelectedPromptId() : ''
     };
 
     localStorage.setItem('simu_params', JSON.stringify(params));

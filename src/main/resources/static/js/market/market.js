@@ -179,6 +179,7 @@ function initNewProjectButton() {
       headers,
       body: JSON.stringify({
         projectId: project.id,
+        promptId: window.getSelectedPromptId ? window.getSelectedPromptId() : '',
         title: project.title,
         description: project.description,
         targetUser: project.targetUser,
@@ -227,6 +228,7 @@ function initNewProjectButton() {
 
     // 선택한 프로젝트 정보를 sessionStorage에 저장
     sessionStorage.setItem('market_selected_project', JSON.stringify(project));
+    sessionStorage.setItem('market_selected_prompt_id', window.getSelectedPromptId ? window.getSelectedPromptId() : '');
     sessionStorage.setItem('market_from_detail', fromDetail ? 'true' : 'false');
     sessionStorage.removeItem('market_analysis_result');
 
