@@ -8,6 +8,7 @@
   <title>SimuUser</title>
   <link rel="stylesheet" th:href="@{/css/scenario/scenario.css}">
   <link rel="stylesheet" th:href="@{/css/header/header.css}">
+  <link rel="stylesheet" th:href="@{/css/common/project-picker.css}">
 </head>
 <body>
 <div class="app-layout">
@@ -28,6 +29,16 @@
           <div class="page-subtitle">여러 기획안을 비교해서 더 적합한 방향을 빠르게 고릅니다.</div>
         </div>
       </div>
+
+      <section class="prompt-select-card unified-prompt-picker" data-prompt-category="scenario">
+        <div class="prompt-select-header">
+          <div>
+            <h2 class="prompt-title">프롬프트 선택</h2>
+            <p class="prompt-helper">프롬프트를 불러오는 중입니다.</p>
+          </div>
+          <select class="prompt-select" name="promptId" aria-label="프롬프트 선택"></select>
+        </div>
+      </section>
 
       <div class="project-select-card">
         <div class="project-select-header">
@@ -62,6 +73,7 @@
       <form id="compareForm" th:action="@{/scenario/result}" method="post">
         <input type="hidden" name="_csrf" th:if="${_csrf}" th:value="${_csrf.token}">
         <input type="hidden" name="projectId" id="selectedProjectIdInput">
+        <input type="hidden" name="promptId" id="selectedPromptIdInput">
         <input type="hidden" name="scenarioPayload" id="scenarioPayloadInput">
         <input type="hidden" name="compareTitle" id="compareTitleHiddenInput">
         <div class="action-footer">
@@ -74,6 +86,7 @@
 
 <script th:src="@{/js/sidebar.js}"></script>
 <script th:src="@{/js/header.js}"></script>
+<script th:src="@{/js/common/prompt-picker.js}"></script>
 <script th:src="@{/js/scenario/scenario.js(v='doc-tree-20260510')}"></script>
 </body>
 </html>

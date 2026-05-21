@@ -33,6 +33,7 @@ public class CostAnalysisResultService {
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectService projectService;
+    private final AiPromptService aiPromptService;
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
     private final String geminiApiKey;
@@ -43,6 +44,7 @@ public class CostAnalysisResultService {
             ProjectRepository projectRepository,
             ProjectMemberRepository projectMemberRepository,
             ProjectService projectService,
+            AiPromptService aiPromptService,
             @Value("${gemini.api.key:}") String geminiApiKey,
             @Value("${gemini.model:gemini-2.5-flash}") String geminiModel
     ) {
@@ -50,6 +52,7 @@ public class CostAnalysisResultService {
         this.projectRepository = projectRepository;
         this.projectMemberRepository = projectMemberRepository;
         this.projectService = projectService;
+        this.aiPromptService = aiPromptService;
         this.objectMapper = new ObjectMapper();
         this.restTemplate = new RestTemplate();
         this.geminiApiKey = geminiApiKey;
@@ -66,7 +69,8 @@ public class CostAnalysisResultService {
         Map<String, Object> baseline = buildFormulaResult(request, project);
 
         try {
-            Map<String, Object> geminiResponse = callGemini(buildGeminiRequest(buildPrompt(request, project, baseline)));
+            String customPrompt = aiPromptService.renderPrompt(request.getPromptId(), costPromptValues(request, project, baseline));
+            Map<String, Object> geminiResponse = callGemini(buildGeminiRequest(customPrompt == null ? buildPrompt(request, project, baseline) : customPrompt));
             Map<String, Object> aiResult = parseJsonResult(extractText(geminiResponse));
             return normalizeAiResult(aiResult, baseline);
         } catch (RestClientException e) {
@@ -492,6 +496,19 @@ private List<String> normalizeLabels(Object value, List<String> fallback) {
             toJson(baseline)
     );
 }
+
+    private Map<String, Object> costPromptValues(CostAnalysisResultSaveRequest request, Project project, Map<String, Object> baseline) {
+        return Map.of(
+                "projectTitle", text(project.getTitle(), ""),
+                "projectDescription", text(project.getDescription(), ""),
+                "targetUser", text(project.getTargetUser(), ""),
+                "industry", text(project.getIndustry(), ""),
+                "revenueModels", normalizeRevenueModels(request.getRevenueModels()),
+                "expectedUsers", normalizedUsers(request.getExpectedUsers()),
+                "pricePerUser", normalizedPrice(request.getPricePerUser()),
+                "baseline", toJson(baseline)
+        );
+    }
  
 
     private String extractText(Map<String, Object> geminiResponse) {

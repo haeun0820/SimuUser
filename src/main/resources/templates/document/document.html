@@ -10,6 +10,7 @@
   <title>SimuUser</title>
   <link rel="stylesheet" th:href="@{/css/document/document.css?v=2026050204}">
   <link rel="stylesheet" th:href="@{/css/header/header.css}">
+  <link rel="stylesheet" th:href="@{/css/common/project-picker.css}">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
@@ -35,6 +36,16 @@
                     <div class="page-subtitle">분석 결과를 자동으로 기획서와 보고서로 변환합니다</div>
                 </div>
             </div>
+
+            <section class="prompt-select-card unified-prompt-picker" data-prompt-category="document">
+                <div class="prompt-select-header">
+                    <div>
+                        <h2 class="prompt-title">프롬프트 선택</h2>
+                        <p class="prompt-helper">프롬프트를 불러오는 중입니다.</p>
+                    </div>
+                    <select class="prompt-select" name="promptId" aria-label="프롬프트 선택"></select>
+                </div>
+            </section>
 
             <div class="project-select-card">
                 <div class="project-select-header">
@@ -133,6 +144,7 @@
 <!-- 사이드바 -->
 <script th:src="@{/js/sidebar.js}"></script>
 <script th:src="@{/js/header.js}"></script>
+<script th:src="@{/js/common/prompt-picker.js}"></script>
 <!-- 페이지 스크립트 -->
 <script th:src="@{/js/document/document.js?v=2026050204}"></script>
 </body>

@@ -7,6 +7,7 @@ import lombok.Setter;
 @Setter
 public class DocumentRequest { 
     private Long projectId;
+    private Long promptId;
     private Long tabId;
     private String documentType;
     private String title;

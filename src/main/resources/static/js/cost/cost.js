@@ -316,6 +316,7 @@
     try {
       const result = await postJson('/cost/analyze', {
         projectId: project.id,
+        promptId: window.getSelectedPromptId ? window.getSelectedPromptId() : '',
         projectTitle: project.title,              // ← 추가: 프로젝트 제목 전송
         projectDescription: project.description,  // ← 추가: 프로젝트 설명 전송
         revenueModels,
@@ -329,7 +330,8 @@
         from: fromDetail ? 'detail' : 'menu',
         revenueModels,
         expectedUsers,
-        pricePerUser
+        pricePerUser,
+        promptId: window.getSelectedPromptId ? window.getSelectedPromptId() : ''
       }));
       sessionStorage.setItem('cost_analysis_result', JSON.stringify(result));
       sessionStorage.removeItem('cost_result_id');
