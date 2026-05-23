@@ -24,25 +24,35 @@
         <main class="page-content" style="overflow-y: auto;">
             
             <div class="log-controls-section">
-                <button class="btn-back" onclick="history.back()">
-                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
-                    </svg>
-                </button>
-
-                <div class="log-filter-group">
-                    <button class="log-filter-btn active" data-filter="all">전체</button>
-                    <button class="log-filter-btn" data-filter="analysis">분석 실행</button>
-                    <button class="log-filter-btn" data-filter="api-error">API 오류</button>
-                    <button class="log-filter-btn" data-filter="sys-error">시스템 오류</button>
-                    <button class="log-filter-btn" data-filter="user-activity">사용자 활동</button>
+                <div class="toolbar-left">
+                    <button class="btn-back" onclick="history.back()">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    
+                    <div class="search-wrapper">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <input type="text" id="logSearchInput" placeholder="로그 검색..">
+                    </div>
                 </div>
 
-                <div class="search-wrapper">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                    <input type="text" id="logSearchInput" placeholder="로그 검색..">
+                <div class="toolbar-right">
+                    <div class="log-filter-group">
+                        <button class="log-filter-btn active" data-filter="all">전체</button>
+                        <button class="log-filter-btn" data-filter="api-error">API 오류</button>
+                        <button class="log-filter-btn" data-filter="sys-error">시스템 오류</button>
+                        <button class="log-filter-btn" data-filter="user-chat">채팅</button>
+                    </div>
+
+                    <button type="button" class="btn-export" onclick="exportLogData()">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        데이터 내보내기
+                    </button>
                 </div>
             </div>
 
@@ -56,10 +66,10 @@
                         </tr>
                     </thead>
                     <tbody id="logTableBody">
-                        <tr class="log-row" data-type="analysis">
-                            <td class="log-type-col">분석 실행</td>
-                            <td>'1인 가구 반찬 배달' 시뮬레이션 성공</td>
-                            <td>2026-04-10 23:55:01</td>
+                        <tr class="log-row" data-type="user-chat">
+                            <td class="log-type-col">채팅</td>
+                            <td>사용자 'admin'이 AI 프롬프트 설정을 변경함</td>
+                            <td>2026-04-10 23:30:10</td>
                         </tr>
                         <tr class="log-row" data-type="api-error">
                             <td class="log-type-col">API 오류</td>
@@ -70,11 +80,6 @@
                             <td class="log-type-col">시스템 오류</td>
                             <td>사용자 업로드 이미지 처리 서버 연결 끊김</td>
                             <td>2026-04-10 23:42:15</td>
-                        </tr>
-                        <tr class="log-row" data-type="user-activity">
-                            <td class="log-type-col">사용자 활동</td>
-                            <td>사용자 'admin'이 AI 프롬프트 설정을 변경함</td>
-                            <td>2026-04-10 23:30:10</td>
                         </tr>
                     </tbody>
                 </table>

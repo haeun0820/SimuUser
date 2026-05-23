@@ -47,3 +47,10 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 });
+
+function exportLogData() {
+    // 실무 백엔드 연동 시 (예: CSV 엑셀 다운로드 API 호출)
+    // window.location.href = '/api/admin/log/export?filter=' + currentFilter;
+    
+    alert("현재 필터링된 시스템 로그 데이터를 CSV/Excel 문서로 추출합니다.\n(다운로드 연동 구간)");
+}
