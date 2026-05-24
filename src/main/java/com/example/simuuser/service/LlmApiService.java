@@ -31,14 +31,16 @@ public class LlmApiService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     public String generateText(String prompt) {
+        return generateText(prompt, null);
+    }
+
+    public String generateText(String prompt, String preferredModel) {
         if (apiKey == null || apiKey.isBlank()) {
             throw new IllegalStateException("GEMINI_API_KEY is not configured.");
         }
 
         RestClientException lastException = null;
-        List<String> models = GEMINI_FALLBACK_MODEL.equals(geminiModel)
-                ? List.of(geminiModel)
-                : List.of(geminiModel, GEMINI_FALLBACK_MODEL);
+        List<String> models = buildModelCandidates(preferredModel);
 
         for (String model : models) {
             for (int attempt = 1; attempt <= MAX_RETRIES_PER_MODEL; attempt++) {
@@ -55,13 +57,41 @@ public class LlmApiService {
         }
 
         if (lastException != null && isTemporaryGeminiUnavailable(lastException)) {
-            throw new IllegalStateException("Gemini is currently busy. Please try again shortly.", lastException);
+            throw new IllegalStateException("현재 Gemini 응답이 몰려 잠시 지연되고 있습니다. 잠시 후 다시 시도해주세요.", lastException);
         }
 
         throw new IllegalStateException(
-                lastException == null ? "Gemini request failed." : "Gemini request failed: " + lastException.getMessage(),
+                lastException == null ? "AI 문서 생성 요청에 실패했습니다." : "AI 문서 생성 요청에 실패했습니다. " + lastException.getMessage(),
                 lastException
         );
+    }
+
+    private List<String> buildModelCandidates(String preferredModel) {
+        String normalizedPreferred = normalizeModel(preferredModel);
+        String normalizedDefault = normalizeModel(geminiModel);
+
+        if (normalizedPreferred != null && GEMINI_FALLBACK_MODEL.equals(normalizedPreferred)) {
+            return List.of(normalizedPreferred);
+        }
+        if (normalizedPreferred != null && normalizedPreferred.equals(normalizedDefault)) {
+            return GEMINI_FALLBACK_MODEL.equals(normalizedDefault)
+                    ? List.of(normalizedDefault)
+                    : List.of(normalizedDefault, GEMINI_FALLBACK_MODEL);
+        }
+        if (normalizedPreferred != null) {
+            return List.of(normalizedPreferred, GEMINI_FALLBACK_MODEL);
+        }
+        return GEMINI_FALLBACK_MODEL.equals(normalizedDefault)
+                ? List.of(normalizedDefault)
+                : List.of(normalizedDefault, GEMINI_FALLBACK_MODEL);
+    }
+
+    private String normalizeModel(String model) {
+        if (model == null) {
+            return null;
+        }
+        String normalized = model.trim();
+        return normalized.isEmpty() ? null : normalized;
     }
 
     private String callGemini(String model, String prompt) {

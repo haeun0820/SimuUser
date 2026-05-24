@@ -17,33 +17,41 @@
   }
 
   async function initPromptPicker(card) {
-    const category = card.dataset.promptCategory;
+    const category = (card.dataset.promptCategory || "").trim().toLowerCase();
     const select = card.querySelector(".prompt-select");
-    if (!category || !select) return;
+    const helper = card.querySelector(".prompt-helper");
+
+    if (!category || !select) {
+      return;
+    }
 
     select.innerHTML = '<option value="">기본 프롬프트 사용</option>';
 
     try {
-      const response = await fetch(`/api/prompts?category=${encodeURIComponent(category)}`);
-      if (!response.ok) throw new Error("prompt load failed");
-      const prompts = await response.json();
+      const response = await fetch(`/api/prompts?category=${encodeURIComponent(category)}`, {
+        credentials: "same-origin"
+      });
+      if (!response.ok) {
+        throw new Error("prompt load failed");
+      }
 
+      const prompts = await response.json();
       prompts.forEach(prompt => {
         const option = document.createElement("option");
         option.value = prompt.id;
-        option.textContent = `${prompt.name} (${prompt.model || "model"})`;
+        option.textContent = `${prompt.name} (${prompt.model || "gemini-2.5-flash"})`;
         select.appendChild(option);
       });
 
-      const helper = card.querySelector(".prompt-helper");
       if (helper) {
         helper.textContent = prompts.length
-          ? `${categoryLabels[category] || category} 프롬프트 ${prompts.length}개 중 선택할 수 있습니다.`
-          : "등록된 프롬프트가 없어 기본 프롬프트로 분석합니다.";
+          ? `${categoryLabels[category] || category} 프롬프트 ${prompts.length}개 중에서 선택할 수 있습니다.`
+          : "등록된 프롬프트가 없어 기본 프롬프트로 진행합니다.";
       }
     } catch (error) {
-      const helper = card.querySelector(".prompt-helper");
-      if (helper) helper.textContent = "프롬프트를 불러오지 못해 기본 프롬프트로 분석합니다.";
+      if (helper) {
+        helper.textContent = "프롬프트를 불러오지 못해 기본 프롬프트로 진행합니다.";
+      }
     }
   }
 

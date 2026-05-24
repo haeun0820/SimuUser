@@ -5,7 +5,6 @@ import com.example.simuuser.dto.ProjectResponse;
 import com.example.simuuser.service.AiSimulationResultService;
 import com.example.simuuser.service.AiPromptService;
 import com.example.simuuser.service.ProjectService;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -39,6 +38,7 @@ public class AiUserController {
     private final String geminiApiKey;
     private final String geminiModel;
     private static final String GEMINI_FALLBACK_MODEL = "gemini-2.5-flash-lite";
+    private static final int MAX_RETRIES_PER_MODEL = 2;
 
     public AiUserController(
             ProjectService projectService,
@@ -81,8 +81,9 @@ public class AiUserController {
         try {
             Long promptId = longValue(body.get("promptId"));
             String customPrompt = aiPromptService.renderPrompt(promptId, promptValues(body, personaCount));
+            String selectedModel = aiPromptService.resolveModel(promptId);
             Map<String, Object> requestBody = buildGeminiRequest(customPrompt == null ? buildPrompt(body, personaCount) : customPrompt);
-            Map<String, Object> geminiResponse = callGemini(requestBody);
+            Map<String, Object> geminiResponse = callGemini(requestBody, selectedModel);
             String resultText = extractText(geminiResponse);
             Map<String, Object> result = parseJsonResult(resultText);
 
@@ -138,19 +139,20 @@ public class AiUserController {
         }
     }
 
-    private Map<String, Object> callGemini(Map<String, Object> requestBody) {
-        List<String> models = GEMINI_FALLBACK_MODEL.equals(geminiModel)
-                ? List.of(geminiModel)
-                : List.of(geminiModel, GEMINI_FALLBACK_MODEL);
+    private Map<String, Object> callGemini(Map<String, Object> requestBody, String preferredModel) {
+        List<String> models = buildModelCandidates(preferredModel);
         RestClientException lastException = null;
 
         for (String model : models) {
-            try {
-                return callGeminiModel(model, requestBody);
-            } catch (RestClientException e) {
-                lastException = e;
-                if (!isTemporaryGeminiUnavailable(e)) {
-                    throw e;
+            for (int attempt = 1; attempt <= MAX_RETRIES_PER_MODEL; attempt++) {
+                try {
+                    return callGeminiModel(model, requestBody);
+                } catch (RestClientException e) {
+                    lastException = e;
+                    if (!isTemporaryGeminiUnavailable(e) || attempt == MAX_RETRIES_PER_MODEL) {
+                        break;
+                    }
+                    sleepBeforeRetry(attempt);
                 }
             }
         }
@@ -158,6 +160,35 @@ public class AiUserController {
         throw lastException == null
                 ? new IllegalArgumentException("Gemini response is empty.")
                 : lastException;
+    }
+
+    private List<String> buildModelCandidates(String preferredModel) {
+        String normalizedPreferred = normalizeModel(preferredModel);
+        String normalizedDefault = normalizeModel(geminiModel);
+
+        if (normalizedPreferred != null && GEMINI_FALLBACK_MODEL.equals(normalizedPreferred)) {
+            return List.of(normalizedPreferred);
+        }
+        if (normalizedPreferred != null && normalizedPreferred.equals(normalizedDefault)) {
+            return GEMINI_FALLBACK_MODEL.equals(normalizedDefault)
+                    ? List.of(normalizedDefault)
+                    : List.of(normalizedDefault, GEMINI_FALLBACK_MODEL);
+        }
+        if (normalizedPreferred != null) {
+            return List.of(normalizedPreferred, GEMINI_FALLBACK_MODEL);
+        }
+        return GEMINI_FALLBACK_MODEL.equals(normalizedDefault)
+                ? List.of(normalizedDefault)
+                : List.of(normalizedDefault, GEMINI_FALLBACK_MODEL);
+    }
+
+    private String normalizeModel(String model) {
+        if (model == null) {
+            return null;
+        }
+
+        String normalized = model.trim();
+        return normalized.isEmpty() ? null : normalized;
     }
 
     private Map<String, Object> callGeminiModel(String model, Map<String, Object> requestBody) {
@@ -185,10 +216,18 @@ public class AiUserController {
 
     private String toGeminiErrorMessage(RestClientException e) {
         if (isTemporaryGeminiUnavailable(e)) {
-            return "Gemini model is currently busy. Please try again shortly.";
+            return "현재 Gemini 응답이 몰려 잠시 지연되고 있습니다. 잠시 후 다시 시도해주세요.";
         }
 
-        return "Gemini API call failed: " + e.getMessage();
+        return "AI 분석 요청 중 오류가 발생했습니다. " + e.getMessage();
+    }
+
+    private void sleepBeforeRetry(int attempt) {
+        try {
+            Thread.sleep(500L * attempt);
+        } catch (InterruptedException interruptedException) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private Map<String, Object> buildGeminiRequest(String prompt) {
@@ -238,7 +277,21 @@ public class AiUserController {
     }
 
     private Map<String, Object> parseJsonResult(String text) throws Exception {
-        return objectMapper.readValue(stripMarkdownFence(text), new TypeReference<>() {});
+        Object parsed = objectMapper.readValue(stripMarkdownFence(text), Object.class);
+        return extractRootObject(parsed);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> extractRootObject(Object parsed) {
+        if (parsed instanceof Map<?, ?> map) {
+            return (Map<String, Object>) map;
+        }
+
+        if (parsed instanceof List<?> list && !list.isEmpty() && list.get(0) instanceof Map<?, ?> firstItem) {
+            return (Map<String, Object>) firstItem;
+        }
+
+        throw new IllegalArgumentException("AI 응답 최상위 형식이 올바르지 않습니다. JSON 객체로 응답하도록 프롬프트를 확인해주세요.");
     }
 
     private String stripMarkdownFence(String text) {

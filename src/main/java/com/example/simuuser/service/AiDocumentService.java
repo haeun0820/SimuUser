@@ -71,9 +71,10 @@ public class AiDocumentService {
                 ? buildAnalysisPrompt(project, request, todayDate)
                 : buildGeneralPrompt(project, request, todayDate);
         String customPrompt = aiPromptService.renderPrompt(request.getPromptId(), documentPromptValues(project, request, todayDate));
+        String selectedModel = aiPromptService.resolveModel(request.getPromptId());
         String prompt = customPrompt == null ? defaultPrompt : customPrompt;
 
-        String generatedContent = llmApiService.generateText(prompt);
+        String generatedContent = llmApiService.generateText(prompt, selectedModel);
 
         Document newDoc = Document.builder()
                 .project(project)

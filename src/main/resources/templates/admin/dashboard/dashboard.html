@@ -15,25 +15,25 @@
                 <div class="dashboard-sub" style="font-size: 12px; color: #64748b;">SimuUser 플랫폼 운영 및 시스템 관리</div>
             </div>
             <form class="logout-form" th:action="@{/logout}" method="post">
-                    <button class="btn-logout" type="submit">로그아웃</button>
-                </form>
+                <button class="btn-logout" type="submit">로그아웃</button>
+            </form>
         </header>
 
         <main class="page-content">
             <div class="admin-stat-grid">
                 <div class="dashboard-card">
                     <span style="color:var(--primary); font-weight:600; font-size:14px;">👤 전체 사용자</span>
-                    <div class="page-subtitle" id="totalUsers">2</div>
+                    <div class="page-subtitle" id="totalUsers">0</div>
                     <span class="section-sub-title" style="font-size:12px; color:#94a3b8;">활성 사용자 포함</span>
                 </div>
                 <div class="dashboard-card">
                     <span style="color:var(--success); font-weight:600; font-size:14px;">📊 프로젝트</span>
-                    <div class="page-subtitle" id="totalProjects">5</div>
+                    <div class="page-subtitle" id="totalProjects">0</div>
                     <span class="section-sub-title" style="font-size:12px; color:#94a3b8;">생성된 프로젝트</span>
                 </div>
                 <div class="dashboard-card">
                     <span style="color:#f97316; font-weight:600; font-size:14px;">⚡ 분석 실행</span>
-                    <div class="page-subtitle" id="totalAnalyses">23</div>
+                    <div class="page-subtitle" id="totalAnalyses">0</div>
                     <span class="section-sub-title" style="font-size:12px; color:#94a3b8;">완료된 분석</span>
                 </div>
             </div>
@@ -111,10 +111,10 @@
                         <h3 style="margin:0; font-size:18px; font-weight:800; color:#1e293b;">AI 관리</h3>
                         <span style="font-size:13px; color:#64748b;">LLM 모델 및 프롬프트 설정 관리</span>
                     </div>
-                    
+
                     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 24px;">
-<a th:href="@{/admin/prompt}" class="btn-primary" style="display: inline-block; text-decoration: none; text-align: center;">AI 프롬프트 설정</a>
-                        
+                        <a th:href="@{/admin/prompt}" class="btn-primary" style="display: inline-block; text-decoration: none; text-align: center;">AI 프롬프트 설정</a>
+
                         <div class="ai-features-box">
                             <p>관리 기능:</p>
                             <ul>
@@ -135,10 +135,10 @@
                         <h3 style="margin:0; font-size:18px; font-weight:800; color:#1e293b;">사용자 관리</h3>
                         <span style="font-size:13px; color:#64748b;">사용자 계정 및 권한 관리</span>
                     </div>
-                    
+
                     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 24px;">
                         <a th:href="@{/admin/user}" class="btn-primary" style="display: inline-block; text-decoration: none; text-align: center;">사용자 목록 조회</a>
-                        
+
                         <div class="ai-features-box">
                             <p>관리 기능:</p>
                             <ul>
@@ -159,10 +159,10 @@
                         <h3 style="margin:0; font-size:18px; font-weight:800; color:#1e293b;">시스템 로그</h3>
                         <span style="font-size:13px; color:#64748b;">시스템 사용 내역 및 오류 로그 조회</span>
                     </div>
-                    
+
                     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 24px;">
                         <a th:href="@{/admin/log}" class="btn-primary" style="display: inline-block; text-decoration: none; text-align: center;">시스템 로그 조회</a>
-                        
+
                         <div class="ai-features-box">
                             <p>모니터링 항목:</p>
                             <ul>
@@ -176,17 +176,17 @@
                     </div>
                 </div>
             </div>
-            
+
             <div id="tab-inquiry" class="tab-pane">
                 <div class="card">
                     <div style="margin-bottom: 30px;">
                         <h3 style="margin:0; font-size:18px; font-weight:800; color:#1e293b;">문의 관리</h3>
                         <span style="font-size:13px; color:#64748b;">사용자 문의 사항 관리</span>
                     </div>
-                    
+
                     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 24px;">
                         <a th:href="@{/admin/inquiry}" class="btn-primary" style="display: inline-block; text-decoration: none; text-align: center;">문의 사항 조회</a>
-                        
+
                         <div class="ai-features-box">
                             <p>모니터링 항목:</p>
                             <ul>
@@ -200,101 +200,69 @@
                     </div>
                 </div>
             </div>
-            </main>
+        </main>
     </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-    // ==========================================
-    // 1. 탭 전환 스크립트 (핵심 로직)
-    // ==========================================
     function switchTab(clickedTab, targetTabId) {
-        // 1) 모든 탭 버튼에서 'active' 클래스 제거
         document.querySelectorAll('.admin-tab').forEach(tab => {
             tab.classList.remove('active');
         });
-        // 2) 클릭된 탭 버튼에만 'active' 클래스 추가
         clickedTab.classList.add('active');
 
-        // 3) 모든 탭 컨텐츠(.tab-pane)를 숨김 처리
         document.querySelectorAll('.tab-pane').forEach(pane => {
             pane.classList.remove('active');
         });
-        // 4) 목표 탭 컨텐츠만 보이게 처리
+
         const targetPane = document.getElementById('tab-' + targetTabId);
-        if(targetPane) {
+        if (targetPane) {
             targetPane.classList.add('active');
         }
     }
 
-    // ==========================================
-    // 2. 차트 로직 (통합 분석 및 전체선택 기능 추가)
-    // ==========================================
     const ctx = document.getElementById('adminGrowthChart').getContext('2d');
-    
-    // 데이터 구조 (기존 분석 총합인 'analyses' 포함)
-    const dataByPeriod = {
-        month: {
-            labels: ['1월', '2월', '3월', '4월'],
-            users: [120, 150, 200, 280],
-            projects: [40, 60, 85, 110],
-            analyses: [180, 240, 320, 420], // 분석 전체 통합 데이터
-            sim: [50, 80, 110, 150],      
-            market: [40, 60, 80, 100],    
-            cost: [30, 40, 50, 70],       
-            feedback: [20, 30, 40, 50],   
-            doc: [30, 20, 25, 30],        
-            scenario: [10, 10, 15, 20]    
-        },
-        year: {
-            labels: ['2023년', '2024년', '2025년', '2026년'],
-            users: [800, 1500, 2400, 3200],
-            projects: [300, 600, 900, 1200],
-            analyses: [1200, 2500, 3800, 5000],
-            sim: [300, 700, 1100, 1500],
-            market: [250, 500, 800, 1100],
-            cost: [200, 400, 600, 850],
-            feedback: [150, 350, 550, 700],
-            doc: [200, 300, 450, 550],
-            scenario: [100, 250, 300, 300]
-        },
-        day: {
-            labels: ['월', '화', '수', '목', '금', '토', '일'],
-            users: [20, 35, 15, 45, 60, 10, 5],
-            projects: [5, 10, 8, 15, 20, 2, 1],
-            analyses: [40, 55, 30, 80, 95, 20, 15],
-            sim: [15, 20, 10, 25, 30, 5, 2],
-            market: [10, 15, 5, 20, 25, 3, 2],
-            cost: [5, 10, 8, 15, 20, 4, 3],
-            feedback: [4, 6, 2, 10, 12, 5, 4],
-            doc: [5, 2, 4, 8, 5, 2, 1],
-            scenario: [1, 2, 1, 2, 3, 1, 3]
-        }
+    const emptyPeriodData = {
+        labels: [],
+        users: [],
+        projects: [],
+        analyses: [],
+        sim: [],
+        market: [],
+        cost: [],
+        feedback: [],
+        doc: [],
+        scenario: []
     };
 
-    // 9개의 데이터셋 배열 생성 (index 0 ~ 8)
+    const dataByPeriod = {
+        year: { ...emptyPeriodData },
+        month: { ...emptyPeriodData },
+        day: { ...emptyPeriodData }
+    };
+
     let growthChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: dataByPeriod.month.labels,
             datasets: [
-                { label: '사용자', data: dataByPeriod.month.users, borderColor: '#3b82f6', tension: 0.3 }, // 0
-                { label: '프로젝트', data: dataByPeriod.month.projects, borderColor: '#10b981', tension: 0.3 }, // 1
-                { label: '분석 (통합)', data: dataByPeriod.month.analyses, borderColor: '#f59e0b', tension: 0.3 }, // 2
-                { label: 'AI 시뮬레이션', data: dataByPeriod.month.sim, borderColor: '#8b5cf6', tension: 0.3 }, // 3
-                { label: '시장 및 경쟁 분석', data: dataByPeriod.month.market, borderColor: '#ec4899', tension: 0.3 }, // 4
-                { label: '비용 및 수익성 분석', data: dataByPeriod.month.cost, borderColor: '#f97316', tension: 0.3 }, // 5
-                { label: '기획 피드백', data: dataByPeriod.month.feedback, borderColor: '#06b6d4', tension: 0.3 }, // 6
-                { label: '자동 문서화', data: dataByPeriod.month.doc, borderColor: '#ef4444', tension: 0.3 }, // 7
-                { label: '시나리오 비교', data: dataByPeriod.month.scenario, borderColor: '#eab308', tension: 0.3 } // 8
+                { label: '사용자', data: dataByPeriod.month.users, borderColor: '#3b82f6', tension: 0.3 },
+                { label: '프로젝트', data: dataByPeriod.month.projects, borderColor: '#10b981', tension: 0.3 },
+                { label: '분석 (통합)', data: dataByPeriod.month.analyses, borderColor: '#f59e0b', tension: 0.3 },
+                { label: 'AI 가상 유저 시뮬레이션', data: dataByPeriod.month.sim, borderColor: '#8b5cf6', tension: 0.3 },
+                { label: '시장 및 경쟁 분석', data: dataByPeriod.month.market, borderColor: '#ec4899', tension: 0.3 },
+                { label: '비용 및 수익성 분석', data: dataByPeriod.month.cost, borderColor: '#f97316', tension: 0.3 },
+                { label: '기획 피드백', data: dataByPeriod.month.feedback, borderColor: '#06b6d4', tension: 0.3 },
+                { label: '자동 문서화', data: dataByPeriod.month.doc, borderColor: '#ef4444', tension: 0.3 },
+                { label: '시나리오 비교', data: dataByPeriod.month.scenario, borderColor: '#eab308', tension: 0.3 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false } // 기본 범례 숨김
+                legend: { display: false }
             },
             scales: {
                 y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
@@ -303,15 +271,33 @@
         }
     });
 
-    // 기간 버튼(년/월/일) 클릭 시 차트 업데이트
-    function updateChart(period, btn) {
-        document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+    function normalizePeriodData(periodData) {
+        if (!periodData) {
+            return { ...emptyPeriodData };
+        }
 
-        const newData = dataByPeriod[period];
+        return {
+            labels: periodData.labels || [],
+            users: periodData.users || [],
+            projects: periodData.projects || [],
+            analyses: periodData.analyses || [],
+            sim: periodData.sim || [],
+            market: periodData.market || [],
+            cost: periodData.cost || [],
+            feedback: periodData.feedback || [],
+            doc: periodData.doc || [],
+            scenario: periodData.scenario || []
+        };
+    }
+
+    function updateChart(period, btn) {
+        document.querySelectorAll('.period-btn').forEach(button => button.classList.remove('active'));
+        if (btn) {
+            btn.classList.add('active');
+        }
+
+        const newData = dataByPeriod[period] || emptyPeriodData;
         growthChart.data.labels = newData.labels;
-        
-        // 9개 데이터 모두 매핑
         growthChart.data.datasets[0].data = newData.users;
         growthChart.data.datasets[1].data = newData.projects;
         growthChart.data.datasets[2].data = newData.analyses;
@@ -321,11 +307,9 @@
         growthChart.data.datasets[6].data = newData.feedback;
         growthChart.data.datasets[7].data = newData.doc;
         growthChart.data.datasets[8].data = newData.scenario;
-        
-        growthChart.update(); 
+        growthChart.update();
     }
 
-    // 💡 개별 범례(버튼) 클릭 시 해당 그래프 켜고 끄기 기능
     function toggleDataset(element) {
         const datasetIndex = element.getAttribute('data-index');
         const isVisible = growthChart.isDatasetVisible(datasetIndex);
@@ -339,33 +323,62 @@
         }
     }
 
-    // 💡 분석 도구 전체 선택 / 해제 기능
-    let allToolsSelected = true; // 초기 상태는 모두 켜져있음
+    let allToolsSelected = true;
 
     function toggleAllTools(btn) {
         const toolLegends = document.querySelectorAll('.tool-legend');
         const textSpan = document.getElementById('selectAllText');
-        
-        allToolsSelected = !allToolsSelected; // 상태 반전
+
+        allToolsSelected = !allToolsSelected;
 
         toolLegends.forEach(legend => {
             const idx = legend.getAttribute('data-index');
-            
+
             if (allToolsSelected) {
-                // 전체 켜기
                 growthChart.show(idx);
                 legend.classList.remove('inactive');
-                textSpan.innerText = "전체 해제";
+                textSpan.innerText = '전체 해제';
                 btn.classList.remove('inactive');
             } else {
-                // 전체 끄기
                 growthChart.hide(idx);
                 legend.classList.add('inactive');
-                textSpan.innerText = "전체 선택";
+                textSpan.innerText = '전체 선택';
                 btn.classList.add('inactive');
             }
         });
     }
+
+    function applyDashboardData(payload) {
+        const summary = payload?.summary || {};
+        document.getElementById('totalUsers').textContent = summary.totalUsers ?? 0;
+        document.getElementById('totalProjects').textContent = summary.totalProjects ?? 0;
+        document.getElementById('totalAnalyses').textContent = summary.totalAnalyses ?? 0;
+
+        dataByPeriod.year = normalizePeriodData(payload?.year);
+        dataByPeriod.month = normalizePeriodData(payload?.month);
+        dataByPeriod.day = normalizePeriodData(payload?.day);
+
+        updateChart('month', document.querySelector('.period-btn.active'));
+    }
+
+    async function loadAdminDashboard() {
+        try {
+            const response = await fetch('/api/admin/dashboard/analytics', {
+                credentials: 'same-origin'
+            });
+
+            if (!response.ok) {
+                throw new Error('admin dashboard analytics request failed');
+            }
+
+            const payload = await response.json();
+            applyDashboardData(payload);
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadAdminDashboard);
 </script>
 </body>
 </html>

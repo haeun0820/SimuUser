@@ -32,22 +32,25 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oauth2User = delegate.loadUser(userRequest);
         String provider = userRequest.getClientRegistration().getRegistrationId().toUpperCase();
+        AppUser user;
 
         if ("GOOGLE".equals(provider) || "NAVER".equals(provider) || "KAKAO".equals(provider)) {
-            saveOAuth2UserIfNew(provider, oauth2User.getAttributes());
+            user = saveOAuth2UserIfNew(provider, oauth2User.getAttributes());
+        } else {
+            user = null;
         }
 
         return new DefaultOAuth2User(
-                List.of(new SimpleGrantedAuthority("ROLE_USER")),
+                List.of(new SimpleGrantedAuthority(roleAuthority(user))),
                 oauth2User.getAttributes(),
                 userRequest.getClientRegistration().getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName()
         );
     }
 
-    private void saveOAuth2UserIfNew(String provider, Map<String, Object> attributes) {
+    private AppUser saveOAuth2UserIfNew(String provider, Map<String, Object> attributes) {
         String providerId = extractProviderId(provider, attributes);
 
-        appUserRepository.findByProviderAndProviderId(provider, providerId)
+        return appUserRepository.findByProviderAndProviderId(provider, providerId)
                 .orElseGet(() -> appUserRepository.save(createOAuth2User(provider, providerId, attributes)));
     }
 
@@ -263,5 +266,13 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         }
 
         return birthday;
+    }
+
+    private String roleAuthority(AppUser user) {
+        if (user == null) {
+            return "ROLE_USER";
+        }
+
+        return "ROLE_" + user.getRole();
     }
 }

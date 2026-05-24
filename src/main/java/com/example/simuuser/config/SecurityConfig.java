@@ -32,6 +32,7 @@ public class SecurityConfig {
                 .userDetailsService(customUserDetailsService)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/login", "/social-onboarding", "/signup", "/signup/check-user-id", "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
+                        .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
@@ -39,7 +40,7 @@ public class SecurityConfig {
                         .loginProcessingUrl("/login")
                         .usernameParameter("userId")
                         .passwordParameter("password")
-                        .defaultSuccessUrl("/", true)
+                        .successHandler(oAuth2LoginSuccessHandler)
                         .failureUrl("/login?error")
                         .permitAll()
                 )

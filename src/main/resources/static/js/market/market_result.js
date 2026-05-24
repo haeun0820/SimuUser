@@ -8,6 +8,7 @@
   const projectId = urlParams.get('projectId');
   const analysisId = urlParams.get('analysisId');
   const fromDetail = urlParams.get('from') === 'detail';
+  const selectedPromptId = sessionStorage.getItem('market_selected_prompt_id') || '';
 
   /* ── 선택된 프로젝트 ── */
   let currentProject = null;
@@ -40,7 +41,10 @@
     const response = await fetch('/market/analyze', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ projectId: project.id })
+      body: JSON.stringify({
+        projectId: project.id,
+        promptId: selectedPromptId
+      })
     });
 
     if (!response.ok) {

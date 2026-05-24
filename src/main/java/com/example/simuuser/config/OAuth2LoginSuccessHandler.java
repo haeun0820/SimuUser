@@ -49,6 +49,11 @@ public class OAuth2LoginSuccessHandler extends SavedRequestAwareAuthenticationSu
             }
         }
 
+        if (authentication.getAuthorities().stream().anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()))) {
+            getRedirectStrategy().sendRedirect(request, response, "/admin/dashboard");
+            return;
+        }
+
         super.onAuthenticationSuccess(request, response, authentication);
     }
 

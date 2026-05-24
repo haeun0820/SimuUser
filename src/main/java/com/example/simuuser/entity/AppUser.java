@@ -54,6 +54,9 @@ public class AppUser {
     @Column
     private Boolean profileCompleted;
 
+    @Column(nullable = false, length = 20)
+    private String role;
+
     protected AppUser() {
     }
 
@@ -68,6 +71,7 @@ public class AppUser {
         this.provider = "LOCAL";
         this.providerId = null;
         this.profileCompleted = true;
+        this.role = "USER";
         this.createdAt = LocalDateTime.now();
     }
 
@@ -82,6 +86,7 @@ public class AppUser {
         this.provider = provider;
         this.providerId = providerId;
         this.profileCompleted = false;
+        this.role = "USER";
         this.createdAt = LocalDateTime.now();
     }
 
@@ -137,6 +142,10 @@ public class AppUser {
         return !Boolean.FALSE.equals(profileCompleted);
     }
 
+    public String getRole() {
+        return role == null || role.isBlank() ? "USER" : role.trim().toUpperCase();
+    }
+
     public void updateProfile(String name, String phone, LocalDate birthDate, String gender) {
         this.name = name;
         this.phone = phone;
@@ -148,8 +157,20 @@ public class AppUser {
         this.password = password;
     }
 
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public void setProfileImage(String profileImage) {
         this.profileImage = profileImage;
+    }
+
+    public void setRole(String role) {
+        this.role = role == null || role.isBlank() ? "USER" : role.trim().toUpperCase();
+    }
+
+    public void setProfileCompleted(boolean profileCompleted) {
+        this.profileCompleted = profileCompleted;
     }
 
     public void completeSocialProfile(String name, String email, String phone, LocalDate birthDate, String gender) {
