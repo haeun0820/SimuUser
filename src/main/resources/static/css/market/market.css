@@ -400,7 +400,8 @@ body {
 
 /* ── 액션 영역 ── */
 .action-area {
-  padding: 24px;
+  margin-top: 20px;
+  padding: 20px 0 0;
   border-top: 1px solid #f1f5f9;
   display: flex;
   justify-content: flex-start;

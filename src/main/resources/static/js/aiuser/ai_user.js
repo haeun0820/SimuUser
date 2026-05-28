@@ -11,6 +11,7 @@
   let allProjects = [];
   let currentFilter = 'all';
   let selectedProjectId = null;
+  let historyPanel = null;
 
   /* ── [수정] URL 파라미터 파싱 ── */
   const urlParams = new URLSearchParams(window.location.search);
@@ -83,6 +84,7 @@
       allProjects = mapped.filter(project => Number.isFinite(project.id));
     }
     renderProjects();
+    if (selectedProjectId) historyPanel?.load(selectedProjectId);
   }
 
   async function loadProjects() {
@@ -154,6 +156,30 @@
       if (check) check.style.display = isTarget ? 'flex' : 'none';
     });
     document.getElementById('err-project')?.classList.remove('show');
+    historyPanel?.load(selectedProjectId);
+  }
+
+  function initHistoryPanel() {
+    if (!window.AnalysisHistoryPanel) return;
+    historyPanel = window.AnalysisHistoryPanel.create({
+      anchor: '.page-content',
+      position: 'append',
+      heading: 'AI 가상 유저 시뮬레이션 내역',
+      fallbackTitle: 'AI 가상 유저 시뮬레이션',
+      endpoint: projectId => `/aiuser/results/project/${projectId}`,
+      title: item => {
+        const count = item.personaCount ? `${item.personaCount}명` : '가상 유저';
+        return `${count} 시뮬레이션`;
+      },
+      meta: item => {
+        const bits = [];
+        if (item.avgPurchaseIntent != null) bits.push(`구매의사 ${item.avgPurchaseIntent}%`);
+        if (item.createdAt) bits.push(new Date(item.createdAt).toLocaleDateString());
+        return bits.join(' · ');
+      },
+      resultUrl: (id, projectId) => `/aiuser/result?projectId=${projectId}&from=detail&resultId=${id}`,
+      emptyText: '선택한 프로젝트의 시뮬레이션 내역이 없습니다.'
+    });
   }
 
   function initFilterTabs() {
@@ -246,6 +272,7 @@
     initFilterTabs();
     initAgeCheckboxes();
     initPersonaInput();
+    initHistoryPanel();
     document.getElementById('simulationForm')?.addEventListener('submit', handleSubmit);
     loadProjects();
   }

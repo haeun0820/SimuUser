@@ -6,6 +6,7 @@
   const initialProjectId = urlParams.get('projectId');
   const fromDetail = urlParams.get('from') === 'detail';
   const draftKey = 'feedbackDraft';
+  let historyPanel = null;
 
   function escHtml(value) {
     return String(value ?? '')
@@ -60,6 +61,7 @@
     }
     renderProjectList();
     updateSubmitButton();
+    if (selectedProjectId) historyPanel?.load(selectedProjectId);
   }
 
   function renderProjectList() {
@@ -100,7 +102,23 @@
         selectedProjectId = item.dataset.id;
         renderProjectList();
         updateSubmitButton();
+        historyPanel?.load(selectedProjectId);
       });
+    });
+  }
+
+  function initHistoryPanel() {
+    if (!window.AnalysisHistoryPanel) return;
+    historyPanel = window.AnalysisHistoryPanel.create({
+      anchor: '.page-content',
+      position: 'append',
+      heading: '기획 & 피드백 AI 내역',
+      fallbackTitle: '기획 & 피드백 AI',
+      endpoint: projectId => `/feedback/results/project/${projectId}`,
+      title: item => item.sourceType === 'file' ? '파일 기반 피드백 분석' : '기획 피드백 분석',
+      meta: item => item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '',
+      resultUrl: (id, projectId) => `/feedback/result?projectId=${projectId}&from=detail&resultId=${id}`,
+      emptyText: '선택한 프로젝트의 피드백 분석 내역이 없습니다.'
     });
   }
 
@@ -189,6 +207,7 @@
   function init() {
     initMethodTabs();
     restoreDraft();
+    initHistoryPanel();
     fetchProjects();
     
     document.querySelectorAll('input[name="projectFilter"]').forEach(radio => {

@@ -6,6 +6,7 @@
   const initialProjectId = urlParams.get('projectId');
   const fromDetail = urlParams.get('from') === 'detail';
   const draftKey = 'scenarioDraft';
+  let historyPanel = null;
 
   function escHtml(value) {
     return String(value ?? '')
@@ -63,6 +64,7 @@
 
     renderProjects();
     updateSelection();
+    if (selectedProjectId) historyPanel?.load(selectedProjectId);
   }
 
   function renderProjects() {
@@ -94,7 +96,28 @@
       item.addEventListener('click', () => {
         selectedProjectId = item.dataset.id;
         updateSelection();
+        historyPanel?.load(selectedProjectId);
       });
+    });
+  }
+
+  function initHistoryPanel() {
+    if (!window.AnalysisHistoryPanel) return;
+    historyPanel = window.AnalysisHistoryPanel.create({
+      anchor: '.page-content',
+      position: 'append',
+      heading: '시나리오 비교 내역',
+      fallbackTitle: '시나리오 비교',
+      endpoint: projectId => `/scenario/results/project/${projectId}`,
+      title: item => item.compareTitle || '시나리오 비교',
+      meta: item => {
+        const bits = [];
+        if (item.recommendedScenarioTitle) bits.push(`추천: ${item.recommendedScenarioTitle}`);
+        if (item.createdAt) bits.push(new Date(item.createdAt).toLocaleDateString());
+        return bits.join(' · ');
+      },
+      resultUrl: (id, projectId) => `/scenario/result?projectId=${projectId}&from=detail&resultId=${id}`,
+      emptyText: '선택한 프로젝트의 시나리오 비교 내역이 없습니다.'
     });
   }
 
@@ -477,6 +500,7 @@
     });
 
     renderScenarioInputs();
+    initHistoryPanel();
     fetchProjects();
   }
 

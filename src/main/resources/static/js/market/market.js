@@ -12,6 +12,7 @@
   const urlParams = new URLSearchParams(window.location.search);
   const fromProjectId = urlParams.get('projectId');  // 상세에서 진입 시
   const fromDetail = urlParams.get('from') === 'detail';
+  let historyPanel = null;
 
   /* ── 유틸 ── */
   function escHtml(str) {
@@ -145,6 +146,7 @@
       selectedProjectId = id;
       renderProjectList();
       updateRunButton();
+      historyPanel?.load(selectedProjectId);
     });
   });
 }
@@ -164,6 +166,21 @@ function initNewProjectButton() {
   function updateRunButton() {
     const btn = document.getElementById('btnRunAnalysis');
     if (btn) btn.disabled = !selectedProjectId;
+  }
+
+  function initHistoryPanel() {
+    if (!window.AnalysisHistoryPanel) return;
+    historyPanel = window.AnalysisHistoryPanel.create({
+      anchor: '.page-content',
+      position: 'append',
+      heading: '시장 & 경쟁 분석 내역',
+      fallbackTitle: '시장 & 경쟁 분석',
+      endpoint: projectId => `/market/results/project/${projectId}`,
+      title: item => item.title || '시장 & 경쟁 분석',
+      meta: item => [item.competitionLevel, item.createdAt ? new Date(item.createdAt).toLocaleDateString() : ''].filter(Boolean).join(' · '),
+      resultUrl: (id, projectId) => `/market/result?projectId=${projectId}&from=detail&analysisId=${id}`,
+      emptyText: '선택한 프로젝트의 시장 분석 내역이 없습니다.'
+    });
   }
 
   async function callMarketAnalyzeAPI(project) {
@@ -285,10 +302,12 @@ function initNewProjectButton() {
 
   renderBreadcrumb();
   renderProjectList();
+  initHistoryPanel();
   initFilters();
   initRunButton();
   initNewProjectButton();
   updateRunButton();
+  if (selectedProjectId) historyPanel?.load(selectedProjectId);
 }
 
   if (document.readyState === 'loading') {

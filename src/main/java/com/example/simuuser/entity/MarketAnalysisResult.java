@@ -40,7 +40,7 @@ public class MarketAnalysisResult {
     private Integer competitorCount;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String resultJson;
 
     @Column(nullable = false)

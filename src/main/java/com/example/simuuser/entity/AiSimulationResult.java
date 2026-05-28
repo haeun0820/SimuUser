@@ -44,10 +44,11 @@ public class AiSimulationResult {
     private Integer avgPurchaseIntent;
 
     @Lob
+    @Column(columnDefinition = "LONGTEXT")
     private String overallReaction;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String resultJson;
 
     @Column(nullable = false)

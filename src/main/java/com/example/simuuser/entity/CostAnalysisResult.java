@@ -33,7 +33,7 @@ public class CostAnalysisResult {
     private String title;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String revenueModels;
 
     @Column(nullable = false)
@@ -43,11 +43,11 @@ public class CostAnalysisResult {
     private Integer pricePerUser;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String formJson;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String resultJson;
 
     @Column(nullable = false)

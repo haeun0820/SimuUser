@@ -7,6 +7,7 @@
   let fromDetail = false;
   let presetProjectId = null;
   let projectsCache = [];
+  let historyPanel = null;
 
   function escHtml(value) {
     return String(value ?? '')
@@ -93,6 +94,7 @@
         renderProjects([target]);
         applyDetailContext(target);
         setExecuteEnabled(true);
+        historyPanel?.load(selectedProjectId);
         return;
       }
     }
@@ -194,11 +196,27 @@
     });
 
     setExecuteEnabled(true);
+    historyPanel?.load(selectedProjectId);
   }
 
   function setExecuteEnabled(enabled) {
     const btn = document.getElementById('btnExecute');
     if (btn) btn.disabled = !enabled;
+  }
+
+  function initHistoryPanel() {
+    if (!window.AnalysisHistoryPanel) return;
+    historyPanel = window.AnalysisHistoryPanel.create({
+      anchor: '.page-content',
+      position: 'append',
+      heading: '비용 & 수익성 분석 내역',
+      fallbackTitle: '비용 & 수익성 분석',
+      endpoint: projectId => `/cost/results/project/${projectId}`,
+      title: item => item.projectTitle ? `${item.projectTitle} 비용 분석` : '비용 & 수익성 분석',
+      meta: item => item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '',
+      resultUrl: (id, projectId) => `/cost/result?projectId=${projectId}&from=detail&analysisId=${id}`,
+      emptyText: '선택한 프로젝트의 비용 분석 내역이 없습니다.'
+    });
   }
 
   function initTypeFilter() {
@@ -359,6 +377,7 @@
     initProfileMenu();
     initTypeFilter();
     initExecuteBtn();
+    initHistoryPanel();
     loadProjects();
   }
 

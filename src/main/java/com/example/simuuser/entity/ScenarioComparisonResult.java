@@ -36,7 +36,7 @@ public class ScenarioComparisonResult {
     private String recommendedScenarioTitle;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String resultJson;
 
     @Column(nullable = false)
