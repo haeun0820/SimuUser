@@ -28,6 +28,7 @@ dependencies {
 	implementation 'org.springframework.security:spring-security-crypto'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
 	implementation 'org.apache.pdfbox:pdfbox:3.0.5'
+	implementation 'org.apache.poi:poi-ooxml:5.4.1'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	runtimeOnly 'org.postgresql:postgresql'

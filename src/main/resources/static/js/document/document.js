@@ -195,6 +195,20 @@ function escHtml(value) {
         .replace(/"/g, '&quot;');
 }
 
+function escapeDocHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function formatDocHtml(value) {
+    const safe = escapeDocHtml(value || '내용이 없습니다.');
+    return safe.replace(/\r\n/g, '\n').replace(/\n/g, '<br>');
+}
+
 /* ── 프로젝트 데이터 서버에서 가져오기 ── */
 async function loadProjects() {
     try {
@@ -498,12 +512,23 @@ async function startDownload(format) {
         const element = document.createElement('div');
         element.innerHTML = `
             <div style="padding: 40px; font-family: 'malgun gothic', sans-serif;">
-                <h1 style="text-align:center; color: #111827;">${doc.title}</h1>
+                <h1 style="text-align:center; color: #111827;">${escapeDocHtml(doc.title || '문서')}</h1>
                 <div style="text-align:right; color: #6b7280; font-size: 12px;">작성일: ${new Date().toLocaleDateString()}</div>
                 <hr style="margin: 20px 0;">
                 <div style="line-height: 1.6; color: #374151;">${doc.content || '내용이 없습니다.'}</div>
             </div>
         `;
+
+        const pdfTitle = element.querySelector('h1');
+        const pdfBody = element.querySelector('div div:last-child');
+        if (pdfTitle) {
+            pdfTitle.textContent = doc.title || '문서';
+        }
+        if (pdfBody) {
+            pdfBody.style.lineHeight = '1.8';
+            pdfBody.style.wordBreak = 'keep-all';
+            pdfBody.innerHTML = formatDocHtml(doc.content);
+        }
 
         const opt = {
             margin: 10,
@@ -515,10 +540,10 @@ async function startDownload(format) {
 
         html2pdf().set(opt).from(element).save();
 
-    } else if (format === 'hwp') {
+    } else if (format === 'hwp' || format === 'docx') {
         // [HWP 방식] 서버에 요청 (단, 한글 깨짐 방지를 위해 window.location 대신 fetch 사용 권장되나 일단 기존 경로 유지)
         // 백엔드 컨트롤러에서 <html> 태그로 감싸서 보내야 한글이 안 깨집니다.
-        const downloadUrl = `/api/documents/download/${selectedDocIdForDownload}?format=hwp`;
+        const downloadUrl = `/api/documents/download/${selectedDocIdForDownload}?format=${format}`;
         window.location.href = downloadUrl;
     }
     

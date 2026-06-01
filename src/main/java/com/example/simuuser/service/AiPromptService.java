@@ -269,6 +269,58 @@ public class AiPromptService {
                     - improvements는 4~6개, risks는 3~5개로 작성하세요.
                     - 모든 텍스트는 한국어로 작성하세요.
                     """;
+            case "scenario" -> """
+                    반드시 JSON 객체 하나만 반환하세요. 설명 문장, 마크다운, 코드블록은 절대 포함하지 마세요.
+                    아래 키를 모두 포함하세요.
+                    - compareTitle
+                    - recommendedScenarioKey
+                    - recommendedScenarioTitle
+                    - recommendationReason
+                    - scenarios
+                    - criteria
+                    - finalSuggestion
+                    - hybridSuggestion
+
+                    scenarios는 배열이어야 하며, 각 항목은 아래 키를 모두 포함해야 합니다.
+                    - key
+                    - title
+                    - mode
+                    - summary
+                    - features
+                    - references
+                    - totalScore
+                    - scores
+                    - pros
+                    - cons
+
+                    scores는 객체여야 하며 아래 5개 기준을 모두 포함해야 합니다.
+                    - 사업성
+                    - 사용자 가치
+                    - 구현 가능성
+                    - 명확성
+                    - 시장 경쟁력
+
+                    criteria는 배열이어야 하며, 각 항목은 아래 키를 모두 포함해야 합니다.
+                    - name
+                    - winnerScenarioKey
+                    - winnerScenarioTitle
+                    - values
+
+                    values는 배열이어야 하며, 각 항목은 아래 키를 포함해야 합니다.
+                    - scenarioKey
+                    - scenarioTitle
+                    - score
+
+                    규칙:
+                    - recommendedScenarioKey는 scenarios 중 하나의 key와 반드시 일치해야 합니다.
+                    - recommendedScenarioTitle은 recommendedScenarioKey가 가리키는 title과 같아야 합니다.
+                    - scenarios 길이는 입력된 시나리오 개수와 같아야 합니다.
+                    - totalScore와 모든 score 값은 0~100 정수여야 합니다.
+                    - pros와 cons는 각각 2~4개로 작성하세요.
+                    - criteria는 반드시 5개 기준을 모두 포함하세요.
+                    - 각 criteria.values 길이는 scenarios 길이와 같아야 합니다.
+                    - 모든 텍스트는 한국어로 작성하세요.
+                    """;
             case "document" -> """
                     모든 출력은 한국어 문서 본문으로 작성하세요.
                     JSON, 마크다운 코드블록, 설명용 메타 문장은 출력하지 마세요.

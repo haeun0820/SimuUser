@@ -126,6 +126,7 @@
     const request = context.request || {};
     sessionStorage.setItem(draftKey, JSON.stringify({
       projectId: request.projectId || '',
+      promptId: request.promptId || '',
       compareTitle: request.compareTitle || '',
       scenarioCount: Array.isArray(request.scenarios) ? request.scenarios.length : 2
     }));

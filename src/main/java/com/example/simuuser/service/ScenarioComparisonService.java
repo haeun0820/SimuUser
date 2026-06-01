@@ -17,8 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,12 +24,20 @@ import java.util.Map;
 @Service
 public class ScenarioComparisonService {
 
-    private static final List<String> CRITERIA = List.of("사업성", "사용자 가치", "구현 가능성", "명확성", "시장 경쟁력");
+    private static final List<String> CRITERIA = List.of(
+            "사업성",
+            "사용자 가치",
+            "구현 가능성",
+            "명확성",
+            "시장 경쟁력"
+    );
 
     private final ScenarioComparisonResultRepository scenarioComparisonResultRepository;
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectService projectService;
+    private final AiPromptService aiPromptService;
+    private final LlmApiService llmApiService;
     private final ObjectMapper objectMapper;
 
     public ScenarioComparisonService(
@@ -39,12 +45,16 @@ public class ScenarioComparisonService {
             ProjectRepository projectRepository,
             ProjectMemberRepository projectMemberRepository,
             ProjectService projectService,
+            AiPromptService aiPromptService,
+            LlmApiService llmApiService,
             ObjectMapper objectMapper
     ) {
         this.scenarioComparisonResultRepository = scenarioComparisonResultRepository;
         this.projectRepository = projectRepository;
         this.projectMemberRepository = projectMemberRepository;
         this.projectService = projectService;
+        this.aiPromptService = aiPromptService;
+        this.llmApiService = llmApiService;
         this.objectMapper = objectMapper;
     }
 
@@ -57,29 +67,20 @@ public class ScenarioComparisonService {
             throw new IllegalArgumentException("At least two scenarios are required.");
         }
 
-        findAccessibleProject(request.getProjectId(), projectService.getCurrentUser(authentication));
+        AppUser currentUser = projectService.getCurrentUser(authentication);
+        Project project = findAccessibleProject(request.getProjectId(), currentUser);
+        String compareTitle = normalizeText(request.getCompareTitle(), "시나리오 비교");
+        List<ScenarioComparisonInput> inputs = request.getScenarios();
 
-        List<Map<String, Object>> scenarios = new ArrayList<>();
-        for (int i = 0; i < request.getScenarios().size(); i++) {
-            scenarios.add(buildScenarioSummary(request.getScenarios().get(i), i));
+        String prompt = aiPromptService.renderPrompt(request.getPromptId(), scenarioPromptValues(project, compareTitle, inputs));
+        if (prompt == null) {
+            prompt = buildPrompt(project, compareTitle, inputs);
         }
 
-        Map<String, Object> recommended = scenarios.stream()
-                .max(Comparator.comparingInt(item -> number(item.get("totalScore"))))
-                .orElseThrow();
-
-        List<Map<String, Object>> criteria = buildCriteria(scenarios);
-
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("compareTitle", normalizeText(request.getCompareTitle(), "시나리오 비교"));
-        result.put("recommendedScenarioKey", recommended.get("key"));
-        result.put("recommendedScenarioTitle", recommended.get("title"));
-        result.put("recommendationReason", buildRecommendationReason(recommended));
-        result.put("scenarios", scenarios);
-        result.put("criteria", criteria);
-        result.put("finalSuggestion", buildFinalSuggestion(recommended));
-        result.put("hybridSuggestion", buildHybridSuggestion(scenarios));
-        return result;
+        String selectedModel = aiPromptService.resolveModel(request.getPromptId());
+        String generatedText = llmApiService.generateText(prompt, selectedModel);
+        Map<String, Object> parsed = parseJsonResult(generatedText);
+        return normalizeResult(parsed, compareTitle, inputs);
     }
 
     @Transactional
@@ -148,133 +149,302 @@ public class ScenarioComparisonService {
         return project;
     }
 
-    private Map<String, Object> buildScenarioSummary(ScenarioComparisonInput input, int index) {
-        String title = normalizeText(input.getTitle(), "시나리오 " + (index + 1));
-        String mode = normalizeMode(input.getMode());
-        String summary = trimLongText(input.getSummary());
-        List<String> features = normalizeList(input.getFeatures());
-        List<String> references = normalizeList(input.getReferences());
+    private Map<String, Object> scenarioPromptValues(Project project, String compareTitle, List<ScenarioComparisonInput> scenarios) {
+        return Map.of(
+                "projectTitle", text(project.getTitle(), ""),
+                "projectDescription", text(project.getDescription(), ""),
+                "compareTitle", compareTitle,
+                "scenarioSummaries", buildScenarioSummaries(scenarios)
+        );
+    }
 
-        int business = clamp(35 + features.size() * 9 + references.size() * 6 + lengthScore(title, 15), 0, 100);
-        int userValue = clamp(30 + features.size() * 8 + lengthScore(summary, 80), 0, 100);
-        int feasibility = clamp(35 + references.size() * 10 + modeBonus(mode) + Math.min(features.size() * 4, 16), 0, 100);
-        int clarity = clamp(25 + lengthScore(title, 12) + lengthScore(summary, 120) + features.size() * 5, 0, 100);
-        int market = clamp(30 + features.size() * 7 + references.size() * 5 + lengthScore(summary, 100), 0, 100);
-        int total = (business + userValue + feasibility + clarity + market) / 5;
+    private String buildScenarioSummaries(List<ScenarioComparisonInput> scenarios) {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < scenarios.size(); i++) {
+            ScenarioComparisonInput scenario = scenarios.get(i);
+            builder.append("시나리오 ").append(i + 1).append('\n')
+                    .append("- key: S").append(i + 1).append('\n')
+                    .append("- title: ").append(normalizeText(scenario.getTitle(), "시나리오 " + (i + 1))).append('\n')
+                    .append("- mode: ").append(normalizeMode(scenario.getMode())).append('\n')
+                    .append("- summary: ").append(text(trimLongText(scenario.getSummary()), "요약 없음")).append('\n')
+                    .append("- features: ").append(joinOrFallback(normalizeList(scenario.getFeatures()), "없음")).append('\n')
+                    .append("- references: ").append(joinOrFallback(normalizeList(scenario.getReferences()), "없음"));
 
-        List<String> pros = new ArrayList<>();
-        List<String> cons = new ArrayList<>();
-        if (!title.isBlank()) pros.add("제안의 방향과 초점이 비교적 명확합니다.");
-        if (!features.isEmpty()) pros.add("핵심 기능이 정리되어 있어 비교 판단이 쉽습니다.");
-        if (!references.isEmpty()) pros.add("참고 자료 또는 근거가 있어 실행 검토에 도움이 됩니다.");
-        if (summary != null && summary.length() >= 80) pros.add("설명이 충분해 기획 의도를 파악하기 쉽습니다.");
-
-        if (summary == null || summary.length() < 40) cons.add("시나리오 설명이 짧아 실제 차별점 파악이 어렵습니다.");
-        if (features.size() < 2) cons.add("기능 정의가 부족해 비교 기준이 약합니다.");
-        if (references.isEmpty()) cons.add("근거 자료가 없어 실현 가능성 검토가 제한됩니다.");
-        if ("upload".equals(mode)) cons.add("업로드 파일 내용 자체는 비교에 직접 반영되지 않아 보완 설명이 필요합니다.");
-
-        while (pros.size() < 2) {
-            pros.add("핵심 방향은 잡혀 있으나 추가 상세화 여지가 있습니다.");
+            if (i < scenarios.size() - 1) {
+                builder.append("\n\n");
+            }
         }
-        while (cons.size() < 2) {
-            cons.add("사업성, 사용자 가치, 실행 계획에 대한 보강이 더 필요합니다.");
+        return builder.toString();
+    }
+
+    private String buildPrompt(Project project, String compareTitle, List<ScenarioComparisonInput> scenarios) {
+        return """
+                당신은 스타트업 기획안 비교를 수행하는 한국어 전략 분석가다.
+                아래 프로젝트와 시나리오들을 비교 평가하고 반드시 JSON 객체 하나만 반환하라.
+                설명 문장, 마크다운, 코드블록은 절대 포함하지 마라.
+
+                [프로젝트]
+                - 제목: %s
+                - 설명: %s
+                - 타겟 사용자: %s
+                - 산업: %s
+
+                [비교 제목]
+                %s
+
+                [시나리오 목록]
+                %s
+
+                반드시 아래 JSON 구조만 반환하라.
+                {
+                  "compareTitle": "string",
+                  "recommendedScenarioKey": "S1",
+                  "recommendedScenarioTitle": "string",
+                  "recommendationReason": "string",
+                  "scenarios": [
+                    {
+                      "key": "S1",
+                      "title": "string",
+                      "mode": "upload | project | direct",
+                      "summary": "string",
+                      "features": ["string"],
+                      "references": ["string"],
+                      "totalScore": 0,
+                      "scores": {
+                        "사업성": 0,
+                        "사용자 가치": 0,
+                        "구현 가능성": 0,
+                        "명확성": 0,
+                        "시장 경쟁력": 0
+                      },
+                      "pros": ["string"],
+                      "cons": ["string"]
+                    }
+                  ],
+                  "criteria": [
+                    {
+                      "name": "사업성",
+                      "winnerScenarioKey": "S1",
+                      "winnerScenarioTitle": "string",
+                      "values": [
+                        { "scenarioKey": "S1", "scenarioTitle": "string", "score": 0 }
+                      ]
+                    }
+                  ],
+                  "finalSuggestion": "string",
+                  "hybridSuggestion": "string"
+                }
+
+                규칙:
+                - scenarios 길이는 입력된 시나리오 개수와 반드시 같아야 한다.
+                - criteria는 반드시 사업성, 사용자 가치, 구현 가능성, 명확성, 시장 경쟁력 5개를 모두 포함해야 한다.
+                - totalScore와 scores 값은 모두 0~100 정수여야 한다.
+                - pros와 cons는 각각 2~4개로 작성하라.
+                - recommendationReason, finalSuggestion, hybridSuggestion은 바로 의사결정에 쓸 수 있게 구체적으로 작성하라.
+                - 모든 텍스트는 한국어로 작성하라.
+                """.formatted(
+                text(project.getTitle(), "프로젝트"),
+                text(project.getDescription(), "설명 없음"),
+                text(project.getTargetUser(), "미정"),
+                text(project.getIndustry(), "미정"),
+                compareTitle,
+                buildScenarioSummaries(scenarios)
+        );
+    }
+
+    private Map<String, Object> parseJsonResult(String text) {
+        try {
+            Object parsed = objectMapper.readValue(stripMarkdownFence(text), Object.class);
+            return extractRootObject(parsed);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("AI 응답을 시나리오 비교 결과 JSON으로 해석하지 못했습니다.");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> extractRootObject(Object parsed) {
+        if (parsed instanceof Map<?, ?> map) {
+            return (Map<String, Object>) map;
+        }
+        if (parsed instanceof List<?> list && !list.isEmpty() && list.get(0) instanceof Map<?, ?> firstItem) {
+            return (Map<String, Object>) firstItem;
+        }
+        throw new IllegalArgumentException("AI 응답 최상위 형식이 올바르지 않습니다. JSON 객체로 응답하도록 프롬프트를 확인해주세요.");
+    }
+
+    private String stripMarkdownFence(String text) {
+        String trimmed = text == null ? "" : text.trim();
+        if (!trimmed.startsWith("```")) {
+            return trimmed;
         }
 
-        Map<String, Integer> scoreMap = new LinkedHashMap<>();
-        scoreMap.put(CRITERIA.get(0), business);
-        scoreMap.put(CRITERIA.get(1), userValue);
-        scoreMap.put(CRITERIA.get(2), feasibility);
-        scoreMap.put(CRITERIA.get(3), clarity);
-        scoreMap.put(CRITERIA.get(4), market);
+        int firstLineEnd = trimmed.indexOf('\n');
+        int lastFence = trimmed.lastIndexOf("```");
+        if (firstLineEnd < 0 || lastFence <= firstLineEnd) {
+            return trimmed;
+        }
+
+        return trimmed.substring(firstLineEnd + 1, lastFence).trim();
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> normalizeResult(Map<String, Object> raw, String compareTitle, List<ScenarioComparisonInput> inputs) {
+        List<Map<String, Object>> rawScenarios = asMapList(raw.get("scenarios"));
+        List<Map<String, Object>> scenarios = new ArrayList<>();
+        List<String> scenarioKeys = new ArrayList<>();
+
+        for (int i = 0; i < inputs.size(); i++) {
+            ScenarioComparisonInput input = inputs.get(i);
+            Map<String, Object> rawScenario = i < rawScenarios.size() ? rawScenarios.get(i) : Map.of();
+            String key = "S" + (i + 1);
+            String title = normalizeText(text(rawScenario.get("title"), input.getTitle()), "시나리오 " + (i + 1));
+            String mode = normalizeMode(text(rawScenario.get("mode"), input.getMode()));
+            String summary = text(rawScenario.get("summary"), text(trimLongText(input.getSummary()), ""));
+            List<String> features = limitList(asStringList(rawScenario.get("features")), normalizeList(input.getFeatures()), 6);
+            List<String> references = limitList(asStringList(rawScenario.get("references")), normalizeList(input.getReferences()), 6);
+            Map<String, Integer> scores = normalizeScores((Map<String, Object>) (rawScenario.get("scores") instanceof Map<?, ?> map ? map : Map.of()));
+            int totalScore = clamp(intNumber(rawScenario.get("totalScore"), averageScore(scores)), 0, 100);
+            List<String> pros = ensureMinItems(limitList(asStringList(rawScenario.get("pros")), List.of(), 4), 2,
+                    title + "의 강점 보완 포인트를 추가로 정리할 수 있습니다.");
+            List<String> cons = ensureMinItems(limitList(asStringList(rawScenario.get("cons")), List.of(), 4), 2,
+                    title + "은 추가 검증이 필요한 리스크가 남아 있습니다.");
+
+            Map<String, Object> scenario = new LinkedHashMap<>();
+            scenario.put("key", key);
+            scenario.put("title", title);
+            scenario.put("mode", mode);
+            scenario.put("summary", summary);
+            scenario.put("features", features);
+            scenario.put("references", references);
+            scenario.put("totalScore", totalScore);
+            scenario.put("scores", scores);
+            scenario.put("pros", pros);
+            scenario.put("cons", cons);
+
+            scenarios.add(scenario);
+            scenarioKeys.add(key);
+        }
+
+        String rawRecommendedKey = text(raw.get("recommendedScenarioKey"), scenarioKeys.get(0));
+        final String recommendedKey = scenarioKeys.contains(rawRecommendedKey)
+                ? rawRecommendedKey
+                : scenarioKeys.get(0);
+
+        Map<String, Object> recommendedScenario = scenarios.stream()
+                .filter(item -> recommendedKey.equals(item.get("key")))
+                .findFirst()
+                .orElse(scenarios.get(0));
+
+        String recommendedTitle = text(raw.get("recommendedScenarioTitle"), text(recommendedScenario.get("title"), "시나리오"));
+        List<Map<String, Object>> criteria = normalizeCriteria(asMapList(raw.get("criteria")), scenarios);
 
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("key", "S" + (index + 1));
-        result.put("title", title);
-        result.put("mode", mode);
-        result.put("summary", summary == null ? "" : summary);
-        result.put("features", features);
-        result.put("references", references);
-        result.put("totalScore", total);
-        result.put("scores", scoreMap);
-        result.put("pros", pros);
-        result.put("cons", cons);
+        result.put("compareTitle", compareTitle);
+        result.put("recommendedScenarioKey", recommendedScenario.get("key"));
+        result.put("recommendedScenarioTitle", recommendedTitle);
+        result.put("recommendationReason", text(raw.get("recommendationReason"), recommendedTitle + "이(가) 전체 균형 측면에서 가장 적합합니다."));
+        result.put("scenarios", scenarios);
+        result.put("criteria", criteria);
+        result.put("finalSuggestion", text(raw.get("finalSuggestion"), recommendedTitle + "을(를) 중심으로 다음 단계 검증을 진행하는 것이 적절합니다."));
+        result.put("hybridSuggestion", text(raw.get("hybridSuggestion"), "상위 시나리오의 강점만 결합해 하이브리드 대안을 추가 검토할 수 있습니다."));
         return result;
     }
 
-    private List<Map<String, Object>> buildCriteria(List<Map<String, Object>> scenarios) {
-        List<Map<String, Object>> criteria = new ArrayList<>();
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> normalizeCriteria(List<Map<String, Object>> rawCriteria, List<Map<String, Object>> scenarios) {
+        List<Map<String, Object>> rows = new ArrayList<>();
+
         for (String criterion : CRITERIA) {
+            Map<String, Object> rawRow = rawCriteria.stream()
+                    .filter(item -> criterion.equals(text(item.get("name"), "")))
+                    .findFirst()
+                    .orElse(Map.of());
+
             List<Map<String, Object>> values = new ArrayList<>();
-            Map<String, Object> winner = null;
-            int max = Integer.MIN_VALUE;
+            String winnerKey = "";
+            String winnerTitle = "";
+            int maxScore = Integer.MIN_VALUE;
 
             for (Map<String, Object> scenario : scenarios) {
-                @SuppressWarnings("unchecked")
-                Map<String, Integer> scores = (Map<String, Integer>) scenario.get("scores");
-                int value = scores.getOrDefault(criterion, 0);
-                Map<String, Object> item = new HashMap<>();
-                item.put("scenarioKey", scenario.get("key"));
-                item.put("scenarioTitle", scenario.get("title"));
-                item.put("score", value);
-                values.add(item);
+                Map<String, Integer> scoreMap = (Map<String, Integer>) scenario.get("scores");
+                int score = clamp(scoreMap.getOrDefault(criterion, 0), 0, 100);
 
-                if (value > max) {
-                    max = value;
-                    winner = scenario;
+                values.add(Map.of(
+                        "scenarioKey", text(scenario.get("key"), ""),
+                        "scenarioTitle", text(scenario.get("title"), ""),
+                        "score", score
+                ));
+
+                if (score > maxScore) {
+                    maxScore = score;
+                    winnerKey = text(scenario.get("key"), "");
+                    winnerTitle = text(scenario.get("title"), "");
                 }
             }
 
+            String normalizedWinnerKey = text(rawRow.get("winnerScenarioKey"), winnerKey);
+            String normalizedWinnerTitle = text(rawRow.get("winnerScenarioTitle"), winnerTitle);
+
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("name", criterion);
-            row.put("winnerScenarioKey", winner == null ? "" : winner.get("key"));
-            row.put("winnerScenarioTitle", winner == null ? "" : winner.get("title"));
+            row.put("winnerScenarioKey", normalizedWinnerKey);
+            row.put("winnerScenarioTitle", normalizedWinnerTitle);
             row.put("values", values);
-            criteria.add(row);
-        }
-        return criteria;
-    }
-
-    private String buildRecommendationReason(Map<String, Object> recommended) {
-        return "%s이(가) 전체 점수와 핵심 비교 지표에서 가장 균형이 좋아 우선 검토 대상으로 적합합니다."
-                .formatted(String.valueOf(recommended.get("title")));
-    }
-
-    private String buildFinalSuggestion(Map<String, Object> recommended) {
-        return "%s을(를) 기준안으로 삼고, 부족한 근거 자료와 세부 실행 계획만 보강해서 다음 단계로 넘기는 편이 효율적입니다."
-                .formatted(String.valueOf(recommended.get("title")));
-    }
-
-    private String buildHybridSuggestion(List<Map<String, Object>> scenarios) {
-        if (scenarios.size() < 2) {
-            return "현재 비교안 기준으로 세부안 정리를 진행하는 것이 적절합니다.";
+            rows.add(row);
         }
 
-        Map<String, Object> first = scenarios.get(0);
-        Map<String, Object> second = scenarios.stream()
-                .sorted((a, b) -> Integer.compare(number(b.get("totalScore")), number(a.get("totalScore"))))
-                .skip(1)
-                .findFirst()
-                .orElse(first);
-
-        return "%s의 강한 방향성과 %s의 보완 포인트를 결합하면 더 현실적인 하이브리드 안을 만들 수 있습니다."
-                .formatted(String.valueOf(first.get("title")), String.valueOf(second.get("title")));
+        return rows;
     }
 
-    private String toJson(Map<String, Object> result) {
-        try {
-            return objectMapper.writeValueAsString(result);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Could not serialize scenario result.", e);
+    private Map<String, Integer> normalizeScores(Map<String, Object> rawScores) {
+        Map<String, Integer> normalized = new LinkedHashMap<>();
+        for (String criterion : CRITERIA) {
+            normalized.put(criterion, clamp(intNumber(rawScores.get(criterion), 60), 0, 100));
         }
+        return normalized;
     }
 
-    private Map<String, Object> fromJson(String resultJson) {
-        try {
-            return objectMapper.readValue(resultJson, new TypeReference<>() {});
-        } catch (Exception e) {
-            return Map.of();
+    private int averageScore(Map<String, Integer> scores) {
+        return (int) scores.values().stream().mapToInt(Integer::intValue).average().orElse(60);
+    }
+
+    private List<String> ensureMinItems(List<String> values, int minSize, String fallbackText) {
+        List<String> normalized = new ArrayList<>(values);
+        while (normalized.size() < minSize) {
+            normalized.add(fallbackText);
         }
+        return normalized;
+    }
+
+    private List<String> limitList(List<String> values, List<String> fallback, int maxSize) {
+        List<String> source = values.isEmpty() ? fallback : values;
+        return source.stream()
+                .filter(item -> item != null && !item.isBlank())
+                .limit(maxSize)
+                .toList();
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> asMapList(Object value) {
+        if (!(value instanceof List<?> list)) {
+            return List.of();
+        }
+
+        return list.stream()
+                .filter(Map.class::isInstance)
+                .map(item -> (Map<String, Object>) item)
+                .toList();
+    }
+
+    private List<String> asStringList(Object value) {
+        if (!(value instanceof List<?> list)) {
+            return List.of();
+        }
+
+        return list.stream()
+                .filter(item -> item != null && !item.toString().isBlank())
+                .map(item -> item.toString().trim())
+                .toList();
     }
 
     private List<String> normalizeList(List<String> values) {
@@ -311,34 +481,46 @@ public class ScenarioComparisonService {
         return normalized.length() > 5000 ? normalized.substring(0, 5000) : normalized;
     }
 
-    private int lengthScore(String value, int maxUsefulLength) {
-        if (value == null || value.isBlank()) {
-            return 0;
+    private String joinOrFallback(List<String> values, String fallback) {
+        return values.isEmpty() ? fallback : String.join(", ", values);
+    }
+
+    private String text(Object value, String fallback) {
+        if (value == null) {
+            return fallback;
         }
-        return Math.min(value.length(), maxUsefulLength) * 30 / maxUsefulLength;
+        String normalized = value.toString().trim();
+        return normalized.isEmpty() ? fallback : normalized;
     }
 
-    private int modeBonus(String mode) {
-        return switch (mode) {
-            case "project" -> 12;
-            case "direct" -> 8;
-            case "upload" -> 4;
-            default -> 0;
-        };
-    }
-
-    private int number(Object value) {
+    private int intNumber(Object value, int fallback) {
         if (value instanceof Number number) {
             return number.intValue();
         }
         try {
             return Integer.parseInt(String.valueOf(value));
         } catch (NumberFormatException e) {
-            return 0;
+            return fallback;
         }
     }
 
     private int clamp(int value, int min, int max) {
         return Math.max(min, Math.min(max, value));
+    }
+
+    private String toJson(Map<String, Object> result) {
+        try {
+            return objectMapper.writeValueAsString(result);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Could not serialize scenario result.", e);
+        }
+    }
+
+    private Map<String, Object> fromJson(String resultJson) {
+        try {
+            return objectMapper.readValue(resultJson, new TypeReference<>() {});
+        } catch (Exception e) {
+            return Map.of();
+        }
     }
 }

@@ -141,6 +141,7 @@
     try {
       const draft = JSON.parse(raw);
       selectedProjectId = draft.projectId ? String(draft.projectId) : selectedProjectId;
+      applyPromptDraft(draft.promptId);
       const titleInput = document.getElementById('compareTitle');
       if (titleInput) {
         titleInput.value = draft.compareTitle || '';
@@ -156,6 +157,30 @@
     } finally {
       sessionStorage.removeItem(draftKey);
     }
+  }
+
+  function applyPromptDraft(promptId) {
+    if (!promptId) return;
+
+    const tryApply = (attempt = 0) => {
+      const select = document.querySelector('.prompt-select');
+      if (!select) {
+        if (attempt < 20) setTimeout(() => tryApply(attempt + 1), 150);
+        return;
+      }
+
+      const target = String(promptId);
+      if (Array.from(select.options).some(option => option.value === target)) {
+        select.value = target;
+        return;
+      }
+
+      if (attempt < 20) {
+        setTimeout(() => tryApply(attempt + 1), 150);
+      }
+    };
+
+    tryApply();
   }
 
   function getUploadUI(index) {

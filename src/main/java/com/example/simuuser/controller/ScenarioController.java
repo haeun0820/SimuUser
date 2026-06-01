@@ -52,12 +52,12 @@ public class ScenarioController {
         if (resultId != null) {
             ScenarioComparisonResultResponse saved = scenarioComparisonService.findOne(resultId, authentication);
             model.addAttribute("scenarioResultData", saved.getResult());
-            model.addAttribute("scenarioRequestData", buildRequestModel(saved.getProjectId(), saved.getCompareTitle(), List.of(), saved.getId()));
+            model.addAttribute("scenarioRequestData", buildRequestModel(saved.getProjectId(), null, saved.getCompareTitle(), List.of(), saved.getId()));
             return "scenario/scenario_result";
         }
 
         model.addAttribute("scenarioResultData", Map.of());
-        model.addAttribute("scenarioRequestData", buildRequestModel(null, "", List.of(), null));
+        model.addAttribute("scenarioRequestData", buildRequestModel(null, null, "", List.of(), null));
         return "scenario/scenario_result";
     }
 
@@ -80,10 +80,12 @@ public class ScenarioController {
 
             Map<String, Object> result = scenarioComparisonService.generate(request, authentication);
             model.addAttribute("scenarioResultData", result);
-            model.addAttribute("scenarioRequestData", buildRequestModel(projectId, compareTitle, scenarios, null));
+            model.addAttribute("scenarioRequestData", buildRequestModel(projectId, promptId, compareTitle, scenarios, null));
             return "scenario/scenario_result";
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (IllegalStateException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, e.getMessage());
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Scenario comparison request is invalid.");
         }
@@ -121,9 +123,10 @@ public class ScenarioController {
         }
     }
 
-    private Map<String, Object> buildRequestModel(Long projectId, String compareTitle, List<ScenarioComparisonInput> scenarios, Long savedResultId) {
+    private Map<String, Object> buildRequestModel(Long projectId, Long promptId, String compareTitle, List<ScenarioComparisonInput> scenarios, Long savedResultId) {
         Map<String, Object> request = new HashMap<>();
         request.put("projectId", projectId);
+        request.put("promptId", promptId);
         request.put("compareTitle", compareTitle == null ? "" : compareTitle);
         request.put("scenarios", scenarios);
         request.put("savedResultId", savedResultId);
