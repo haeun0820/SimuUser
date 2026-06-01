@@ -29,7 +29,9 @@ public class AnalysisResultSchemaMigration {
                     "ALTER TABLE feedback_analysis_results MODIFY COLUMN result_json LONGTEXT NOT NULL",
                     "ALTER TABLE ai_simulation_results MODIFY COLUMN overall_reaction LONGTEXT NULL",
                     "ALTER TABLE ai_simulation_results MODIFY COLUMN result_json LONGTEXT NOT NULL",
-                    "ALTER TABLE scenario_comparison_results MODIFY COLUMN result_json LONGTEXT NOT NULL"
+                    "ALTER TABLE scenario_comparison_results MODIFY COLUMN result_json LONGTEXT NOT NULL",
+                    "ALTER TABLE documents MODIFY COLUMN content LONGTEXT NULL",
+                    "ALTER TABLE documents MODIFY COLUMN description LONGTEXT NULL"
             );
 
             for (String statement : statements) {

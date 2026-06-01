@@ -27,23 +27,37 @@ public class DocumentApiController {
     private final AiDocumentService aiDocumentService;
 
     @PostMapping("/generate")
-    public ResponseEntity<DocumentResponse> generateDocument(
+    public ResponseEntity<?> generateDocument(
             @RequestBody DocumentRequest request,
             Authentication authentication
     ) {
-        return ResponseEntity.ok(aiDocumentService.generateDocument(request, authentication));
+        try {
+            return ResponseEntity.ok(aiDocumentService.generateDocument(request, authentication));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(502).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "문서 생성 중 오류가 발생했습니다. " + e.getMessage()));
+        }
     }
 
     @GetMapping("/project/{projectId}")
-    public ResponseEntity<List<DocumentResponse>> getDocumentsByProject(
-            @PathVariable Long projectId,
+    public ResponseEntity<?> getDocumentsByProject(
+            @PathVariable("projectId") Long projectId,
             Authentication authentication
     ) {
-        return ResponseEntity.ok(aiDocumentService.getDocumentsByProjectId(projectId, authentication));
+        try {
+            return ResponseEntity.ok(aiDocumentService.getDocumentsByProjectId(projectId, authentication));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "문서 목록 조회 중 오류가 발생했습니다. " + e.getMessage()));
+        }
     }
 
     @PatchMapping("/{documentId}/star")
-    public ResponseEntity<?> toggleDocumentStar(@PathVariable Long documentId, Authentication authentication) {
+    public ResponseEntity<?> toggleDocumentStar(@PathVariable("documentId") Long documentId, Authentication authentication) {
         return ResponseEntity.ok(Map.of("starred", aiDocumentService.toggleStarred(documentId, authentication)));
     }
 }

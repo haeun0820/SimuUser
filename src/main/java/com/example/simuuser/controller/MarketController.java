@@ -107,7 +107,7 @@ public class MarketController {
 
     @GetMapping("/market/results/{resultId}")
     @ResponseBody
-    public ResponseEntity<?> result(@PathVariable Long resultId, Authentication authentication) {
+    public ResponseEntity<?> result(@PathVariable("resultId") Long resultId, Authentication authentication) {
         try {
             return ResponseEntity.ok(marketAnalysisResultService.findOne(resultId, authentication));
         } catch (IllegalArgumentException | IllegalStateException e) {
@@ -120,7 +120,7 @@ public class MarketController {
 
     @GetMapping("/market/results/project/{projectId}")
     @ResponseBody
-    public ResponseEntity<?> projectResults(@PathVariable Long projectId, Authentication authentication) {
+    public ResponseEntity<?> projectResults(@PathVariable("projectId") Long projectId, Authentication authentication) {
         try {
             return ResponseEntity.ok(marketAnalysisResultService.findByProject(projectId, authentication));
         } catch (IllegalArgumentException | IllegalStateException e) {
@@ -133,7 +133,7 @@ public class MarketController {
 
     @PatchMapping("/market/results/{resultId}/star")
     @ResponseBody
-    public ResponseEntity<?> toggleStar(@PathVariable Long resultId, Authentication authentication) {
+    public ResponseEntity<?> toggleStar(@PathVariable("resultId") Long resultId, Authentication authentication) {
         try {
             return ResponseEntity.ok(Map.of("starred", marketAnalysisResultService.toggleStarred(resultId, authentication)));
         } catch (IllegalArgumentException | IllegalStateException e) {

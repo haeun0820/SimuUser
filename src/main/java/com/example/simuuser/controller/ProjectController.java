@@ -160,7 +160,7 @@ public class ProjectController {
 
     @ResponseBody
     @PostMapping("/api/projects/{projectId}/tabs")
-    public ResponseEntity<?> addTab(@PathVariable Long projectId, @RequestBody TabRequest request) {
+    public ResponseEntity<?> addTab(@PathVariable("projectId") Long projectId, @RequestBody TabRequest request) {
         try {
             ProjectTab savedTab = projectTabService.addTab(projectId, request);
             return ResponseEntity.ok(new ProjectTabResponse(savedTab));
@@ -171,7 +171,7 @@ public class ProjectController {
 
     @ResponseBody
     @GetMapping("/api/projects/{projectId}/tabs")
-    public List<ProjectTabResponse> getProjectTabs(@PathVariable Long projectId) {
+    public List<ProjectTabResponse> getProjectTabs(@PathVariable("projectId") Long projectId) {
         return projectTabService.getTabs(projectId).stream()
                 .map(ProjectTabResponse::new)
                 .toList();
@@ -179,14 +179,14 @@ public class ProjectController {
 
     @ResponseBody
     @PatchMapping("/api/projects/tabs/{tabId}")
-    public ResponseEntity<?> updateTab(@PathVariable Long tabId, @RequestBody Map<String, String> body) {
+    public ResponseEntity<?> updateTab(@PathVariable("tabId") Long tabId, @RequestBody Map<String, String> body) {
         projectTabService.updateTabName(tabId, body.get("name"));
         return ResponseEntity.ok().build();
     }
 
     @ResponseBody
     @DeleteMapping("/api/projects/tabs/{tabId}")
-    public ResponseEntity<?> deleteTab(@PathVariable Long tabId) {
+    public ResponseEntity<?> deleteTab(@PathVariable("tabId") Long tabId) {
         projectTabService.deleteTab(tabId);
         return ResponseEntity.ok().build();
     }

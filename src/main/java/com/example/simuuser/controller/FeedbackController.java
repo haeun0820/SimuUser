@@ -140,7 +140,7 @@ public class FeedbackController {
     @GetMapping("/feedback/results/project/{projectId}")
     @ResponseBody
     public List<FeedbackAnalysisResultResponse> findFeedbackResultsByProject(
-            @PathVariable Long projectId,
+            @PathVariable("projectId") Long projectId,
             Authentication authentication
     ) {
         return feedbackAnalysisResultService.findByProject(projectId, authentication);
@@ -148,7 +148,7 @@ public class FeedbackController {
 
     @PatchMapping("/feedback/results/{resultId}/star")
     @ResponseBody
-    public Map<String, Object> toggleFeedbackStar(@PathVariable Long resultId, Authentication authentication) {
+    public Map<String, Object> toggleFeedbackStar(@PathVariable("resultId") Long resultId, Authentication authentication) {
         try {
             return Map.of("starred", feedbackAnalysisResultService.toggleStarred(resultId, authentication));
         } catch (IllegalArgumentException | IllegalStateException e) {

@@ -70,9 +70,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 return alert("먼저 왼쪽 목록에서 프로젝트를 선택해주세요.");
             }
 
+            const selectedPromptId = window.getSelectedPromptId ? window.getSelectedPromptId() : '';
+
             const requestData = {
                 projectId: selectedProjectId, 
-                promptId: window.getSelectedPromptId ? window.getSelectedPromptId() : '',
+                promptId: selectedPromptId ? Number(selectedPromptId) : null,
                 documentType: currentDocType,
                 title: title,
                 description: desc
@@ -94,7 +96,16 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`백엔드 서버 오류가 발생했습니다. (상태 코드: ${response.status})`);
+                    return response.text().then(errorText => {
+                        let errorMessage = errorText || `백엔드 서버 오류가 발생했습니다. (상태 코드: ${response.status})`;
+                        try {
+                            const errorJson = JSON.parse(errorText);
+                            errorMessage = errorJson.error || errorJson.message || errorMessage;
+                        } catch (error) {
+                            // Keep the raw response text when the server does not return JSON.
+                        }
+                        throw new Error(errorMessage);
+                    });
                 }
                 return response.json();
             })
@@ -299,7 +310,17 @@ async function loadDocumentsForProject(projectId) {
         console.log("👉 내가 클릭한 프로젝트 ID:", projectId);
 
         const response = await fetch(`/api/documents/project/${projectId}`);
-        if (!response.ok) throw new Error('문서 목록을 불러오지 못했습니다.');
+        if (!response.ok) {
+            const errorText = await response.text();
+            let errorMessage = errorText || '문서 목록을 불러오지 못했습니다.';
+            try {
+                const errorJson = JSON.parse(errorText);
+                errorMessage = errorJson.error || errorJson.message || errorMessage;
+            } catch (error) {
+                // Keep the raw response text when the server does not return JSON.
+            }
+            throw new Error(errorMessage);
+        }
         
         const data = await response.json();
         
@@ -334,6 +355,9 @@ async function loadDocumentsForProject(projectId) {
         renderDocuments(); // 화면 다시 그리기
     } catch (error) {
         console.error('Error:', error);
+        generatedDocs = [];
+        renderDocuments();
+        alert(error.message);
     }
 }
 

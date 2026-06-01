@@ -105,7 +105,7 @@ public class ScenarioController {
     @GetMapping("/scenario/results/project/{projectId}")
     @ResponseBody
     public List<ScenarioComparisonResultResponse> findScenarioResultsByProject(
-            @PathVariable Long projectId,
+            @PathVariable("projectId") Long projectId,
             Authentication authentication
     ) {
         return scenarioComparisonService.findByProject(projectId, authentication);
@@ -113,7 +113,7 @@ public class ScenarioController {
 
     @PatchMapping("/scenario/results/{resultId}/star")
     @ResponseBody
-    public Map<String, Object> toggleScenarioStar(@PathVariable Long resultId, Authentication authentication) {
+    public Map<String, Object> toggleScenarioStar(@PathVariable("resultId") Long resultId, Authentication authentication) {
         try {
             return Map.of("starred", scenarioComparisonService.toggleStarred(resultId, authentication));
         } catch (IllegalArgumentException | IllegalStateException e) {

@@ -224,7 +224,9 @@ public class AiDocumentService {
 
     private ProjectTab resolveProjectTab(Long tabId, Project project) {
         if (tabId == null) {
-            return null;
+            return projectTabRepository.findByProjectIdOrderByOrderIndexAsc(project.getId()).stream()
+                    .findFirst()
+                    .orElseGet(() -> projectTabRepository.save(new ProjectTab(project, "문서", 0)));
         }
 
         ProjectTab tab = projectTabRepository.findById(tabId)
