@@ -26,9 +26,7 @@ body {
 
 /* ── 페이지 내부 콘텐츠 패딩 ── */
 .page-content {
-    padding: 32px 40px;
-    max-width: 1000px; /* 너무 퍼지지 않게 제한 */
-    margin: 0 auto;
+    padding: 36px 40px; /* 위아래 36px, 좌우 40px 여백으로 이미지 비율 최적화 */
     width: 100%;
 }
 

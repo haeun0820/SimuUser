@@ -265,6 +265,10 @@
 
     localStorage.setItem('simu_params', JSON.stringify(params));
     localStorage.setItem('simu_should_run', '1');
+    window.AnalysisLoading?.show({
+      title: 'AI 가상 유저 시뮬레이션을 준비 중입니다',
+      subtitle: '설정값을 저장하고 결과 화면으로 이동합니다.'
+    });
     window.location.href = document.getElementById('resultPageUrl')?.value || '/aiuser/result';
   }
 

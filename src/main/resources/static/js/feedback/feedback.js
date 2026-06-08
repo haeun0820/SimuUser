@@ -200,8 +200,10 @@
       textContent
     }));
 
-    const overlay = document.getElementById('loadingOverlay');
-    overlay.classList.add('active');
+    window.AnalysisLoading?.show({
+      title: '기획 피드백 분석 중입니다',
+      subtitle: '입력한 기획안을 읽고 개선 포인트를 정리하고 있습니다.'
+    });
   }
 
   function init() {

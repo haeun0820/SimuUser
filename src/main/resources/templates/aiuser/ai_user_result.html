@@ -6,6 +6,7 @@
   <title>시뮬레이션 결과 – SimuUser</title>
   <link rel="stylesheet" th:href="@{/css/aiuser/ai_user_result.css}">
   <link rel="stylesheet" th:href="@{/css/header/header.css}">
+  <link rel="stylesheet" th:href="@{/css/common/analysis-loading.css}">
   
   <meta name="_csrf" th:content="${_csrf.token}"/>
   <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
@@ -38,11 +39,7 @@
       </div>
 
       <!-- ── 로딩 상태 ── -->
-      <div id="loadingState" class="loading-state" style="display:flex;">
-        <div class="spinner"></div>
-        <div class="loading-text">AI가 가상 유저를 생성하고 있습니다...</div>
-        <div class="loading-sub">잠시만 기다려주세요. 페르소나 분석에 약 10~20초가 소요됩니다.</div>
-      </div>
+      <div id="loadingState" class="loading-state" style="display:none;"></div>
 
       <!-- ── 에러 상태 ── -->
       <div id="errorState" class="error-state" style="display:none;">
@@ -138,6 +135,7 @@
 <!-- 사이드바 -->
 <script th:src="@{/js/sidebar.js}"></script>
 <script th:src="@{/js/header.js}"></script>
+<script th:src="@{/js/common/analysis-loading.js}"></script>
 <!-- 결과 스크립트 -->
 <script th:src="@{/js/aiuser/ai_user_result.js}"></script>
 </body>

@@ -330,6 +330,10 @@
     const { revenueModels, expectedUsers, pricePerUser } = readForm();
     const btn = document.getElementById('btnExecute');
     if (btn) btn.disabled = true;
+    window.AnalysisLoading?.show({
+      title: '비용 & 수익성 분석 중입니다',
+      subtitle: '수익 모델과 손익분기점을 계산하고 있습니다.'
+    });
 
     try {
       const result = await postJson('/cost/analyze', {
@@ -363,6 +367,7 @@
     } catch (error) {
       console.error(error);
       alert(`비용 분석에 실패했습니다. ${error.message}`);
+      window.AnalysisLoading?.hide();
       if (btn) btn.disabled = false;
     }
   }
