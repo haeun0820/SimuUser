@@ -1840,8 +1840,14 @@ async function deleteProject() {
         if (response.ok) {
             alert("삭제되었습니다.");
             location.href = "/project/all";
+        } else {
+            const error = await response.json().catch(() => ({}));
+            alert(error.message || "삭제에 실패했습니다.");
         }
-    } catch (err) { console.error(err); }
+    } catch (err) {
+        console.error(err);
+        alert("삭제 중 오류가 발생했습니다.");
+    }
 }
 
 // 💡 1. 백엔드에서 해당 프로젝트의 문서들을 싹 가져옵니다.
