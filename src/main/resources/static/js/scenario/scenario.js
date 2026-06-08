@@ -521,7 +521,12 @@
     document.getElementById('compareForm')?.addEventListener('submit', event => {
       if (!validateBeforeSubmit()) {
         event.preventDefault();
+        return;
       }
+      window.AnalysisLoading?.show({
+        title: '시나리오 비교 분석 중입니다',
+        subtitle: '여러 기획안을 비교해 추천 방향을 찾고 있습니다.'
+      });
     });
 
     renderScenarioInputs();

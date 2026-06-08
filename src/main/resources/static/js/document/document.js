@@ -85,6 +85,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
             btnSubmit.innerText = "생성 중...";
             btnSubmit.disabled = true;
+            window.AnalysisLoading?.show({
+                title: 'AI 문서 생성 중입니다',
+                subtitle: '선택한 프로젝트 정보를 바탕으로 문서를 작성하고 있습니다.'
+            });
 
             fetch('/api/documents/generate', {
                 method: 'POST',
@@ -131,6 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert(error.message);
             })
             .finally(() => {
+                window.AnalysisLoading?.hide();
                 btnSubmit.innerText = "추가";
                 btnSubmit.disabled = false;
             });

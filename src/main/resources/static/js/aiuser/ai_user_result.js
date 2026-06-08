@@ -307,7 +307,11 @@
 
     if (resultContent) resultContent.style.display = 'none';
     if (errorState) errorState.style.display = 'none';
-    if (loadingState) loadingState.style.display = 'flex';
+    if (loadingState) loadingState.style.display = 'none';
+    window.AnalysisLoading?.show({
+      title: 'AI 가상 유저 분석 중입니다',
+      subtitle: '페르소나 반응과 구매 의사를 시뮬레이션하고 있습니다.'
+    });
   }
 
   function hideLoading() {
@@ -315,6 +319,7 @@
     const resultContent = document.getElementById('resultContent');
 
     if (loadingState) loadingState.style.display = 'none';
+    window.AnalysisLoading?.hide();
     if (resultContent) resultContent.style.display = 'block';
   }
 
@@ -324,6 +329,7 @@
     const errorState = document.getElementById('errorState');
 
     if (loadingState) loadingState.style.display = 'none';
+    window.AnalysisLoading?.hide();
     if (resultContent) resultContent.style.display = 'none';
     if (errorState) {
       errorState.style.display = 'block';
