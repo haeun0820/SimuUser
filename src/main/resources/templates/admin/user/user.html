@@ -15,7 +15,7 @@
                 <div class="dashboard-title" style="font-size: 20px; font-weight: 700;">사용자 관리</div>
                 <div class="dashboard-sub" style="font-size: 12px; color: #64748b;">전체 사용자 계정 및 권한 관리</div>
             </div>
-            
+
             <form class="logout-form" th:action="@{/logout}" method="post">
                 <button class="btn-logout" type="submit">로그아웃</button>
             </form>
@@ -33,7 +33,7 @@
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
-                        <input type="text" id="userSearchInput" placeholder="사용자 검색..">
+                        <input type="text" id="userSearchInput" placeholder="사용자 검색">
                     </div>
                 </div>
 
@@ -46,7 +46,7 @@
                         <label class="radio-label"><input type="radio" name="loginMethodFilter" value="apple"><span class="radio-custom"></span> 애플</label>
                         <label class="radio-label"><input type="radio" name="loginMethodFilter" value="site"><span class="radio-custom"></span> 일반 ID</label>
                     </div>
-                    
+
                     <button type="button" class="btn-export" onclick="exportUserData()">
                         <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px;">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
@@ -59,35 +59,20 @@
             <div class="user-card">
                 <div class="user-card-header">
                     <h3 class="user-card-title">사용자 목록</h3>
-                    <p class="user-card-sub" id="userCountText">총 2명의 사용자</p>
+                    <p class="user-card-sub" id="userCountText">총 0명의 사용자</p>
                 </div>
-                
+
                 <table class="user-table">
                     <thead>
-                        <tr>
-                            <th>이름</th>
-                            <th>이메일</th>
-                            <th>로그인 방식</th>
-                            <th>가입일</th>
-                            <th>작업</th>
-                        </tr>
+                    <tr>
+                        <th>이름</th>
+                        <th>이메일</th>
+                        <th>로그인 방식</th>
+                        <th>가입일</th>
+                        <th>작업</th>
+                    </tr>
                     </thead>
-                    <tbody id="userTableBody">
-                        <tr class="user-row" data-login-method="google">
-                            <td style="font-weight: 600;">연주 최</td>
-                            <td>duswndi1106@gmail.com</td>
-                            <td>google</td>
-                            <td>2026. 4. 1.</td>
-                            <td><button class="btn-action" th:onclick="|location.href='@{/admin/user/detail}'|">상세보기</button></td>
-                        </tr>
-                        <tr class="user-row" data-login-method="google">
-                            <td style="font-weight: 600;">윤냥 나는</td>
-                            <td>wannaturi@gmail.com</td>
-                            <td>google</td>
-                            <td>2026. 3. 31.</td>
-                            <td><button class="btn-action" th:onclick="|location.href='@{/admin/user/detail}'|">상세보기</button></td>
-                        </tr>
-                    </tbody>
+                    <tbody id="userTableBody"></tbody>
                 </table>
             </div>
         </main>

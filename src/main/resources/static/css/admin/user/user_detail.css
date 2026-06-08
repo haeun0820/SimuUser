@@ -125,6 +125,74 @@
     font-weight: 500;
 }
 
+.project-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.project-status-personal {
+    background: #eef2f7;
+    color: #475569;
+}
+
+.project-status-collab {
+    background: #f9e6f0;
+    color: #be185d;
+}
+
+.analysis-tool-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.analysis-tool-simulation {
+    background: #f1eafe;
+    color: #8b5cf6;
+}
+
+.analysis-tool-market {
+    background: #fce9f3;
+    color: #d2529c;
+}
+
+.analysis-tool-profit {
+    background: #fff0e2;
+    color: #e07c2b;
+}
+
+.analysis-tool-feedback {
+    background: #e9f5fb;
+    color: #64b4d3;
+}
+
+.analysis-tool-document {
+    background: #fdeceb;
+    color: #d5534c;
+}
+
+.analysis-tool-scenario {
+    background: #fff4db;
+    color: #d8ad2e;
+}
+
+.analysis-tool-default {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
 /* 버튼 스타일 확장 */
 .btn-danger-outline {
     padding: 10px 16px;
