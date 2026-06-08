@@ -2,6 +2,7 @@ package com.example.simuuser.controller;
 
 import com.example.simuuser.dto.AiSimulationResultSaveRequest;
 import com.example.simuuser.dto.ProjectResponse;
+import com.example.simuuser.service.AdminLogService;
 import com.example.simuuser.service.AiSimulationResultService;
 import com.example.simuuser.service.AiPromptService;
 import com.example.simuuser.service.ProjectService;
@@ -34,6 +35,7 @@ public class AiUserController {
     private final ProjectService projectService;
     private final AiSimulationResultService aiSimulationResultService;
     private final AiPromptService aiPromptService;
+    private final AdminLogService adminLogService;
     private final RestTemplate restTemplate;
     private final String geminiApiKey;
     private final String geminiModel;
@@ -44,6 +46,7 @@ public class AiUserController {
             ProjectService projectService,
             AiSimulationResultService aiSimulationResultService,
             AiPromptService aiPromptService,
+            AdminLogService adminLogService,
             @Value("${gemini.api.key:}") String geminiApiKey,
             @Value("${gemini.model:gemini-2.5-flash}") String geminiModel
     ) {
@@ -51,6 +54,7 @@ public class AiUserController {
         this.projectService = projectService;
         this.aiSimulationResultService = aiSimulationResultService;
         this.aiPromptService = aiPromptService;
+        this.adminLogService = adminLogService;
         this.restTemplate = new RestTemplate();
         this.geminiApiKey = geminiApiKey;
         this.geminiModel = geminiModel;
@@ -74,6 +78,7 @@ public class AiUserController {
         int personaCount = clamp(number(body.get("personaCount"), 3), 2, 3);
 
         if (geminiApiKey == null || geminiApiKey.isBlank()) {
+            adminLogService.logApiError("AI 시뮬레이션 Gemini API 키 미설정");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "GEMINI_API_KEY가 설정되지 않았습니다."));
         }
@@ -89,11 +94,13 @@ public class AiUserController {
 
             return ResponseEntity.ok(normalizeResult(result, personaCount));
         } catch (RestClientException e) {
+            adminLogService.logApiError("AI 시뮬레이션 Gemini 호출 실패: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                     .body(Map.of("error", toGeminiErrorMessage(e)));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
+            adminLogService.logSystemError("AI 시뮬레이션 처리 실패: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "AI 응답 처리 중 오류가 발생했습니다: " + e.getMessage()));
         }

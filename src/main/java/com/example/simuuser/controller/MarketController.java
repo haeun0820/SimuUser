@@ -2,6 +2,7 @@ package com.example.simuuser.controller;
 
 import com.example.simuuser.dto.MarketAnalysisResultSaveRequest;
 import com.example.simuuser.dto.ProjectResponse;
+import com.example.simuuser.service.AdminLogService;
 import com.example.simuuser.service.AiPromptService;
 import com.example.simuuser.service.MarketAnalysisResultService;
 import com.example.simuuser.service.ProjectService;
@@ -30,6 +31,7 @@ public class MarketController {
     private final ProjectService projectService;
     private final AiPromptService aiPromptService;
     private final MarketAnalysisResultService marketAnalysisResultService;
+    private final AdminLogService adminLogService;
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
     private final String geminiApiKey;
@@ -41,12 +43,14 @@ public class MarketController {
             ProjectService projectService,
             AiPromptService aiPromptService,
             MarketAnalysisResultService marketAnalysisResultService,
+            AdminLogService adminLogService,
             @Value("${gemini.api.key:}") String geminiApiKey,
             @Value("${gemini.model:gemini-2.5-flash}") String geminiModel
     ) {
         this.projectService = projectService;
         this.aiPromptService = aiPromptService;
         this.marketAnalysisResultService = marketAnalysisResultService;
+        this.adminLogService = adminLogService;
         this.objectMapper = new ObjectMapper();
         this.restTemplate = new RestTemplate();
         this.geminiApiKey = geminiApiKey;
@@ -67,6 +71,7 @@ public class MarketController {
     @ResponseBody
     public ResponseEntity<?> analyze(@RequestBody Map<String, Object> body, Authentication authentication) {
         if (geminiApiKey == null || geminiApiKey.isBlank()) {
+            adminLogService.logApiError("시장 분석 Gemini API 키 미설정");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "GEMINI_API_KEY is not configured."));
         }
@@ -82,11 +87,13 @@ public class MarketController {
 
             return ResponseEntity.ok(normalizeResult(result));
         } catch (RestClientException e) {
+            adminLogService.logApiError("시장 분석 Gemini 호출 실패: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                     .body(Map.of("error", toGeminiErrorMessage(e)));
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
+            adminLogService.logSystemError("시장 분석 처리 실패: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Market analysis failed: " + e.getMessage()));
         }
@@ -100,6 +107,7 @@ public class MarketController {
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
+            adminLogService.logSystemError("시장 분석 저장 실패: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Market analysis save failed: " + e.getMessage()));
         }
@@ -113,6 +121,7 @@ public class MarketController {
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
+            adminLogService.logSystemError("시장 분석 단건 조회 실패: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Market analysis load failed: " + e.getMessage()));
         }
@@ -126,6 +135,7 @@ public class MarketController {
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
+            adminLogService.logSystemError("시장 분석 목록 조회 실패: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Market analysis list load failed: " + e.getMessage()));
         }

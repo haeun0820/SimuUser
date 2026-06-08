@@ -4,6 +4,7 @@ import com.example.simuuser.dto.ScenarioComparisonInput;
 import com.example.simuuser.dto.ScenarioComparisonRequest;
 import com.example.simuuser.dto.ScenarioComparisonResultResponse;
 import com.example.simuuser.dto.ScenarioComparisonResultSaveRequest;
+import com.example.simuuser.service.AdminLogService;
 import com.example.simuuser.service.ScenarioComparisonService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,13 +30,16 @@ public class ScenarioController {
 
     private final ScenarioComparisonService scenarioComparisonService;
     private final ObjectMapper objectMapper;
+    private final AdminLogService adminLogService;
 
     public ScenarioController(
             ScenarioComparisonService scenarioComparisonService,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            AdminLogService adminLogService
     ) {
         this.scenarioComparisonService = scenarioComparisonService;
         this.objectMapper = objectMapper;
+        this.adminLogService = adminLogService;
     }
 
     @GetMapping("/scenario")
@@ -85,8 +89,10 @@ public class ScenarioController {
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (IllegalStateException e) {
+            adminLogService.logApiError("시나리오 비교 API 처리 실패: " + e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, e.getMessage());
         } catch (Exception e) {
+            adminLogService.logSystemError("시나리오 비교 처리 실패: " + e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Scenario comparison request is invalid.");
         }
     }

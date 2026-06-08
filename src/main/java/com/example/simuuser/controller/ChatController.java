@@ -1,6 +1,7 @@
 package com.example.simuuser.controller;
 
 import com.example.simuuser.dto.ChatMessageResponse;
+import com.example.simuuser.service.AdminLogService;
 import com.example.simuuser.service.ChatService;
 import com.example.simuuser.websocket.ChatSseBroadcaster;
 import com.example.simuuser.websocket.ChatWebSocketBroadcaster;
@@ -21,15 +22,18 @@ import java.util.Map;
 public class ChatController {
 
     private final ChatService chatService;
+    private final AdminLogService adminLogService;
     private final ChatWebSocketBroadcaster chatWebSocketBroadcaster;
     private final ChatSseBroadcaster chatSseBroadcaster;
 
     public ChatController(
             ChatService chatService,
+            AdminLogService adminLogService,
             ChatWebSocketBroadcaster chatWebSocketBroadcaster,
             ChatSseBroadcaster chatSseBroadcaster
     ) {
         this.chatService = chatService;
+        this.adminLogService = adminLogService;
         this.chatWebSocketBroadcaster = chatWebSocketBroadcaster;
         this.chatSseBroadcaster = chatSseBroadcaster;
     }
@@ -142,6 +146,7 @@ public class ChatController {
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
+            adminLogService.logSystemError("채팅 메시지 전송 실패: " + e.getMessage());
             return ResponseEntity.internalServerError().body(Map.of("message", "메시지 전송 중 오류가 발생했습니다."));
         }
     }

@@ -38,6 +38,7 @@ public class ChatService {
     private final ProjectMemberRepository projectMemberRepository;
     private final AppUserRepository appUserRepository;
     private final AppUserService appUserService;
+    private final AdminLogService adminLogService;
 
     public ChatService(
             ChatRoomRepository chatRoomRepository,
@@ -46,7 +47,8 @@ public class ChatService {
             ProjectRepository projectRepository,
             ProjectMemberRepository projectMemberRepository,
             AppUserRepository appUserRepository,
-            AppUserService appUserService
+            AppUserService appUserService,
+            AdminLogService adminLogService
     ) {
         this.chatRoomRepository = chatRoomRepository;
         this.chatParticipantRepository = chatParticipantRepository;
@@ -55,6 +57,7 @@ public class ChatService {
         this.projectMemberRepository = projectMemberRepository;
         this.appUserRepository = appUserRepository;
         this.appUserService = appUserService;
+        this.adminLogService = adminLogService;
     }
 
     @Transactional
@@ -201,6 +204,7 @@ public class ChatService {
 
         ChatMessage message = chatMessageRepository.save(new ChatMessage(room, currentUser, normalizedContent));
         room.touch();
+        adminLogService.logUserChat("사용자 '" + displayName(currentUser) + "' 채팅 메시지 전송: " + summarizeForLog(normalizedContent));
         return new ChatMessageResponse(message, currentUser.getId());
     }
 
@@ -442,5 +446,12 @@ public class ChatService {
 
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private String summarizeForLog(String value) {
+        if (value == null || value.isBlank()) {
+            return "-";
+        }
+        return value.length() > 120 ? value.substring(0, 120) + "..." : value;
     }
 }

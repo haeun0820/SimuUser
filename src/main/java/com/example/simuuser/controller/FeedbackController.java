@@ -3,6 +3,7 @@ package com.example.simuuser.controller;
 import com.example.simuuser.dto.FeedbackAnalysisResultResponse;
 import com.example.simuuser.dto.FeedbackAnalysisResultSaveRequest;
 import com.example.simuuser.dto.ProjectResponse;
+import com.example.simuuser.service.AdminLogService;
 import com.example.simuuser.service.AiPromptService;
 import com.example.simuuser.service.FeedbackAnalysisResultService;
 import com.example.simuuser.service.ProjectService;
@@ -40,6 +41,7 @@ public class FeedbackController {
     private final ProjectService projectService;
     private final AiPromptService aiPromptService;
     private final FeedbackAnalysisResultService feedbackAnalysisResultService;
+    private final AdminLogService adminLogService;
     private final ObjectMapper objectMapper;
     private final RestTemplate restTemplate;
     private final String geminiApiKey;
@@ -51,12 +53,14 @@ public class FeedbackController {
             ProjectService projectService,
             AiPromptService aiPromptService,
             FeedbackAnalysisResultService feedbackAnalysisResultService,
+            AdminLogService adminLogService,
             @Value("${gemini.api.key:}") String geminiApiKey,
             @Value("${gemini.model:gemini-2.5-flash}") String geminiModel
     ) {
         this.projectService = projectService;
         this.aiPromptService = aiPromptService;
         this.feedbackAnalysisResultService = feedbackAnalysisResultService;
+        this.adminLogService = adminLogService;
         this.objectMapper = new ObjectMapper();
         this.restTemplate = new RestTemplate();
         this.geminiApiKey = geminiApiKey;
@@ -119,8 +123,10 @@ public class FeedbackController {
             Map<String, Object> result = normalizeResult(parseJsonResult(extractText(geminiResponse)));
             applyResultModel(model, result, projectId, sourceType, sourceContent);
         } catch (RestClientException e) {
+            adminLogService.logApiError("기획 피드백 Gemini 호출 실패: " + e.getMessage());
             applyResultModel(model, emptyAnalysisData(toGeminiErrorMessage(e)), projectId, sourceType, sourceContent);
         } catch (Exception e) {
+            adminLogService.logSystemError("기획 피드백 처리 실패: " + e.getMessage());
             applyResultModel(model, emptyAnalysisData("기획 피드백 분석에 실패했습니다: " + e.getMessage()), projectId, sourceType, sourceContent);
         }
 

@@ -3,6 +3,7 @@ package com.example.simuuser.controller;
 import com.example.simuuser.dto.DocumentResponse;
 import com.example.simuuser.entity.Document;
 import com.example.simuuser.entity.DocumentVersion;
+import com.example.simuuser.service.AdminLogService;
 import com.example.simuuser.service.DocumentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ContentDisposition;
@@ -36,9 +37,11 @@ import java.util.zip.ZipOutputStream;
 public class DocumentController {
 
     private final DocumentService documentService;
+    private final AdminLogService adminLogService;
 
-    public DocumentController(DocumentService documentService) {
+    public DocumentController(DocumentService documentService, AdminLogService adminLogService) {
         this.documentService = documentService;
+        this.adminLogService = adminLogService;
     }
 
     @GetMapping("/document")
@@ -105,6 +108,7 @@ public class DocumentController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
+            adminLogService.logSystemError("문서 삭제 실패: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("문서 삭제 중 오류가 발생했습니다.");
         }
     }
@@ -170,6 +174,7 @@ public class DocumentController {
                     .contentType(new MediaType("text", "plain", StandardCharsets.UTF_8))
                     .body("지원하지 않는 다운로드 형식입니다.".getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
+            adminLogService.logSystemError("문서 다운로드 실패: " + e.getMessage());
             log.error("Document download failed", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .contentType(new MediaType("text", "plain", StandardCharsets.UTF_8))

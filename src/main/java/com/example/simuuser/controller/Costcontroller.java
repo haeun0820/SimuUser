@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.example.simuuser.dto.CostAnalysisResultSaveRequest;
+import com.example.simuuser.service.AdminLogService;
 import com.example.simuuser.service.CostAnalysisResultService;
 
 @Controller
@@ -22,9 +23,11 @@ import com.example.simuuser.service.CostAnalysisResultService;
 public class Costcontroller {
 
     private final CostAnalysisResultService costAnalysisResultService;
+    private final AdminLogService adminLogService;
 
-    public Costcontroller(CostAnalysisResultService costAnalysisResultService) {
+    public Costcontroller(CostAnalysisResultService costAnalysisResultService, AdminLogService adminLogService) {
         this.costAnalysisResultService = costAnalysisResultService;
+        this.adminLogService = adminLogService;
     }
 
     @GetMapping({"", "/", "/cost"})
@@ -42,9 +45,13 @@ public class Costcontroller {
     public ResponseEntity<?> analyze(@RequestBody CostAnalysisResultSaveRequest request, Authentication authentication) {
         try {
             return ResponseEntity.ok(costAnalysisResultService.analyze(request, authentication));
-        } catch (IllegalArgumentException | IllegalStateException e) {
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            adminLogService.logApiError("수익성 분석 API 처리 실패: " + e.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
+            adminLogService.logSystemError("수익성 분석 처리 실패: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Cost analysis failed: " + e.getMessage()));
         }
@@ -58,6 +65,7 @@ public class Costcontroller {
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
+            adminLogService.logSystemError("수익성 분석 저장 실패: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Cost analysis save failed: " + e.getMessage()));
         }
@@ -71,6 +79,7 @@ public class Costcontroller {
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
+            adminLogService.logSystemError("수익성 분석 단건 조회 실패: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Cost analysis load failed: " + e.getMessage()));
         }
@@ -84,6 +93,7 @@ public class Costcontroller {
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
+            adminLogService.logSystemError("수익성 분석 목록 조회 실패: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Cost analysis list load failed: " + e.getMessage()));
         }
