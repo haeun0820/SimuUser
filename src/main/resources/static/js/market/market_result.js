@@ -375,6 +375,10 @@
 
     // 분석 결과 로드
     let result;
+    window.AnalysisLoading?.show({
+      title: '시장 & 경쟁 분석 중입니다',
+      subtitle: '분석 결과를 준비하고 있습니다.'
+    });
     try {
       result = await loadAnalysisResult(currentProject);
     } catch (error) {
@@ -383,6 +387,7 @@
       result = generateAnalysisResult(currentProject);
     }
     renderResult(result);
+    window.AnalysisLoading?.hide();
 
     // 저장 버튼
     const btnSave = document.getElementById('btnSave');

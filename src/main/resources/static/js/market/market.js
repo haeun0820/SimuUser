@@ -228,6 +228,10 @@ function initNewProjectButton() {
 
     const btn = document.getElementById('btnRunAnalysis');
     if (btn) btn.disabled = true;
+    window.AnalysisLoading?.show({
+      title: '시장 & 경쟁 분석 중입니다',
+      subtitle: '시장 규모와 경쟁 환경을 정리하고 있습니다.'
+    });
 
     // 로딩 오버레이 표시
     let overlay = document.getElementById('loadingOverlay');
@@ -259,6 +263,7 @@ function initNewProjectButton() {
       window.location.href = `/market/result?${params.toString()}`;
     } catch (error) {
       console.error(error);
+      window.AnalysisLoading?.hide();
       if (overlay) overlay.classList.remove('active');
       if (btn) btn.disabled = false;
       alert(`AI 분석 중 오류가 발생했습니다. ${error.message}`);

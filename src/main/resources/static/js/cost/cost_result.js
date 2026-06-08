@@ -303,6 +303,10 @@
 
     const overlay = document.getElementById('loadingOverlay');
     overlay?.classList.add('active');
+    window.AnalysisLoading?.show({
+      title: '비용 & 수익성 분석 중입니다',
+      subtitle: '수익 모델과 손익분기점을 다시 계산하고 있습니다.'
+    });
 
     try {
       const result = await postJson('/cost/analyze', {
@@ -326,6 +330,7 @@
       console.error(error);
       alert(`Re-analysis failed. ${error.message}`);
     } finally {
+      window.AnalysisLoading?.hide();
       overlay?.classList.remove('active');
     }
   }
@@ -427,6 +432,10 @@
   }
 
   async function init() {
+    window.AnalysisLoading?.show({
+      title: '비용 & 수익성 분석 중입니다',
+      subtitle: '분석 결과를 준비하고 있습니다.'
+    });
     const query = parseQuery();
     const resultId = query.get('analysisId') || query.get('resultId');
 
@@ -479,6 +488,7 @@
     initProfileMenu();
     renderResults(analysisResult);
     setSaveButtonState(Boolean(savedResultId));
+    window.AnalysisLoading?.hide();
     document.getElementById('loadingOverlay')?.classList.remove('active');
   }
 
