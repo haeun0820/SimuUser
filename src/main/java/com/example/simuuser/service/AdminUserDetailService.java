@@ -19,6 +19,8 @@ import com.example.simuuser.repository.InquiryRepository;
 import com.example.simuuser.repository.MarketAnalysisResultRepository;
 import com.example.simuuser.repository.ProjectRepository;
 import com.example.simuuser.repository.ScenarioComparisonResultRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class AdminUserDetailService {
@@ -41,6 +44,7 @@ public class AdminUserDetailService {
     private final FeedbackAnalysisResultRepository feedbackAnalysisResultRepository;
     private final DocumentRepository documentRepository;
     private final ScenarioComparisonResultRepository scenarioComparisonResultRepository;
+    private final ObjectMapper objectMapper;
 
     public AdminUserDetailService(
             AppUserRepository appUserRepository,
@@ -51,7 +55,8 @@ public class AdminUserDetailService {
             CostAnalysisResultRepository costAnalysisResultRepository,
             FeedbackAnalysisResultRepository feedbackAnalysisResultRepository,
             DocumentRepository documentRepository,
-            ScenarioComparisonResultRepository scenarioComparisonResultRepository
+            ScenarioComparisonResultRepository scenarioComparisonResultRepository,
+            ObjectMapper objectMapper
     ) {
         this.appUserRepository = appUserRepository;
         this.projectRepository = projectRepository;
@@ -62,6 +67,7 @@ public class AdminUserDetailService {
         this.feedbackAnalysisResultRepository = feedbackAnalysisResultRepository;
         this.documentRepository = documentRepository;
         this.scenarioComparisonResultRepository = scenarioComparisonResultRepository;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional(readOnly = true)
@@ -114,7 +120,7 @@ public class AdminUserDetailService {
                 inquiries.stream().map(Inquiry::getCreatedAt).max(LocalDateTime::compareTo).orElse(null),
                 recentAnalyses.stream()
                         .map(AdminUserDetailResponse.RecentAnalysisItem::getCreatedAt)
-                        .filter(value -> value != null)
+                        .filter(value -> value != null && !value.isBlank())
                         .map(LocalDateTime::parse)
                         .max(LocalDateTime::compareTo)
                         .orElse(null)
@@ -201,12 +207,42 @@ public class AdminUserDetailService {
     ) {
         List<AnalysisRow> rows = new ArrayList<>();
 
-        aiResults.forEach(result -> rows.add(new AnalysisRow("AI 시뮬레이션", result.getProject().getTitle(), summary(result.getOverallReaction()), result.getCreatedAt())));
-        marketResults.forEach(result -> rows.add(new AnalysisRow("시장 분석", result.getProject().getTitle(), summary(result.getTitle()), result.getCreatedAt())));
-        costResults.forEach(result -> rows.add(new AnalysisRow("수익성 분석", result.getProject().getTitle(), summary(result.getTitle()), result.getCreatedAt())));
-        feedbackResults.forEach(result -> rows.add(new AnalysisRow("기획 피드백", result.getProject().getTitle(), summary(result.getSourceType()), result.getCreatedAt())));
-        documents.forEach(result -> rows.add(new AnalysisRow("자동 문서화", result.getProject() == null ? "-" : result.getProject().getTitle(), summary(result.getTitle()), result.getCreatedAt())));
-        scenarioResults.forEach(result -> rows.add(new AnalysisRow("시나리오 비교", result.getProject().getTitle(), summary(result.getCompareTitle()), result.getCreatedAt())));
+        aiResults.forEach(result -> rows.add(new AnalysisRow(
+                "AI 시뮬레이션",
+                result.getProject().getTitle(),
+                summarizeAiSimulation(result),
+                result.getCreatedAt()
+        )));
+        marketResults.forEach(result -> rows.add(new AnalysisRow(
+                "시장 분석",
+                result.getProject().getTitle(),
+                summarizeMarketAnalysis(result),
+                result.getCreatedAt()
+        )));
+        costResults.forEach(result -> rows.add(new AnalysisRow(
+                "수익성 분석",
+                result.getProject().getTitle(),
+                summarizeCostAnalysis(result),
+                result.getCreatedAt()
+        )));
+        feedbackResults.forEach(result -> rows.add(new AnalysisRow(
+                "기획 피드백",
+                result.getProject().getTitle(),
+                summarizeFeedbackAnalysis(result),
+                result.getCreatedAt()
+        )));
+        documents.forEach(result -> rows.add(new AnalysisRow(
+                "자동 문서화",
+                result.getProject() == null ? "-" : result.getProject().getTitle(),
+                summarizeDocument(result),
+                result.getCreatedAt()
+        )));
+        scenarioResults.forEach(result -> rows.add(new AnalysisRow(
+                "시나리오 비교",
+                result.getProject().getTitle(),
+                summarizeScenarioComparison(result),
+                result.getCreatedAt()
+        )));
 
         return rows.stream()
                 .sorted(Comparator.comparing(AnalysisRow::createdAt, Comparator.nullsLast(Comparator.reverseOrder())))
@@ -220,12 +256,136 @@ public class AdminUserDetailService {
                 .toList();
     }
 
+    private String summarizeAiSimulation(AiSimulationResult result) {
+        Map<String, Object> json = parseJson(result.getResultJson());
+        return summary(
+                firstNonBlank(
+                        text(json.get("overallReaction")),
+                        firstListItem(json, "keyInsights"),
+                        firstListItem(json, "improvements"),
+                        result.getOverallReaction()
+                )
+        );
+    }
+
+    private String summarizeMarketAnalysis(MarketAnalysisResult result) {
+        Map<String, Object> json = parseJson(result.getResultJson());
+        return summary(
+                firstNonBlank(
+                        text(json.get("opportunity")),
+                        firstListItem(json, "differentiation"),
+                        firstListItem(json, "risks"),
+                        result.getTitle()
+                )
+        );
+    }
+
+    private String summarizeCostAnalysis(CostAnalysisResult result) {
+        Map<String, Object> json = parseJson(result.getResultJson());
+        String suggestion = firstListItem(json, "suggestions");
+        if (suggestion != null) {
+            return summary(suggestion);
+        }
+
+        String score = text(json.get("score"));
+        String bepMonths = text(json.get("bepMonths"));
+        if (score != null || bepMonths != null) {
+            return summary(
+                    ("손익 점수 " + defaultText(score, "-") + "점 / BEP " + defaultText(bepMonths, "-") + "개월")
+            );
+        }
+
+        return summary(result.getTitle());
+    }
+
+    private String summarizeFeedbackAnalysis(FeedbackAnalysisResult result) {
+        Map<String, Object> json = parseJson(result.getResultJson());
+        return summary(
+                firstNonBlank(
+                        firstListItem(json, "improvements"),
+                        firstListItem(json, "strengths"),
+                        firstListItem(json, "risks"),
+                        result.getSourceContent()
+                )
+        );
+    }
+
+    private String summarizeDocument(Document result) {
+        return summary(
+                firstNonBlank(
+                        result.getContent(),
+                        result.getDescription(),
+                        result.getTitle()
+                )
+        );
+    }
+
+    private String summarizeScenarioComparison(ScenarioComparisonResult result) {
+        Map<String, Object> json = parseJson(result.getResultJson());
+        return summary(
+                firstNonBlank(
+                        text(json.get("finalSuggestion")),
+                        text(json.get("recommendationReason")),
+                        text(json.get("recommendedScenarioTitle")),
+                        result.getRecommendedScenarioTitle(),
+                        result.getCompareTitle()
+                )
+        );
+    }
+
+    private Map<String, Object> parseJson(String resultJson) {
+        if (resultJson == null || resultJson.isBlank()) {
+            return Map.of();
+        }
+
+        try {
+            return objectMapper.readValue(resultJson, new TypeReference<>() {});
+        } catch (Exception e) {
+            return Map.of();
+        }
+    }
+
+    private String firstListItem(Map<String, Object> json, String key) {
+        Object value = json.get(key);
+        if (value instanceof List<?> list) {
+            for (Object item : list) {
+                String text = text(item);
+                if (text != null) {
+                    return text;
+                }
+            }
+        }
+        return null;
+    }
+
+    private String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private String text(Object value) {
+        if (value == null) {
+            return null;
+        }
+
+        String normalized = String.valueOf(value).replaceAll("\\s+", " ").trim();
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private String defaultText(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value;
+    }
+
     private String summary(String value) {
         if (value == null || value.isBlank()) {
             return "-";
         }
         String normalized = value.replaceAll("\\s+", " ").trim();
-        return normalized.length() > 60 ? normalized.substring(0, 60) + "..." : normalized;
+        return normalized.length() > 120 ? normalized.substring(0, 120) + "..." : normalized;
     }
 
     private String stringify(LocalDateTime value) {
@@ -259,9 +419,7 @@ public class AdminUserDetailService {
             return "-";
         }
         return switch (type.trim().toUpperCase()) {
-            case "TEAM" -> "협업";
-            case "COLLAB" -> "협업";
-            case "COLLABORATION" -> "협업";
+            case "TEAM", "COLLAB", "COLLABORATION" -> "협업";
             case "PERSONAL" -> "개인";
             default -> type;
         };

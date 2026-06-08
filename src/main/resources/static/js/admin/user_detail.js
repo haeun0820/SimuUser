@@ -136,7 +136,7 @@ document.addEventListener("DOMContentLoaded", function () {
             data: {
                 labels: chartData.labels || [],
                 datasets: [
-                    { label: "시뮬레이션", data: chartData.aiSimulation || [], borderColor: "#8b5cf6", backgroundColor: "#8b5cf6", pointBackgroundColor: "#8b5cf6", tension: 0.35 },
+                    { label: "AI 시뮬레이션", data: chartData.aiSimulation || [], borderColor: "#8b5cf6", backgroundColor: "#8b5cf6", pointBackgroundColor: "#8b5cf6", tension: 0.35 },
                     { label: "시장 분석", data: chartData.marketAnalysis || [], borderColor: "#d2529c", backgroundColor: "#d2529c", pointBackgroundColor: "#d2529c", tension: 0.35 },
                     { label: "수익성 분석", data: chartData.costAnalysis || [], borderColor: "#e07c2b", backgroundColor: "#e07c2b", pointBackgroundColor: "#e07c2b", tension: 0.35 },
                     { label: "기획 피드백", data: chartData.feedbackAnalysis || [], borderColor: "#64b4d3", backgroundColor: "#64b4d3", pointBackgroundColor: "#64b4d3", tension: 0.35 },
@@ -171,7 +171,7 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("detailRoleBadge").textContent = data.roleLabel || "-";
         document.getElementById("detailAccountStatus").textContent = data.accountStatusLabel || "-";
         document.getElementById("detailProjectCount").textContent = `${data.projectCount || 0}개`;
-        document.getElementById("detailAnalysisCount").textContent = `${data.totalAnalysisCount || 0}회`;
+        document.getElementById("detailAnalysisCount").textContent = `${data.totalAnalysisCount || 0}건`;
         document.getElementById("detailInquiryCount").textContent = `${data.inquiryCount || 0}건`;
         document.getElementById("detailLastActivity").textContent = formatDateTime(data.lastActivityAt);
 
