@@ -253,6 +253,25 @@
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  function csrfHeaders() {
+    const token = document.querySelector('meta[name="_csrf"]')?.getAttribute('content')
+      || document.getElementById('csrfToken')?.value;
+    const header = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content')
+      || document.getElementById('csrfHeader')?.value;
+    return token && header ? { [header]: token } : {};
+  }
+
+  async function readErrorMessage(response, fallback) {
+    const text = await response.text().catch(() => '');
+    if (!text) return fallback;
+    try {
+      const data = JSON.parse(text);
+      return data.message || data.error || fallback;
+    } catch (error) {
+      return text || fallback;
+    }
+  }
+
   // 메뉴 열고 닫기
 function toggleCardMenu(event, id) {
   event.stopPropagation(); // 카드 클릭 이벤트 전파 방지
@@ -275,12 +294,15 @@ async function deleteProject(id) {
   if (!confirm("정말 이 프로젝트를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.")) return;
 
   try {
-    const response = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
+    const response = await fetch(`/api/projects/${id}`, {
+      method: 'DELETE',
+      headers: csrfHeaders()
+    });
     if (response.ok) {
       alert("프로젝트가 삭제되었습니다.");
       init(); // 목록 새로고침
     } else {
-      alert("삭제에 실패했습니다.");
+      alert(await readErrorMessage(response, "삭제에 실패했습니다."));
     }
   } catch (err) {
     console.error(err);

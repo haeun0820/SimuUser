@@ -22,9 +22,19 @@ import com.example.simuuser.entity.Notification;
 import com.example.simuuser.entity.Project;
 import com.example.simuuser.entity.ProjectMember;
 import com.example.simuuser.repository.AppUserRepository;
+import com.example.simuuser.repository.AiSimulationResultRepository;
+import com.example.simuuser.repository.ChatMessageRepository;
+import com.example.simuuser.repository.ChatParticipantRepository;
+import com.example.simuuser.repository.ChatRoomRepository;
+import com.example.simuuser.repository.CostAnalysisResultRepository;
+import com.example.simuuser.repository.DocumentRepository;
+import com.example.simuuser.repository.FeedbackAnalysisResultRepository;
+import com.example.simuuser.repository.MarketAnalysisResultRepository;
 import com.example.simuuser.repository.NotificationRepository;
 import com.example.simuuser.repository.ProjectMemberRepository;
 import com.example.simuuser.repository.ProjectRepository;
+import com.example.simuuser.repository.ProjectTabRepository;
+import com.example.simuuser.repository.ScenarioComparisonResultRepository;
 
 @Service
 public class ProjectService {
@@ -33,17 +43,47 @@ public class ProjectService {
     private final ProjectMemberRepository projectMemberRepository;
     private final AppUserRepository appUserRepository;
     private final NotificationRepository notificationRepository;
+    private final AiSimulationResultRepository aiSimulationResultRepository;
+    private final MarketAnalysisResultRepository marketAnalysisResultRepository;
+    private final CostAnalysisResultRepository costAnalysisResultRepository;
+    private final FeedbackAnalysisResultRepository feedbackAnalysisResultRepository;
+    private final ScenarioComparisonResultRepository scenarioComparisonResultRepository;
+    private final DocumentRepository documentRepository;
+    private final ProjectTabRepository projectTabRepository;
+    private final ChatRoomRepository chatRoomRepository;
+    private final ChatMessageRepository chatMessageRepository;
+    private final ChatParticipantRepository chatParticipantRepository;
 
     public ProjectService(
             ProjectRepository projectRepository,
             ProjectMemberRepository projectMemberRepository,
             AppUserRepository appUserRepository,
-            NotificationRepository notificationRepository
+            NotificationRepository notificationRepository,
+            AiSimulationResultRepository aiSimulationResultRepository,
+            MarketAnalysisResultRepository marketAnalysisResultRepository,
+            CostAnalysisResultRepository costAnalysisResultRepository,
+            FeedbackAnalysisResultRepository feedbackAnalysisResultRepository,
+            ScenarioComparisonResultRepository scenarioComparisonResultRepository,
+            DocumentRepository documentRepository,
+            ProjectTabRepository projectTabRepository,
+            ChatRoomRepository chatRoomRepository,
+            ChatMessageRepository chatMessageRepository,
+            ChatParticipantRepository chatParticipantRepository
     ) {
         this.projectRepository = projectRepository;
         this.projectMemberRepository = projectMemberRepository;
         this.appUserRepository = appUserRepository;
         this.notificationRepository = notificationRepository;
+        this.aiSimulationResultRepository = aiSimulationResultRepository;
+        this.marketAnalysisResultRepository = marketAnalysisResultRepository;
+        this.costAnalysisResultRepository = costAnalysisResultRepository;
+        this.feedbackAnalysisResultRepository = feedbackAnalysisResultRepository;
+        this.scenarioComparisonResultRepository = scenarioComparisonResultRepository;
+        this.documentRepository = documentRepository;
+        this.projectTabRepository = projectTabRepository;
+        this.chatRoomRepository = chatRoomRepository;
+        this.chatMessageRepository = chatMessageRepository;
+        this.chatParticipantRepository = chatParticipantRepository;
     }
 
     @Transactional
@@ -406,6 +446,47 @@ public class ProjectService {
 
         List<ProjectMember> members = projectMemberRepository.findByProjectOrderByCreatedAtAsc(project);
         return new ProjectResponse(project, members, currentUser.getId());
+    }
+
+    @Transactional
+    public void delete(Long projectId, Authentication authentication) {
+        AppUser currentUser = getCurrentUser(authentication);
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("?꾨줈?앺듃瑜?李얠쓣 ???놁뒿?덈떎."));
+
+        if (!project.getOwner().getId().equals(currentUser.getId())) {
+            throw new IllegalStateException("?꾨줈?앺듃 ?뚯쑀?먮쭔 ??젣?????덉뒿?덈떎.");
+        }
+
+        var members = projectMemberRepository.findByProjectOrderByCreatedAtAsc(project);
+        var memberIds = members.stream()
+                .map(ProjectMember::getId)
+                .toList();
+
+        if (!memberIds.isEmpty()) {
+            notificationRepository.deleteAll(
+                    notificationRepository.findByTypeAndReferenceIdIn(NotificationService.TYPE_PROJECT_INVITE, memberIds)
+            );
+        }
+
+        var chatRooms = chatRoomRepository.findByProjectIn(List.of(project));
+        if (!chatRooms.isEmpty()) {
+            chatMessageRepository.deleteAll(chatMessageRepository.findByRoomIn(chatRooms));
+            chatParticipantRepository.deleteAll(chatParticipantRepository.findByRoomIn(chatRooms));
+            chatRoomRepository.deleteAll(chatRooms);
+        }
+
+        documentRepository.deleteAll(documentRepository.findByProjectIdOrderByUpdatedAtDesc(projectId));
+        projectTabRepository.deleteAll(projectTabRepository.findByProjectIdOrderByOrderIndexAsc(projectId));
+
+        aiSimulationResultRepository.deleteAll(aiSimulationResultRepository.findByProject(project));
+        marketAnalysisResultRepository.deleteAll(marketAnalysisResultRepository.findByProject(project));
+        costAnalysisResultRepository.deleteAll(costAnalysisResultRepository.findByProject(project));
+        feedbackAnalysisResultRepository.deleteAll(feedbackAnalysisResultRepository.findByProject(project));
+        scenarioComparisonResultRepository.deleteAll(scenarioComparisonResultRepository.findByProject(project));
+
+        projectMemberRepository.deleteAll(members);
+        projectRepository.delete(project);
     }
 
     @Transactional

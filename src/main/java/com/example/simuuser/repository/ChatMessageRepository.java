@@ -31,6 +31,8 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
 
     Optional<ChatMessage> findTopByRoomOrderByCreatedAtDesc(ChatRoom room);
 
+    List<ChatMessage> findByRoomIn(List<ChatRoom> rooms);
+
     @Query("""
             select m
             from ChatMessage m

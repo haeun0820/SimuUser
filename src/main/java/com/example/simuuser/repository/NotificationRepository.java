@@ -14,4 +14,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     Optional<Notification> findByIdAndRecipient(Long id, AppUser recipient);
 
     Optional<Notification> findByRecipientAndTypeAndReferenceIdAndDeletedAtIsNull(AppUser recipient, String type, Long referenceId);
+
+    List<Notification> findByTypeAndReferenceIdIn(String type, List<Long> referenceIds);
 }

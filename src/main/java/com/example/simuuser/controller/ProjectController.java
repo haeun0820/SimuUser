@@ -92,6 +92,17 @@ public class ProjectController {
     }
 
     @ResponseBody
+    @DeleteMapping("/api/projects/{projectId}")
+    public ResponseEntity<?> deleteProject(@PathVariable("projectId") Long projectId, Authentication authentication) {
+        try {
+            projectService.delete(projectId, authentication);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @ResponseBody
     @GetMapping("/api/users/search")
     public List<UserSearchResponse> searchUsers(@RequestParam("email") String email, Authentication authentication) { // ("email") 추가
         return projectService.searchInviteCandidates(email, authentication);
