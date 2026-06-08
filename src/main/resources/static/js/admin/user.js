@@ -1,55 +1,105 @@
-document.addEventListener("DOMContentLoaded", function() {
-    
-    const searchInput = document.getElementById('userSearchInput');
+let currentMethodFilter = "all";
+let searchQuery = "";
+
+document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("userSearchInput");
     const radioFilters = document.querySelectorAll('input[name="loginMethodFilter"]');
-    const userRows = document.querySelectorAll('.user-row');
-    const userCountText = document.getElementById('userCountText');
+    const tableBody = document.getElementById("userTableBody");
+    const userCountText = document.getElementById("userCountText");
 
-    let currentMethodFilter = 'all';
-    let searchQuery = '';
+    let users = [];
 
-    // 1. 로그인 방식 변경 이벤트 매핑
+    function escapeHtml(value) {
+        return String(value || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+
+    function formatDate(value) {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            return "-";
+        }
+        return new Intl.DateTimeFormat("ko-KR", {
+            year: "numeric",
+            month: "numeric",
+            day: "numeric"
+        }).format(date);
+    }
+
+    function loginMethodLabel(method) {
+        const labels = {
+            google: "Google",
+            naver: "Naver",
+            kakao: "Kakao",
+            apple: "Apple",
+            site: "Site ID"
+        };
+        return labels[method] || method || "-";
+    }
+
+    function applyFilters() {
+        const filtered = users.filter(user => {
+            const matchesMethod = currentMethodFilter === "all" || user.loginMethod === currentMethodFilter;
+            const searchableText = `${user.name || ""} ${user.email || ""} ${user.userId || ""}`.toLowerCase();
+            const matchesSearch = !searchQuery || searchableText.includes(searchQuery);
+            return matchesMethod && matchesSearch;
+        });
+
+        userCountText.textContent = `총 ${filtered.length}명의 사용자`;
+        tableBody.innerHTML = filtered.map(user => `
+            <tr class="user-row" data-login-method="${escapeHtml(user.loginMethod)}">
+                <td style="font-weight: 600;">${escapeHtml(user.name)}</td>
+                <td>${escapeHtml(user.email || "-")}</td>
+                <td>${escapeHtml(loginMethodLabel(user.loginMethod))}</td>
+                <td>${escapeHtml(formatDate(user.createdAt))}</td>
+                <td>
+                    <button class="btn-action" type="button" onclick="location.href='/admin/user/detail/${user.id}'">상세보기</button>
+                </td>
+            </tr>
+        `).join("");
+    }
+
+    async function loadUsers() {
+        try {
+            const response = await fetch("/api/admin/users");
+            if (!response.ok) {
+                throw new Error("Failed to load admin users.");
+            }
+            users = await response.json();
+        } catch (error) {
+            console.error(error);
+            users = [];
+        }
+
+        applyFilters();
+    }
+
     radioFilters.forEach(radio => {
-        radio.addEventListener('change', function() {
+        radio.addEventListener("change", function () {
             currentMethodFilter = this.value;
             applyFilters();
         });
     });
 
-    // 2. 검색창 실시간 탐색 이벤트
-    searchInput.addEventListener('input', function(e) {
-        searchQuery = e.target.value.toLowerCase().trim();
+    searchInput.addEventListener("input", function (event) {
+        searchQuery = event.target.value.toLowerCase().trim();
         applyFilters();
     });
 
-    // 3. 다중 조건 필터링 비즈니스 로직
-    function applyFilters() {
-        let visibleCount = 0;
-
-        userRows.forEach(row => {
-            const loginMethod = row.getAttribute('data-login-method'); // 각 행의 로그인 플랫폼 (google, naver 등)
-            const textContent = row.innerText.toLowerCase(); 
-
-            // 로그인 방식 부합 조건 검증
-            const matchesMethod = (currentMethodFilter === 'all' || currentMethodFilter === loginMethod);
-            // 텍스트 매칭 검색 조건 검증
-            const matchesSearch = (searchQuery === '' || textContent.includes(searchQuery));
-
-            if (matchesMethod && matchesSearch) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
-        });
-
-        // 4. 동적 카운트 텍스트 갱신
-        userCountText.textContent = `총 ${visibleCount}명의 사용자`;
-    }
+    loadUsers();
 });
 
-// 💡 데이터 내보내기 액션 핸들러
 function exportUserData() {
-    // 실무 백엔드 연결 시: window.location.href = '/admin/user/export'; 와 같이 연동하여 파일 스트림을 다운로드합니다.
-    alert("현재 필터링된 사용자 데이터를 Excel 문서 포맷으로 추출합니다.\n(Apache POI 등 파일 라이브러리 연동 구간)");
+    const params = new URLSearchParams();
+    if (typeof searchQuery === "string" && searchQuery) {
+        params.set("query", searchQuery);
+    }
+    if (typeof currentMethodFilter === "string" && currentMethodFilter && currentMethodFilter !== "all") {
+        params.set("loginMethod", currentMethodFilter);
+    }
+    const queryString = params.toString();
+    window.location.href = `/api/admin/users/export${queryString ? `?${queryString}` : ""}`;
 }
