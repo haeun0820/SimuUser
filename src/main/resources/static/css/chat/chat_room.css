@@ -1,8 +1,40 @@
 body { margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; background: #f6fbff; }
         .chat-header { background: #3b82f6; color: white; padding: 15px; font-weight: bold; }
         .chat-messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .msg { background: white; padding: 8px 12px; border-radius: 10px; max-width: 80%; font-size: 14px; }
+        .msg {
+    background: white;
+    padding: 8px 12px;
+    border-radius: 10px;
+    max-width: 70%;
+    font-size: 14px;
+    position: relative;
+}
         .my-msg { align-self: flex-end; background: #e4efff; }
+
+/* 시간 표시 */
+.msg-time { font-size: 10px; color: #4a5568; min-width: 40px; }
+
+/* 날짜 구분선 */
+.date-divider {
+    text-align: center;
+    margin: 15px 0;
+    font-size: 12px;
+    color: white;
+    background: rgba(0,0,0,0.15);
+    padding: 5px 15px;
+    border-radius: 20px;
+    align-self: center;
+}
+
+.msg-wrapper {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+.my-msg-wrapper {
+    flex-direction: row-reverse;
+}
 
         /* 입력 영역 전체 */
 .chat-input-area { 

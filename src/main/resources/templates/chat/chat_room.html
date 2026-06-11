@@ -244,6 +244,49 @@
                 }
             });
         })();
+
+        // 전역 변수로 날짜 추적
+let lastDate = null;
+
+function appendMessage(message) {
+    if (!message || typeof message.id !== 'number') return;
+    if (lastMessageId !== null && message.id <= lastMessageId) return;
+
+    clearEmptyState();
+
+    const msgDate = new Date(message.createdAt);
+    const dateStr = msgDate.toLocaleDateString('ko-KR', { 
+        year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' 
+    });
+
+    // 1. 날짜가 바뀌었으면 구분선 추가
+    if (lastDate !== dateStr) {
+        const divider = document.createElement('div');
+        divider.className = 'date-divider';
+        divider.textContent = dateStr;
+        chatMsgs.appendChild(divider);
+        lastDate = dateStr;
+    }
+
+    // 2. 메시지 구조 생성 (wrapper 활용)
+    const wrapper = document.createElement('div');
+    wrapper.className = message.mine ? 'msg-wrapper my-msg-wrapper' : 'msg-wrapper';
+
+    const msgDiv = document.createElement('div');
+    msgDiv.className = message.mine ? 'msg my-msg' : 'msg';
+    msgDiv.textContent = message.content;
+
+    const timeDiv = document.createElement('div');
+    timeDiv.className = 'msg-time';
+    timeDiv.textContent = formatTime(message.createdAt);
+
+    wrapper.appendChild(msgDiv);
+    wrapper.appendChild(timeDiv);
+    
+    chatMsgs.appendChild(wrapper);
+    chatMsgs.scrollTop = chatMsgs.scrollHeight;
+    lastMessageId = message.id;
+}
     </script>
 </body>
 </html>
