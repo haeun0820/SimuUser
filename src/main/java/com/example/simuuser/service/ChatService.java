@@ -19,17 +19,26 @@ import com.example.simuuser.repository.ProjectRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 public class ChatService {
+
+    private static final long MAX_ATTACHMENT_SIZE = 25L * 1024L * 1024L;
+    private static final Path CHAT_UPLOAD_DIR = Paths.get("src/main/resources/uploads/chat").toAbsolutePath().normalize();
 
     private final ChatRoomRepository chatRoomRepository;
     private final ChatParticipantRepository chatParticipantRepository;
@@ -205,6 +214,51 @@ public class ChatService {
         ChatMessage message = chatMessageRepository.save(new ChatMessage(room, currentUser, normalizedContent));
         room.touch();
         adminLogService.logUserChat("사용자 '" + displayName(currentUser) + "' 채팅 메시지 전송: " + summarizeForLog(normalizedContent));
+        return new ChatMessageResponse(message, currentUser.getId());
+    }
+
+    @Transactional
+    public ChatMessageResponse sendAttachment(Long roomId, MultipartFile file, boolean imageOnly, Authentication authentication) throws IOException {
+        AppUser currentUser = appUserService.getCurrentUser(authentication);
+        ChatRoom room = resolveRoomReference(roomId, currentUser, true);
+
+        if (!"ACTIVE".equals(room.getStatus())) {
+            throw new IllegalStateException("아직 수락되지 않은 채팅입니다.");
+        }
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("업로드할 파일을 선택해주세요.");
+        }
+        if (file.getSize() > MAX_ATTACHMENT_SIZE) {
+            throw new IllegalArgumentException("파일은 25MB 이하만 업로드할 수 있습니다.");
+        }
+
+        String contentType = file.getContentType() == null ? "application/octet-stream" : file.getContentType();
+        if (imageOnly && !contentType.toLowerCase().startsWith("image/")) {
+            throw new IllegalArgumentException("이미지 파일만 전송할 수 있습니다.");
+        }
+
+        Files.createDirectories(CHAT_UPLOAD_DIR);
+        String originalName = normalizeFileName(file.getOriginalFilename());
+        String storedName = UUID.randomUUID() + "-" + originalName;
+        Path target = CHAT_UPLOAD_DIR.resolve(storedName).normalize();
+        if (!target.startsWith(CHAT_UPLOAD_DIR)) {
+            throw new IllegalArgumentException("올바르지 않은 파일명입니다.");
+        }
+        file.transferTo(target);
+
+        String messageType = contentType.toLowerCase().startsWith("image/") ? "IMAGE" : "FILE";
+        String attachmentUrl = "/uploads/chat/" + storedName;
+        ChatMessage message = chatMessageRepository.save(new ChatMessage(
+                room,
+                currentUser,
+                originalName,
+                messageType,
+                attachmentUrl,
+                originalName,
+                contentType
+        ));
+        room.touch();
+        adminLogService.logUserChat("사용자 '" + displayName(currentUser) + "' 채팅 첨부 전송: " + originalName);
         return new ChatMessageResponse(message, currentUser.getId());
     }
 
@@ -446,6 +500,16 @@ public class ChatService {
 
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private String normalizeFileName(String value) {
+        String fileName = value == null ? "attachment" : Paths.get(value).getFileName().toString();
+        String sanitized = fileName.replaceAll("[\\\\/:*?\"<>|]", "_").trim();
+        sanitized = sanitized.replaceAll("\\s+", "_");
+        if (sanitized.isBlank()) {
+            return "attachment";
+        }
+        return sanitized.length() > 120 ? sanitized.substring(sanitized.length() - 120) : sanitized;
     }
 
     private String summarizeForLog(String value) {

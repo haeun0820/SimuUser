@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.Map;
@@ -148,6 +149,30 @@ public class ChatController {
         } catch (Exception e) {
             adminLogService.logSystemError("채팅 메시지 전송 실패: " + e.getMessage());
             return ResponseEntity.internalServerError().body(Map.of("message", "메시지 전송 중 오류가 발생했습니다."));
+        }
+    }
+
+    @ResponseBody
+    @PostMapping("/api/chat/rooms/{roomId}/attachments")
+    public ResponseEntity<?> sendAttachment(@PathVariable Long roomId,
+                                            @RequestParam("file") MultipartFile file,
+                                            @RequestParam(defaultValue = "false") boolean imageOnly,
+                                            Authentication authentication) {
+        try {
+            ChatMessageResponse response = chatService.sendAttachment(roomId, file, imageOnly, authentication);
+            try {
+                Long actualRoomId = chatService.findRoomDetail(roomId, authentication).getId();
+                chatSseBroadcaster.broadcast(actualRoomId, response);
+                chatWebSocketBroadcaster.broadcast(actualRoomId, response);
+            } catch (Exception ignored) {
+                // Delivery failures must not break message persistence.
+            }
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            adminLogService.logSystemError("채팅 첨부 업로드 실패: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of("message", "첨부 파일 업로드 중 오류가 발생했습니다."));
         }
     }
 }

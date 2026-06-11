@@ -15,20 +15,22 @@
     </div>
     <div class="chat-input-area">
         <div class="plus-menu-container">
-            <button id="plusBtn" class="plus-btn" type="button">+</button>
+            <button id="plusBtn" class="plus-btn" type="button" aria-label="첨부 메뉴 열기">+</button>
             <div id="plusMenu" class="plus-menu">
-                <button type="button" disabled>사진 전송</button>
-                <button type="button" disabled>파일 업로드</button>
+                <button id="photoBtn" type="button">사진 전송</button>
+                <button id="fileBtn" type="button">파일 업로드</button>
             </div>
         </div>
-        <input type="text" id="msgInput" placeholder="메시지를 입력해주세요." onkeypress="if(event.keyCode==13) send()">
-        <button id="sendBtn" onclick="send()" type="button">전송</button>
+        <input type="file" id="attachmentInput" class="attachment-input" aria-hidden="true" tabindex="-1">
+        <input type="text" id="msgInput" placeholder="메시지를 입력해주세요.">
+        <button id="sendBtn" type="button">전송</button>
     </div>
 
     <script>
         const routeRoomId = window.location.pathname.split('/').pop();
         let roomId = routeRoomId;
         let lastMessageId = null;
+        let lastDate = null;
         let isLoadingMessages = false;
         let isSending = false;
         let stream = null;
@@ -39,17 +41,49 @@
 
         const plusBtn = document.getElementById('plusBtn');
         const plusMenu = document.getElementById('plusMenu');
+        const photoBtn = document.getElementById('photoBtn');
+        const fileBtn = document.getElementById('fileBtn');
+        const attachmentInput = document.getElementById('attachmentInput');
         const msgInput = document.getElementById('msgInput');
         const sendBtn = document.getElementById('sendBtn');
         const chatMsgs = document.getElementById('chatMsgs');
 
-        plusBtn.onclick = (e) => {
-            e.stopPropagation();
+        plusBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
             plusMenu.classList.toggle('active');
-        };
+        });
+
+        plusMenu.addEventListener('click', (event) => {
+            event.stopPropagation();
+        });
 
         document.addEventListener('click', () => {
             plusMenu.classList.remove('active');
+        });
+
+        photoBtn.addEventListener('click', () => {
+            plusMenu.classList.remove('active');
+            openAttachmentPicker(true);
+        });
+
+        fileBtn.addEventListener('click', () => {
+            plusMenu.classList.remove('active');
+            openAttachmentPicker(false);
+        });
+
+        attachmentInput.addEventListener('change', () => {
+            void uploadSelectedFile();
+        });
+
+        msgInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                void send();
+            }
+        });
+
+        sendBtn.addEventListener('click', () => {
+            void send();
         });
 
         function csrfHeaders() {
@@ -66,12 +100,22 @@
         function setChatEnabled(enabled) {
             msgInput.disabled = !enabled;
             sendBtn.disabled = !enabled;
+            plusBtn.disabled = !enabled;
+            photoBtn.disabled = !enabled;
+            fileBtn.disabled = !enabled;
+        }
+
+        function openAttachmentPicker(imageOnly) {
+            attachmentInput.value = '';
+            attachmentInput.dataset.imageOnly = String(imageOnly);
+            attachmentInput.accept = imageOnly ? 'image/*' : '';
+            attachmentInput.click();
         }
 
         function clearEmptyState() {
             if (chatMsgs.children.length === 1 && chatMsgs.firstElementChild?.classList.contains('msg')) {
                 const text = chatMsgs.firstElementChild.textContent || '';
-                if (text.includes('대화를 시작해보세요.') || text.includes('메시지를 불러오는 중입니다.')) {
+                if (text.includes('대화를 시작해보세요') || text.includes('메시지를 불러오는 중입니다')) {
                     chatMsgs.innerHTML = '';
                 }
             }
@@ -86,14 +130,75 @@
             }
 
             clearEmptyState();
+            appendDateDivider(message.createdAt);
 
-            const div = document.createElement('div');
-            div.className = message.mine ? 'msg my-msg' : 'msg';
-            div.textContent = message.content;
-            div.title = formatTime(message.createdAt);
-            chatMsgs.appendChild(div);
+            const wrapper = document.createElement('div');
+            wrapper.className = message.mine ? 'msg-wrapper my-msg-wrapper' : 'msg-wrapper';
+
+            const msgDiv = document.createElement('div');
+            msgDiv.className = message.mine ? 'msg my-msg' : 'msg';
+            renderMessageContent(msgDiv, message);
+
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'msg-time';
+            timeDiv.textContent = formatTime(message.createdAt);
+
+            wrapper.appendChild(msgDiv);
+            wrapper.appendChild(timeDiv);
+            chatMsgs.appendChild(wrapper);
             chatMsgs.scrollTop = chatMsgs.scrollHeight;
             lastMessageId = message.id;
+        }
+
+        function appendDateDivider(createdAt) {
+            const msgDate = new Date(createdAt);
+            const dateStr = msgDate.toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'long'
+            });
+
+            if (lastDate === dateStr) {
+                return;
+            }
+
+            const divider = document.createElement('div');
+            divider.className = 'date-divider';
+            divider.textContent = dateStr;
+            chatMsgs.appendChild(divider);
+            lastDate = dateStr;
+        }
+
+        function renderMessageContent(container, message) {
+            const type = message.messageType || 'TEXT';
+            if (type === 'IMAGE' && message.attachmentUrl) {
+                const link = document.createElement('a');
+                link.href = message.attachmentUrl;
+                link.target = '_blank';
+                link.rel = 'noopener';
+
+                const image = document.createElement('img');
+                image.className = 'chat-img';
+                image.src = message.attachmentUrl;
+                image.alt = message.attachmentName || '첨부 이미지';
+
+                link.appendChild(image);
+                container.appendChild(link);
+                return;
+            }
+
+            if (type === 'FILE' && message.attachmentUrl) {
+                const link = document.createElement('a');
+                link.className = 'file-msg';
+                link.href = message.attachmentUrl;
+                link.download = message.attachmentName || '';
+                link.textContent = message.attachmentName || message.content || '첨부 파일';
+                container.appendChild(link);
+                return;
+            }
+
+            container.textContent = message.content || '';
         }
 
         async function loadRoom() {
@@ -119,9 +224,7 @@
             isLoadingMessages = true;
             try {
                 const query = !reset && lastMessageId ? `?afterMessageId=${lastMessageId}` : '';
-                const response = await fetch(`/api/chat/rooms/${roomId}/messages${query}`, {
-                    cache: 'no-store'
-                });
+                const response = await fetch(`/api/chat/rooms/${roomId}/messages${query}`, { cache: 'no-store' });
                 const result = await response.json().catch(() => []);
 
                 if (!response.ok) {
@@ -132,6 +235,7 @@
                 if (reset) {
                     chatMsgs.innerHTML = '';
                     lastMessageId = null;
+                    lastDate = null;
                 }
 
                 if (reset && !result.length) {
@@ -151,7 +255,7 @@
             }
 
             pollHandle = window.setInterval(() => {
-                syncMessages(false);
+                void syncMessages(false);
             }, 1500);
         }
 
@@ -220,6 +324,46 @@
             }
         }
 
+        async function uploadSelectedFile() {
+            const file = attachmentInput.files && attachmentInput.files[0];
+            const imageOnly = attachmentInput.dataset.imageOnly === 'true';
+            attachmentInput.value = '';
+            if (!file || isSending) {
+                return;
+            }
+            if (file.size > 25 * 1024 * 1024) {
+                alert('파일은 25MB 이하만 업로드할 수 있습니다.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            isSending = true;
+            setChatEnabled(false);
+
+            try {
+                const params = new URLSearchParams({ imageOnly: String(imageOnly) });
+                const response = await fetch(`/api/chat/rooms/${roomId}/attachments?${params}`, {
+                    method: 'POST',
+                    headers: csrfHeaders(),
+                    body: formData
+                });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    alert(result.message || '파일 업로드 중 오류가 발생했습니다.');
+                    return;
+                }
+                appendMessage(result);
+            } catch (error) {
+                alert(error.message || '파일 업로드 중 오류가 발생했습니다.');
+            } finally {
+                isSending = false;
+                setChatEnabled(true);
+                msgInput.focus();
+            }
+        }
+
         window.send = send;
 
         (async function init() {
@@ -244,49 +388,6 @@
                 }
             });
         })();
-
-        // 전역 변수로 날짜 추적
-let lastDate = null;
-
-function appendMessage(message) {
-    if (!message || typeof message.id !== 'number') return;
-    if (lastMessageId !== null && message.id <= lastMessageId) return;
-
-    clearEmptyState();
-
-    const msgDate = new Date(message.createdAt);
-    const dateStr = msgDate.toLocaleDateString('ko-KR', { 
-        year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' 
-    });
-
-    // 1. 날짜가 바뀌었으면 구분선 추가
-    if (lastDate !== dateStr) {
-        const divider = document.createElement('div');
-        divider.className = 'date-divider';
-        divider.textContent = dateStr;
-        chatMsgs.appendChild(divider);
-        lastDate = dateStr;
-    }
-
-    // 2. 메시지 구조 생성 (wrapper 활용)
-    const wrapper = document.createElement('div');
-    wrapper.className = message.mine ? 'msg-wrapper my-msg-wrapper' : 'msg-wrapper';
-
-    const msgDiv = document.createElement('div');
-    msgDiv.className = message.mine ? 'msg my-msg' : 'msg';
-    msgDiv.textContent = message.content;
-
-    const timeDiv = document.createElement('div');
-    timeDiv.className = 'msg-time';
-    timeDiv.textContent = formatTime(message.createdAt);
-
-    wrapper.appendChild(msgDiv);
-    wrapper.appendChild(timeDiv);
-    
-    chatMsgs.appendChild(wrapper);
-    chatMsgs.scrollTop = chatMsgs.scrollHeight;
-    lastMessageId = message.id;
-}
     </script>
 </body>
 </html>

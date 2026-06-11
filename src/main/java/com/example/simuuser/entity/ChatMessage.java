@@ -38,6 +38,18 @@ public class ChatMessage {
     @Column(nullable = false, length = 2000)
     private String content;
 
+    @Column(length = 20)
+    private String messageType = "TEXT";
+
+    @Column(length = 500)
+    private String attachmentUrl;
+
+    @Column(length = 255)
+    private String attachmentName;
+
+    @Column(length = 100)
+    private String attachmentContentType;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -48,6 +60,19 @@ public class ChatMessage {
         this.room = room;
         this.sender = sender;
         this.content = content;
+        this.messageType = "TEXT";
+        this.createdAt = LocalDateTime.now();
+    }
+
+    public ChatMessage(ChatRoom room, AppUser sender, String content, String messageType,
+                       String attachmentUrl, String attachmentName, String attachmentContentType) {
+        this.room = room;
+        this.sender = sender;
+        this.content = content;
+        this.messageType = messageType;
+        this.attachmentUrl = attachmentUrl;
+        this.attachmentName = attachmentName;
+        this.attachmentContentType = attachmentContentType;
         this.createdAt = LocalDateTime.now();
     }
 
@@ -65,6 +90,22 @@ public class ChatMessage {
 
     public String getContent() {
         return content;
+    }
+
+    public String getMessageType() {
+        return messageType;
+    }
+
+    public String getAttachmentUrl() {
+        return attachmentUrl;
+    }
+
+    public String getAttachmentName() {
+        return attachmentName;
+    }
+
+    public String getAttachmentContentType() {
+        return attachmentContentType;
     }
 
     public LocalDateTime getCreatedAt() {

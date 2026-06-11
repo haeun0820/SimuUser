@@ -11,6 +11,10 @@ public class ChatMessageResponse {
     private final String senderName;
     private final String senderProfileImage;
     private final String content;
+    private final String messageType;
+    private final String attachmentUrl;
+    private final String attachmentName;
+    private final String attachmentContentType;
     private final LocalDateTime createdAt;
     private final boolean mine;
 
@@ -20,6 +24,10 @@ public class ChatMessageResponse {
         this.senderName = message.getSender().getName();
         this.senderProfileImage = message.getSender().getProfileImage();
         this.content = message.getContent();
+        this.messageType = message.getMessageType();
+        this.attachmentUrl = message.getAttachmentUrl();
+        this.attachmentName = message.getAttachmentName();
+        this.attachmentContentType = message.getAttachmentContentType();
         this.createdAt = message.getCreatedAt();
         this.mine = currentUserId != null && currentUserId.equals(message.getSender().getId());
     }
@@ -42,6 +50,22 @@ public class ChatMessageResponse {
 
     public String getContent() {
         return content;
+    }
+
+    public String getMessageType() {
+        return messageType;
+    }
+
+    public String getAttachmentUrl() {
+        return attachmentUrl;
+    }
+
+    public String getAttachmentName() {
+        return attachmentName;
+    }
+
+    public String getAttachmentContentType() {
+        return attachmentContentType;
     }
 
     public LocalDateTime getCreatedAt() {
