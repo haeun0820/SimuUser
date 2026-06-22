@@ -110,7 +110,7 @@ public class ProjectController {
 
     @ResponseBody
     @PostMapping("/api/projects/{projectId}/members/invite")
-    public ResponseEntity<?> inviteMember(@PathVariable Long projectId, @RequestBody Map<String, String> body, Authentication authentication) {
+    public ResponseEntity<?> inviteMember(@PathVariable("projectId") Long projectId, @RequestBody Map<String, String> body, Authentication authentication) {
         try {
             return ResponseEntity.ok(projectService.inviteMember(projectId, body.get("email"), body.get("role"), authentication));
         } catch (IllegalArgumentException | IllegalStateException e) {
@@ -120,7 +120,7 @@ public class ProjectController {
 
     @ResponseBody
     @GetMapping("/api/projects/{projectId}/members")
-    public ResponseEntity<?> projectMembers(@PathVariable Long projectId, Authentication authentication) {
+    public ResponseEntity<?> projectMembers(@PathVariable("projectId") Long projectId, Authentication authentication) {
         try {
             return ResponseEntity.ok(projectService.findProjectMembers(projectId, authentication));
         } catch (IllegalArgumentException | IllegalStateException e) {
@@ -130,7 +130,7 @@ public class ProjectController {
 
     @ResponseBody
     @DeleteMapping("/api/projects/{projectId}/members/{memberId}")
-    public ResponseEntity<?> removeMember(@PathVariable Long projectId, @PathVariable Long memberId, Authentication authentication) {
+    public ResponseEntity<?> removeMember(@PathVariable("projectId") Long projectId, @PathVariable("memberId") Long memberId, Authentication authentication) {
         try {
             projectService.removeProjectMember(projectId, memberId, authentication);
             return ResponseEntity.ok().build();
@@ -147,7 +147,7 @@ public class ProjectController {
 
     @ResponseBody
     @PostMapping("/api/project-invitations/{inviteId}/accept")
-    public ResponseEntity<?> acceptInvitation(@PathVariable Long inviteId, Authentication authentication) {
+    public ResponseEntity<?> acceptInvitation(@PathVariable("inviteId") Long inviteId, Authentication authentication) {
         try {
             var response = projectService.acceptInvite(inviteId, authentication);
             notificationService.markProjectInviteHandled(inviteId, authentication);
@@ -159,7 +159,7 @@ public class ProjectController {
 
     @ResponseBody
     @PostMapping("/api/project-invitations/{inviteId}/decline")
-    public ResponseEntity<?> declineInvitation(@PathVariable Long inviteId, Authentication authentication) {
+    public ResponseEntity<?> declineInvitation(@PathVariable("inviteId") Long inviteId, Authentication authentication) {
         try {
             var response = projectService.declineInvite(inviteId, authentication);
             notificationService.markProjectInviteHandled(inviteId, authentication);

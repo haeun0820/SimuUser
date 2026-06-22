@@ -24,7 +24,7 @@ public class SignupController {
 
     @GetMapping("/signup/check-user-id")
     @ResponseBody
-    public Map<String, Object> checkUserId(@RequestParam String userId) {
+    public Map<String, Object> checkUserId(@RequestParam("userId") String userId) {
         boolean available = appUserService.isUserIdAvailable(userId);
         String message = available ? "사용 가능한 아이디입니다." : "이미 사용 중이거나 입력할 수 없는 아이디입니다.";
 

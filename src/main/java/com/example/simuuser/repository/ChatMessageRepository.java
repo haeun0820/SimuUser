@@ -18,7 +18,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
             where m.room = :room
             order by m.createdAt asc
             """)
-    List<ChatMessage> findByRoomOrderByCreatedAtAsc(ChatRoom room);
+    List<ChatMessage> findByRoomOrderByCreatedAtAsc(@Param("room") ChatRoom room);
 
     @Query("""
             select m

@@ -50,7 +50,7 @@ public class DocumentController {
     }
 
     @GetMapping("/document/editor")
-    public String openEditor(@RequestParam Long id) {
+    public String openEditor(@RequestParam("id") Long id) {
         return "document/document_editor";
     }
 
@@ -84,8 +84,17 @@ public class DocumentController {
             @RequestBody Map<String, String> body,
             Authentication authentication
     ) {
-        documentService.saveContent(id, body.get("title"), body.get("content"), authentication);
-        return ResponseEntity.ok().build();
+        try {
+            documentService.saveContent(id, body.get("title"), body.get("content"), authentication);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            adminLogService.logSystemError("문서 저장 실패: " + e.getMessage());
+            log.error("Document save failed. id={}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", e.getMessage() == null ? "문서 저장 중 오류가 발생했습니다." : e.getMessage()));
+        }
     }
 
     @ResponseBody
@@ -95,8 +104,17 @@ public class DocumentController {
             @RequestBody Map<String, String> body,
             Authentication authentication
     ) {
-        documentService.updatePureContent(id, body.get("title"), body.get("content"), authentication);
-        return ResponseEntity.ok().build();
+        try {
+            documentService.updatePureContent(id, body.get("title"), body.get("content"), authentication);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            adminLogService.logSystemError("문서 복구 실패: " + e.getMessage());
+            log.error("Document restore failed. id={}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", e.getMessage() == null ? "문서 복구 중 오류가 발생했습니다." : e.getMessage()));
+        }
     }
 
     @ResponseBody

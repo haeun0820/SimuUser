@@ -26,7 +26,7 @@ public class NotificationController {
 
     @ResponseBody
     @DeleteMapping("/api/notifications/{notificationId}")
-    public ResponseEntity<?> deleteNotification(@PathVariable Long notificationId, Authentication authentication) {
+    public ResponseEntity<?> deleteNotification(@PathVariable("notificationId") Long notificationId, Authentication authentication) {
         notificationService.delete(notificationId, authentication);
         return ResponseEntity.ok().build();
     }

@@ -33,7 +33,7 @@ public class InquiryController {
 
     @ResponseBody
     @GetMapping("/api/inquiries/{inquiryId}")
-    public ResponseEntity<?> myInquiry(@PathVariable Long inquiryId, Authentication authentication) {
+    public ResponseEntity<?> myInquiry(@PathVariable("inquiryId") Long inquiryId, Authentication authentication) {
         return ResponseEntity.ok(inquiryService.findMine(inquiryId, authentication));
     }
 
@@ -50,7 +50,7 @@ public class InquiryController {
     @ResponseBody
     @PutMapping("/api/inquiries/{inquiryId}")
     public ResponseEntity<?> updateInquiry(
-            @PathVariable Long inquiryId,
+            @PathVariable("inquiryId") Long inquiryId,
             @RequestBody InquiryCreateRequest request,
             Authentication authentication
     ) {
@@ -63,7 +63,7 @@ public class InquiryController {
 
     @ResponseBody
     @DeleteMapping("/api/inquiries/{inquiryId}")
-    public ResponseEntity<?> deleteInquiry(@PathVariable Long inquiryId, Authentication authentication) {
+    public ResponseEntity<?> deleteInquiry(@PathVariable("inquiryId") Long inquiryId, Authentication authentication) {
         try {
             inquiryService.delete(inquiryId, authentication);
             return ResponseEntity.ok().build();
@@ -80,7 +80,7 @@ public class InquiryController {
 
     @ResponseBody
     @GetMapping("/api/admin/inquiries/{inquiryId}")
-    public ResponseEntity<?> adminInquiry(@PathVariable Long inquiryId) {
+    public ResponseEntity<?> adminInquiry(@PathVariable("inquiryId") Long inquiryId) {
         try {
             return ResponseEntity.ok(inquiryService.findForAdmin(inquiryId));
         } catch (IllegalArgumentException e) {
@@ -91,7 +91,7 @@ public class InquiryController {
     @ResponseBody
     @PutMapping("/api/admin/inquiries/{inquiryId}/answer")
     public ResponseEntity<?> answerInquiry(
-            @PathVariable Long inquiryId,
+            @PathVariable("inquiryId") Long inquiryId,
             @RequestBody InquiryAnswerRequest request,
             Authentication authentication
     ) {

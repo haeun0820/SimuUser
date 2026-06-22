@@ -509,3 +509,48 @@ renderTabs();
     }
 };
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    const btnSave = document.getElementById('btnSave');
+    const editorPage = document.getElementById('editorPage');
+    const urlParams = new URLSearchParams(window.location.search);
+    const docId = urlParams.get('id');
+
+    if (!btnSave || !editorPage || !docId) {
+        return;
+    }
+
+    btnSave.onclick = async function() {
+        const title = document.getElementById('headerTitle')?.innerText ?? '';
+        const content = editorPage.innerHTML;
+        const token = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+        const header = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+
+        if (!token || !header) {
+            alert("보안 토큰 오류가 발생했습니다.");
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/documents/${docId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', [header]: token },
+                body: JSON.stringify({ title, content })
+            });
+
+            if (response.ok) {
+                alert("성공적으로 저장되었습니다.");
+                if (typeof loadVersionHistory === 'function') {
+                    loadVersionHistory();
+                }
+                return;
+            }
+
+            const error = await response.json().catch(() => ({}));
+            alert(error.message || "문서 저장에 실패했습니다.");
+        } catch (error) {
+            console.error("문서 저장 오류:", error);
+            alert("문서 저장 중 네트워크 오류가 발생했습니다.");
+        }
+    };
+});

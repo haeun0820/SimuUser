@@ -73,7 +73,7 @@ public class ChatController {
 
     @ResponseBody
     @PostMapping("/api/chat/requests/{roomId}/accept")
-    public ResponseEntity<?> acceptRequest(@PathVariable Long roomId, Authentication authentication) {
+    public ResponseEntity<?> acceptRequest(@PathVariable("roomId") Long roomId, Authentication authentication) {
         try {
             return ResponseEntity.ok(chatService.acceptRequest(roomId, authentication));
         } catch (IllegalArgumentException | IllegalStateException e) {
@@ -83,7 +83,7 @@ public class ChatController {
 
     @ResponseBody
     @PostMapping("/api/chat/requests/{roomId}/decline")
-    public ResponseEntity<?> declineRequest(@PathVariable Long roomId, Authentication authentication) {
+    public ResponseEntity<?> declineRequest(@PathVariable("roomId") Long roomId, Authentication authentication) {
         try {
             chatService.declineRequest(roomId, authentication);
             return ResponseEntity.ok().build();
@@ -94,7 +94,7 @@ public class ChatController {
 
     @ResponseBody
     @PostMapping("/api/chat/rooms/{projectId}")
-    public ResponseEntity<?> createOrGetProjectRoom(@PathVariable Long projectId, Authentication authentication) {
+    public ResponseEntity<?> createOrGetProjectRoom(@PathVariable("projectId") Long projectId, Authentication authentication) {
         try {
             return ResponseEntity.ok(chatService.createOrGetProjectRoom(projectId, authentication));
         } catch (IllegalArgumentException | IllegalStateException e) {
@@ -104,7 +104,7 @@ public class ChatController {
 
     @ResponseBody
     @GetMapping("/api/chat/rooms/{roomId}")
-    public ResponseEntity<?> roomDetail(@PathVariable Long roomId, Authentication authentication) {
+    public ResponseEntity<?> roomDetail(@PathVariable("roomId") Long roomId, Authentication authentication) {
         try {
             return ResponseEntity.ok(chatService.findRoomDetail(roomId, authentication));
         } catch (IllegalArgumentException | IllegalStateException e) {
@@ -114,8 +114,8 @@ public class ChatController {
 
     @ResponseBody
     @GetMapping("/api/chat/rooms/{roomId}/messages")
-    public ResponseEntity<?> messages(@PathVariable Long roomId,
-                                      @RequestParam(required = false) Long afterMessageId,
+    public ResponseEntity<?> messages(@PathVariable("roomId") Long roomId,
+                                      @RequestParam(value = "afterMessageId", required = false) Long afterMessageId,
                                       Authentication authentication) {
         try {
             return ResponseEntity.ok(chatService.findMessages(roomId, afterMessageId, authentication));
@@ -126,14 +126,14 @@ public class ChatController {
 
     @ResponseBody
     @GetMapping(value = "/api/chat/rooms/{roomId}/stream", produces = "text/event-stream")
-    public SseEmitter stream(@PathVariable Long roomId, Authentication authentication) {
+    public SseEmitter stream(@PathVariable("roomId") Long roomId, Authentication authentication) {
         Long actualRoomId = chatService.findRoomDetail(roomId, authentication).getId();
         return chatSseBroadcaster.register(actualRoomId);
     }
 
     @ResponseBody
     @PostMapping("/api/chat/rooms/{roomId}/messages")
-    public ResponseEntity<?> sendMessage(@PathVariable Long roomId, @RequestBody Map<String, String> body, Authentication authentication) {
+    public ResponseEntity<?> sendMessage(@PathVariable("roomId") Long roomId, @RequestBody Map<String, String> body, Authentication authentication) {
         try {
             ChatMessageResponse response = chatService.sendMessage(roomId, body.get("content"), authentication);
             try {
@@ -154,9 +154,9 @@ public class ChatController {
 
     @ResponseBody
     @PostMapping("/api/chat/rooms/{roomId}/attachments")
-    public ResponseEntity<?> sendAttachment(@PathVariable Long roomId,
+    public ResponseEntity<?> sendAttachment(@PathVariable("roomId") Long roomId,
                                             @RequestParam("file") MultipartFile file,
-                                            @RequestParam(defaultValue = "false") boolean imageOnly,
+                                            @RequestParam(value = "imageOnly", defaultValue = "false") boolean imageOnly,
                                             Authentication authentication) {
         try {
             ChatMessageResponse response = chatService.sendAttachment(roomId, file, imageOnly, authentication);

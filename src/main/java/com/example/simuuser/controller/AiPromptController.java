@@ -41,7 +41,7 @@ public class AiPromptController {
 
     @ResponseBody
     @PutMapping("/api/admin/prompts/{promptId}")
-    public ResponseEntity<?> updatePrompt(@PathVariable Long promptId, @RequestBody AiPromptRequest request) {
+    public ResponseEntity<?> updatePrompt(@PathVariable("promptId") Long promptId, @RequestBody AiPromptRequest request) {
         try {
             return ResponseEntity.ok(aiPromptService.update(promptId, request));
         } catch (IllegalArgumentException e) {
@@ -51,7 +51,7 @@ public class AiPromptController {
 
     @ResponseBody
     @DeleteMapping("/api/admin/prompts/{promptId}")
-    public ResponseEntity<?> deletePrompt(@PathVariable Long promptId) {
+    public ResponseEntity<?> deletePrompt(@PathVariable("promptId") Long promptId) {
         try {
             aiPromptService.delete(promptId);
             return ResponseEntity.ok().build();

@@ -21,7 +21,7 @@ public interface ChatParticipantRepository extends JpaRepository<ChatParticipant
             where cp.user = :user
             order by r.updatedAt desc
             """)
-    List<ChatParticipant> findByUserOrderByRoomUpdatedAtDesc(AppUser user);
+    List<ChatParticipant> findByUserOrderByRoomUpdatedAtDesc(@Param("user") AppUser user);
 
     @Query("""
             select cp
@@ -30,7 +30,7 @@ public interface ChatParticipantRepository extends JpaRepository<ChatParticipant
             where cp.room = :room
             order by cp.joinedAt asc
             """)
-    List<ChatParticipant> findByRoomOrderByJoinedAtAsc(ChatRoom room);
+    List<ChatParticipant> findByRoomOrderByJoinedAtAsc(@Param("room") ChatRoom room);
 
     @Query("""
             select cp
